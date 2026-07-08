@@ -1,6 +1,37 @@
 import { collection, doc, setDoc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebaseConfig";
 
+// Get Line Settings
+export const getLineSettings = async () => {
+  try {
+    const docRef = doc(db, "system_config", "line_settings");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching line settings:", error);
+    return null;
+  }
+};
+
+// Save Line Settings
+export const saveLineSettings = async (liffId, channelAccessToken) => {
+  try {
+    const docRef = doc(db, "system_config", "line_settings");
+    await setDoc(docRef, {
+      liffId,
+      channelAccessToken,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error saving line settings:", error);
+    throw error;
+  }
+};
+
 // Save or update user profile from LIFF
 export const saveUserProfile = async (userId, displayName) => {
   try {

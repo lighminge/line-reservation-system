@@ -1,3 +1,19 @@
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+
+// Initialize Firebase using environment variables in Vercel
+const firebaseConfig = {
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
@@ -10,15 +26,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  const lineChannelToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-
-  if (!lineChannelToken) {
-    console.error("LINE_CHANNEL_ACCESS_TOKEN is not set.");
-    return res.status(500).json({ message: 'Server configuration error' });
-  }
-
   try {
-    // Construct the Line push message payload
+    // 1. Fetch Line Settings from Firestore
+    const settingsRef = doc(db, "system_config", "line_settings");
+    const settingsSnap = await getDoc(settingsRef);
+    
+    if (!settingsSnap.exists() || !settingsSnap.data().channelAccessToken) {
+      console.error("Line Channel Access Token not found in Firestore system_config.");
+      return res.status(500).json({ message: 'System not configured properly' });
+    }
+
+    const lineChannelToken = settingsSnap.data().channelAccessToken;
+
+    // 2. Construct the Line push message payload
     const messagePayload = {
       to: userId,
       messages: [
@@ -146,7 +166,7 @@ export default async function handler(req, res) {
       ]
     };
 
-    // Call Line Messaging API
+    // 3. Call Line Messaging API
     const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
       headers: {
