@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #00B900; /* Line Green */
+  --color-bg-light: #f8fafc;
+  --color-card-light: #ffffff;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--color-bg-light);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}

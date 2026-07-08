@@ -1,0 +1,170 @@
+export default async function handler(req, res) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  }
+
+  const { userId, reservationId, date, time } = req.body;
+
+  if (!userId || !date || !time) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const lineChannelToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+
+  if (!lineChannelToken) {
+    console.error("LINE_CHANNEL_ACCESS_TOKEN is not set.");
+    return res.status(500).json({ message: 'Server configuration error' });
+  }
+
+  try {
+    // Construct the Line push message payload
+    const messagePayload = {
+      to: userId,
+      messages: [
+        {
+          type: "flex",
+          altText: "預約成功通知",
+          contents: {
+            type: "bubble",
+            header: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: "預約成功確認",
+                  weight: "bold",
+                  size: "xl",
+                  color: "#ffffff"
+                }
+              ],
+              backgroundColor: "#00B900"
+            },
+            body: {
+              type: "box",
+              layout: "vertical",
+              spacing: "md",
+              contents: [
+                {
+                  type: "text",
+                  text: "您好！我們已經收到您的預約。",
+                  wrap: true,
+                  size: "sm"
+                },
+                {
+                  type: "box",
+                  layout: "vertical",
+                  margin: "lg",
+                  spacing: "sm",
+                  contents: [
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "日期",
+                          color: "#aaaaaa",
+                          size: "sm",
+                          flex: 1
+                        },
+                        {
+                          type: "text",
+                          text: date,
+                          wrap: true,
+                          color: "#666666",
+                          size: "sm",
+                          flex: 3
+                        }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "時間",
+                          color: "#aaaaaa",
+                          size: "sm",
+                          flex: 1
+                        },
+                        {
+                          type: "text",
+                          text: time,
+                          wrap: true,
+                          color: "#666666",
+                          size: "sm",
+                          flex: 3
+                        }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
+                          text: "單號",
+                          color: "#aaaaaa",
+                          size: "sm",
+                          flex: 1
+                        },
+                        {
+                          type: "text",
+                          text: reservationId || "N/A",
+                          wrap: true,
+                          color: "#666666",
+                          size: "xs",
+                          flex: 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            footer: {
+              type: "box",
+              layout: "vertical",
+              contents: [
+                {
+                  type: "text",
+                  text: "期待您的光臨！",
+                  align: "center",
+                  color: "#00B900",
+                  weight: "bold"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    };
+
+    // Call Line Messaging API
+    const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${lineChannelToken}`,
+      },
+      body: JSON.stringify(messagePayload),
+    });
+
+    if (!lineResponse.ok) {
+      const errorData = await lineResponse.text();
+      console.error("Line API Error:", errorData);
+      throw new Error(`Line API responded with ${lineResponse.status}`);
+    }
+
+    return res.status(200).json({ success: true, message: 'Message sent successfully' });
+  } catch (error) {
+    console.error("Error sending Line message:", error);
+    return res.status(500).json({ success: false, message: 'Failed to send Line message', error: error.message });
+  }
+}
