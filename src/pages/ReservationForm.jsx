@@ -187,5 +187,3 @@ export default function ReservationForm() {
     </div>
   );
 }
-
-export default App;
