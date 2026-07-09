@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Lock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Settings, Lock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { getLineSettings, saveLineSettings } from '../services/db';
 
 export default function Admin() {
