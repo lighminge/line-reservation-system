@@ -9,11 +9,11 @@ export const getLineSettings = async () => {
     if (docSnap.exists()) {
       return docSnap.data();
     } else {
-      return null;
+      throw new Error("Firestore 中找不到系統設定檔 (system_config/line_settings)。如果您剛剛有儲存，可能是資料庫權限不足導致儲存失敗但未報錯。");
     }
   } catch (error) {
     console.error("Error fetching line settings:", error);
-    return null;
+    throw error;
   }
 };
 

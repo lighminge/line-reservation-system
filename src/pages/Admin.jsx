@@ -54,7 +54,7 @@ export default function Admin() {
       await saveLineSettings(liffId, channelAccessToken);
       setMessage({ text: '儲存成功！系統已更新', type: 'success' });
     } catch (error) {
-      setMessage({ text: '儲存失敗，請稍後再試', type: 'error' });
+      setMessage({ text: `儲存失敗: ${error.message}`, type: 'error' });
     } finally {
       setSaving(false);
     }
