@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Settings, Lock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import { getLineSettings, saveLineSettings } from '../services/db';
+import { Settings, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { getLineSettings, saveLineSettings } from '../../services/db';
 
-export default function Admin() {
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+export default function AdminSettings() {
   const [liffId, setLiffId] = useState('');
   const [channelAccessToken, setChannelAccessToken] = useState('');
   
@@ -13,17 +10,9 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
 
-  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (password === adminPassword) {
-      setIsAuthenticated(true);
-      fetchSettings();
-    } else {
-      setMessage({ text: '密碼錯誤', type: 'error' });
-    }
-  };
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -34,7 +23,8 @@ export default function Admin() {
         setChannelAccessToken(settings.channelAccessToken || '');
       }
     } catch (error) {
-      setMessage({ text: '讀取設定失敗', type: 'error' });
+      // It's expected to throw if not set yet, so we just set message to empty or warning
+      console.warn(error);
     } finally {
       setLoading(false);
     }
@@ -60,45 +50,17 @@ export default function Admin() {
     }
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6">
-        <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-sm w-full">
-          <div className="flex justify-center mb-6">
-            <div className="bg-slate-100 p-4 rounded-full">
-              <Lock className="w-8 h-8 text-slate-700" />
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-center text-slate-800 mb-6">系統管理員登入</h1>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-600">管理員密碼</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3 mt-1 rounded-xl border border-slate-200 focus:border-slate-500 focus:ring-2 focus:ring-slate-200 outline-none"
-                placeholder="請輸入 VITE_ADMIN_PASSWORD"
-                required
-              />
-            </div>
-            {message.type === 'error' && <p className="text-red-500 text-sm">{message.text}</p>}
-            <button type="submit" className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition-colors">
-              登入
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
-      <div className="max-w-xl w-full bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden mt-8">
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">系統設定</h1>
+        <p className="text-slate-500 mt-2">管理 Line API 金鑰與系統層級的環境變數</p>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="bg-slate-800 p-6 text-white flex items-center space-x-3">
           <Settings className="w-6 h-6" />
-          <h1 className="text-xl font-bold">Line 系統參數設定</h1>
+          <h2 className="text-xl font-bold">Line 系統參數</h2>
         </div>
         
         <div className="p-8">
@@ -109,28 +71,28 @@ export default function Admin() {
           ) : (
             <form onSubmit={handleSave} className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-slate-600 block mb-2">LIFF ID (前端登入用)</label>
+                <label className="text-sm font-semibold text-slate-700 block mb-2">LIFF ID (前端登入用)</label>
                 <input 
                   type="text" 
                   value={liffId}
                   onChange={(e) => setLiffId(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none font-mono text-sm"
+                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none font-mono text-sm bg-slate-50 focus:bg-white transition-colors"
                   placeholder="例如：165xxxxxxx-xxxxxxx"
                   required
                 />
-                <p className="text-xs text-slate-400 mt-2">請從 LINE Developers Console 的 LINE Login Channel 中取得</p>
+                <p className="text-xs text-slate-500 mt-2">請從 LINE Developers Console 的 LINE Login Channel 中取得</p>
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-slate-600 block mb-2">Channel Access Token (後端推播用)</label>
+                <label className="text-sm font-semibold text-slate-700 block mb-2">Channel Access Token (後端推播用)</label>
                 <textarea 
                   value={channelAccessToken}
                   onChange={(e) => setChannelAccessToken(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none font-mono text-sm h-32"
+                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none font-mono text-sm h-32 bg-slate-50 focus:bg-white transition-colors"
                   placeholder="請貼上長效 Token"
                   required
                 />
-                <p className="text-xs text-slate-400 mt-2">請從 LINE Developers Console 的 Messaging API Channel 中取得</p>
+                <p className="text-xs text-slate-500 mt-2">請從 LINE Developers Console 的 Messaging API Channel 中取得</p>
               </div>
 
               {message.text && (

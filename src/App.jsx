@@ -1,13 +1,26 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ReservationForm from './pages/ReservationForm';
-import Admin from './pages/Admin';
+import AdminLayout from './components/AdminLayout';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminAvailability from './pages/admin/AdminAvailability';
+import AdminReservations from './pages/admin/AdminReservations';
+import AdminSettings from './pages/admin/AdminSettings';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 前台：客戶預約頁面 */}
         <Route path="/" element={<ReservationForm />} />
-        <Route path="/admin" element={<Admin />} />
+        
+        {/* 後台：管理員版面 */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminReservations />} /> {/* 預設顯示預約管理 */}
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="availability" element={<AdminAvailability />} />
+          <Route path="reservations" element={<AdminReservations />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

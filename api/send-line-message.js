@@ -129,6 +129,28 @@ export default async function handler(req, res) {
                       contents: [
                         {
                           type: "text",
+                          text: "項目",
+                          color: "#aaaaaa",
+                          size: "sm",
+                          flex: 1
+                        },
+                        {
+                          type: "text",
+                          text: req.body.purpose || "一般預約",
+                          wrap: true,
+                          color: "#666666",
+                          size: "sm",
+                          flex: 3
+                        }
+                      ]
+                    },
+                    {
+                      type: "box",
+                      layout: "baseline",
+                      spacing: "sm",
+                      contents: [
+                        {
+                          type: "text",
                           text: "單號",
                           color: "#aaaaaa",
                           size: "sm",

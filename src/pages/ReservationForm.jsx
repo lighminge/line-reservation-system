@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import liff from '@line/liff';
-import { Calendar, Clock, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
-import { saveUserProfile, addReservation, getLineSettings } from '../services/db';
+import { format } from 'date-fns';
+import { Calendar, Clock, CheckCircle2, Loader2, AlertCircle, FileText } from 'lucide-react';
+import { saveUserProfile, addReservation, getLineSettings, getAvailability } from '../services/db';
 
 export default function ReservationForm() {
   const [liffState, setLiffState] = useState('init'); // init, ready, error
@@ -9,10 +10,17 @@ export default function ReservationForm() {
   const [errorMsg, setErrorMsg] = useState('');
 
   // Form State
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [time, setTime] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Availability State
+  const [availabilityDict, setAvailabilityDict] = useState({});
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [availableTimes, setAvailableTimes] = useState([]);
+  const [availablePurposes, setAvailablePurposes] = useState([]);
 
   useEffect(() => {
     const initLiff = async () => {
@@ -45,13 +53,41 @@ export default function ReservationForm() {
     initLiff();
   }, []);
 
+  // Fetch availability when month changes (simplified by fetching based on selected date's month)
+  useEffect(() => {
+    if (liffState === 'ready' && date) {
+      const monthStr = date.substring(0, 7); // e.g. "2026-07"
+      const fetchAvailability = async () => {
+        setLoadingAvailability(true);
+        const data = await getAvailability(monthStr);
+        setAvailabilityDict(data);
+        setLoadingAvailability(false);
+      };
+      fetchAvailability();
+    }
+  }, [date, liffState]);
+
+  // Update available times and purposes when date or dict changes
+  useEffect(() => {
+    if (date && availabilityDict[date]?.isOpen) {
+      setAvailableTimes(availabilityDict[date].timeSlots || []);
+      setAvailablePurposes(availabilityDict[date].purposes || []);
+    } else {
+      setAvailableTimes([]);
+      setAvailablePurposes([]);
+    }
+    // Reset selections
+    setTime('');
+    setPurpose('');
+  }, [date, availabilityDict]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!profile || !date || !time) return;
 
     setSubmitting(true);
     try {
-      await addReservation(profile.userId, { date, time });
+      await addReservation(profile.userId, { date, time, purpose });
       setSuccess(true);
     } catch (err) {
       console.error(err);
@@ -89,9 +125,9 @@ export default function ReservationForm() {
           <div className="bg-green-100 p-3 rounded-full mb-6">
             <CheckCircle2 className="w-16 h-16 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">預約成功！</h2>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">預約已送出！</h2>
           <p className="text-slate-500 text-center mb-8">
-            我們已經收到您的預約資訊，<br />並且已透過 Line 發送確認訊息給您。
+            我們已經收到您的預約資訊。<br />待管理員審核確認後，將會透過 Line 發送確認訊息給您。
           </p>
           <button 
             onClick={() => liff.closeWindow()}
@@ -103,6 +139,8 @@ export default function ReservationForm() {
       </div>
     );
   }
+
+  const isDateOpen = availabilityDict[date]?.isOpen;
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 flex flex-col items-center">
@@ -125,7 +163,7 @@ export default function ReservationForm() {
 
         {/* Form Section */}
         <div className="p-8">
-          <h2 className="text-xl font-bold text-slate-800 mb-6">請選擇預約時間</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-6">請填寫預約資訊</h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             
@@ -143,39 +181,87 @@ export default function ReservationForm() {
               />
             </div>
 
-            {/* Time Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600 flex items-center">
-                <Clock className="w-4 h-4 mr-2" /> 預約時間
-              </label>
-              <select 
-                required
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all outline-none appearance-none"
-              >
-                <option value="" disabled>請選擇時間</option>
-                <option value="10:00">10:00 AM</option>
-                <option value="11:00">11:00 AM</option>
-                <option value="13:00">01:00 PM</option>
-                <option value="14:00">02:00 PM</option>
-                <option value="15:00">03:00 PM</option>
-                <option value="16:00">04:00 PM</option>
-              </select>
-            </div>
+            {loadingAvailability ? (
+              <div className="py-8 flex flex-col items-center text-slate-400">
+                <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                <span className="text-sm">檢查可預約時段...</span>
+              </div>
+            ) : !isDateOpen ? (
+              <div className="py-6 px-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                <AlertCircle className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-slate-600">此日期尚未開放預約</p>
+                <p className="text-xs text-slate-400 mt-1">請選擇其他日期</p>
+              </div>
+            ) : (
+              <>
+                {/* Time Input */}
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="text-sm font-semibold text-slate-600 flex items-center">
+                    <Clock className="w-4 h-4 mr-2" /> 預約時段
+                  </label>
+                  {availableTimes.length === 0 ? (
+                    <p className="text-sm text-red-500 p-3 bg-red-50 rounded-xl">本日無可用時段</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {availableTimes.map(t => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setTime(t)}
+                          className={cn(
+                            "p-2 rounded-lg text-sm font-medium transition-all border",
+                            time === t 
+                              ? "bg-green-500 text-white border-green-500 shadow-md shadow-green-500/30" 
+                              : "bg-white text-slate-600 border-slate-200 hover:border-green-500 hover:text-green-600"
+                          )}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-            {errorMsg && <p className="text-red-500 text-sm mt-2">{errorMsg}</p>}
+                {/* Purpose Input */}
+                {availablePurposes.length > 0 && (
+                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="text-sm font-semibold text-slate-600 flex items-center">
+                      <FileText className="w-4 h-4 mr-2" /> 預約項目
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {availablePurposes.map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setPurpose(p)}
+                          className={cn(
+                            "p-2 rounded-lg text-sm font-medium transition-all border",
+                            purpose === p 
+                              ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/30" 
+                              : "bg-white text-slate-600 border-slate-200 hover:border-emerald-500 hover:text-emerald-600"
+                          )}
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {errorMsg && <p className="text-red-500 text-sm mt-2 font-medium bg-red-50 p-3 rounded-lg">{errorMsg}</p>}
 
             {/* Submit Button */}
             <button 
               type="submit" 
-              disabled={submitting}
-              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold py-4 px-6 rounded-xl transition-colors flex items-center justify-center group shadow-lg shadow-slate-900/20"
+              disabled={submitting || !isDateOpen || !time}
+              className="w-full mt-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center group shadow-lg shadow-slate-900/20"
             >
               {submitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <span>確認預約</span>
+                <span>確認送出預約</span>
               )}
             </button>
           </form>

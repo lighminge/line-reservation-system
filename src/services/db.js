@@ -54,7 +54,7 @@ export const saveUserProfile = async (userId, displayName) => {
   }
 };
 
-// Add a new reservation
+// Add a new reservation (from client)
 export const addReservation = async (userId, reservationData) => {
   try {
     const reservationsRef = collection(db, "reservations");
@@ -62,27 +62,116 @@ export const addReservation = async (userId, reservationData) => {
       userId,
       date: reservationData.date,
       time: reservationData.time,
-      status: "confirmed", // or "pending" depending on business logic
+      purpose: reservationData.purpose || "",
+      status: "pending", // Waiting for admin confirmation
       createdAt: serverTimestamp()
-    });
-    
-    // Call our Vercel API to send Line message
-    await fetch('/api/send-line-message', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        reservationId: docRef.id,
-        date: reservationData.date,
-        time: reservationData.time,
-      }),
     });
     
     return docRef.id;
   } catch (error) {
     console.error("Error adding reservation:", error);
+    throw error;
+  }
+};
+
+
+// ==========================================
+// Admin: Users CRUD
+// ==========================================
+export const getAllUsers = async () => {
+  try {
+    const q = collection(db, "users");
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return [];
+  }
+};
+
+export const saveAdminUser = async (userId, userData) => {
+  try {
+    if (userId) {
+      const docRef = doc(db, "users", userId);
+      await setDoc(docRef, { ...userData, updatedAt: serverTimestamp() }, { merge: true });
+    } else {
+      await addDoc(collection(db, "users"), {
+        ...userData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    }
+  } catch (error) {
+    console.error("Error saving user:", error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId) => {
+  try {
+    await deleteDoc(doc(db, "users", userId));
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw error;
+  }
+};
+
+// ==========================================
+// Admin: Availability CRUD
+// ==========================================
+export const getAvailability = async (monthStr) => {
+  // monthStr e.g. "2026-07"
+  try {
+    const q = query(collection(db, "availability"), where("month", "==", monthStr));
+    const querySnapshot = await getDocs(q);
+    const data = {};
+    querySnapshot.forEach((doc) => {
+      data[doc.data().date] = { id: doc.id, ...doc.data() };
+    });
+    return data;
+  } catch (error) {
+    console.error("Error fetching availability:", error);
+    return {};
+  }
+};
+
+export const saveAvailability = async (availabilityId, data) => {
+  try {
+    if (availabilityId) {
+      const docRef = doc(db, "availability", availabilityId);
+      await setDoc(docRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+    } else {
+      await addDoc(collection(db, "availability"), {
+        ...data,
+        updatedAt: serverTimestamp()
+      });
+    }
+  } catch (error) {
+    console.error("Error saving availability:", error);
+    throw error;
+  }
+};
+
+// ==========================================
+// Admin: Reservations CRUD
+// ==========================================
+export const getAdminReservations = async () => {
+  try {
+    const q = collection(db, "reservations");
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching reservations:", error);
+    return [];
+  }
+};
+
+export const updateReservationStatus = async (reservationId, status) => {
+  try {
+    const docRef = doc(db, "reservations", reservationId);
+    await setDoc(docRef, { status, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error updating reservation status:", error);
     throw error;
   }
 };
