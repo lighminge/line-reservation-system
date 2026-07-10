@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates } from '../../services/db';
-import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export default function AdminUsers() {
@@ -10,11 +10,11 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Message Modal state
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [messageSending, setMessageSending] = useState(false);
+  const [sendResult, setSendResult] = useState({ text: '', type: '' });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -44,6 +44,7 @@ export default function AdminUsers() {
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
     setMessageText('');
+    setSendResult({ text: '', type: '' });
     setIsMessageModalOpen(true);
   };
 
@@ -52,7 +53,7 @@ export default function AdminUsers() {
     if (templates && templates.lineConfirm) {
       setMessageText(templates.lineConfirm.text);
     } else {
-      alert("無法載入樣板");
+      setSendResult({ text: '無法載入樣板', type: 'error' });
     }
   };
 
@@ -61,6 +62,7 @@ export default function AdminUsers() {
     if (!messageText) return;
     
     setMessageSending(true);
+    setSendResult({ text: '', type: '' });
     try {
       const response = await fetch('/api/send-custom-message', {
         method: 'POST',
@@ -74,13 +76,15 @@ export default function AdminUsers() {
       
       const data = await response.json();
       if (data.success) {
-        alert("訊息發送成功！");
-        setIsMessageModalOpen(false);
+        setSendResult({ text: '訊息發送成功！', type: 'success' });
+        setTimeout(() => {
+          setIsMessageModalOpen(false);
+        }, 1500);
       } else {
-        alert("發送失敗：" + data.message);
+        setSendResult({ text: '發送失敗：' + data.message, type: 'error' });
       }
     } catch (error) {
-      alert("發送發生錯誤：" + error.message);
+      setSendResult({ text: '發送發生錯誤：' + error.message, type: 'error' });
     } finally {
       setMessageSending(false);
     }
@@ -379,7 +383,14 @@ export default function AdminUsers() {
                 />
               </div>
 
-              <div className="pt-4 flex space-x-3 shrink-0">
+              {sendResult.text && (
+                <div className={`p-3 rounded-xl flex items-center text-sm ${sendResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                  {sendResult.type === 'success' ? <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" /> : <AlertCircle className="w-4 h-4 mr-2 shrink-0" />}
+                  <span>{sendResult.text}</span>
+                </div>
+              )}
+
+              <div className="pt-2 flex space-x-3 shrink-0">
                 <button type="button" onClick={() => setIsMessageModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors">
                   取消
                 </button>
