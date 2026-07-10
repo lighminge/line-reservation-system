@@ -31,164 +31,189 @@ export default async function handler(req, res) {
     const settingsRef = doc(db, "system_config", "line_settings");
     const settingsSnap = await getDoc(settingsRef);
     
-    if (!settingsSnap.exists() || !settingsSnap.data().channelAccessToken) {
+    let lineChannelToken = null;
+    
+    if (settingsSnap.exists() && settingsSnap.data().configs) {
+      const configs = settingsSnap.data().configs;
+      const activeConfig = configs.find(c => c.isActive) || configs[0];
+      if (activeConfig) {
+        lineChannelToken = activeConfig.channelAccessToken;
+      }
+    }
+    
+    // Fallback for old structure or missing token
+    if (!lineChannelToken && settingsSnap.exists() && settingsSnap.data().channelAccessToken) {
+      lineChannelToken = settingsSnap.data().channelAccessToken;
+    }
+
+    if (!lineChannelToken) {
       console.error("Line Channel Access Token not found in Firestore system_config.");
       return res.status(500).json({ message: 'System not configured properly' });
     }
 
-    const lineChannelToken = settingsSnap.data().channelAccessToken;
+    // 2. Fetch Message Templates from Firestore
+    const templatesRef = doc(db, "system_config", "message_templates");
+    const templatesSnap = await getDoc(templatesRef);
+    
+    let lineTemplate = {
+      title: "預約成功確認",
+      text: "您的預約已經審核通過！請準時抵達。",
+      imageUrl: ""
+    };
 
-    // 2. Construct the Line push message payload
+    if (templatesSnap.exists() && templatesSnap.data().lineConfirm) {
+      lineTemplate = templatesSnap.data().lineConfirm;
+    }
+
+    // 3. Construct the Line push message payload
+    const flexContents = {
+      type: "bubble",
+      body: {
+        type: "box",
+        layout: "vertical",
+        spacing: "md",
+        contents: [
+          {
+            type: "text",
+            text: lineTemplate.text || "您好！我們已經收到您的預約。",
+            wrap: true,
+            size: "sm",
+            weight: "regular"
+          },
+          {
+            type: "separator",
+            margin: "lg"
+          },
+          {
+            type: "box",
+            layout: "vertical",
+            margin: "lg",
+            spacing: "sm",
+            contents: [
+              {
+                type: "box",
+                layout: "baseline",
+                spacing: "sm",
+                contents: [
+                  {
+                    type: "text",
+                    text: "日期",
+                    color: "#aaaaaa",
+                    size: "sm",
+                    flex: 1
+                  },
+                  {
+                    type: "text",
+                    text: date,
+                    wrap: true,
+                    color: "#666666",
+                    size: "sm",
+                    flex: 3
+                  }
+                ]
+              },
+              {
+                type: "box",
+                layout: "baseline",
+                spacing: "sm",
+                contents: [
+                  {
+                    type: "text",
+                    text: "時間",
+                    color: "#aaaaaa",
+                    size: "sm",
+                    flex: 1
+                  },
+                  {
+                    type: "text",
+                    text: time,
+                    wrap: true,
+                    color: "#666666",
+                    size: "sm",
+                    flex: 3
+                  }
+                ]
+              },
+              {
+                type: "box",
+                layout: "baseline",
+                spacing: "sm",
+                contents: [
+                  {
+                    type: "text",
+                    text: "項目",
+                    color: "#aaaaaa",
+                    size: "sm",
+                    flex: 1
+                  },
+                  {
+                    type: "text",
+                    text: req.body.purpose || "一般預約",
+                    wrap: true,
+                    color: "#666666",
+                    size: "sm",
+                    flex: 3
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      footer: {
+        type: "box",
+        layout: "vertical",
+        contents: [
+          {
+            type: "text",
+            text: "期待您的光臨！",
+            align: "center",
+            color: "#00B900",
+            weight: "bold"
+          }
+        ]
+      }
+    };
+
+    // If an image URL is provided, add hero section
+    if (lineTemplate.imageUrl) {
+      flexContents.hero = {
+        type: "image",
+        url: lineTemplate.imageUrl,
+        size: "full",
+        aspectRatio: "1.51:1",
+        aspectMode: "cover"
+      };
+    }
+    
+    // Add header
+    flexContents.header = {
+      type: "box",
+      layout: "vertical",
+      contents: [
+        {
+          type: "text",
+          text: lineTemplate.title || "預約成功確認",
+          weight: "bold",
+          size: "xl",
+          color: "#ffffff"
+        }
+      ],
+      backgroundColor: "#00B900"
+    };
+
     const messagePayload = {
       to: userId,
       messages: [
         {
           type: "flex",
-          altText: "預約成功通知",
-          contents: {
-            type: "bubble",
-            header: {
-              type: "box",
-              layout: "vertical",
-              contents: [
-                {
-                  type: "text",
-                  text: "預約成功確認",
-                  weight: "bold",
-                  size: "xl",
-                  color: "#ffffff"
-                }
-              ],
-              backgroundColor: "#00B900"
-            },
-            body: {
-              type: "box",
-              layout: "vertical",
-              spacing: "md",
-              contents: [
-                {
-                  type: "text",
-                  text: "您好！我們已經收到您的預約。",
-                  wrap: true,
-                  size: "sm"
-                },
-                {
-                  type: "box",
-                  layout: "vertical",
-                  margin: "lg",
-                  spacing: "sm",
-                  contents: [
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        {
-                          type: "text",
-                          text: "日期",
-                          color: "#aaaaaa",
-                          size: "sm",
-                          flex: 1
-                        },
-                        {
-                          type: "text",
-                          text: date,
-                          wrap: true,
-                          color: "#666666",
-                          size: "sm",
-                          flex: 3
-                        }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        {
-                          type: "text",
-                          text: "時間",
-                          color: "#aaaaaa",
-                          size: "sm",
-                          flex: 1
-                        },
-                        {
-                          type: "text",
-                          text: time,
-                          wrap: true,
-                          color: "#666666",
-                          size: "sm",
-                          flex: 3
-                        }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        {
-                          type: "text",
-                          text: "項目",
-                          color: "#aaaaaa",
-                          size: "sm",
-                          flex: 1
-                        },
-                        {
-                          type: "text",
-                          text: req.body.purpose || "一般預約",
-                          wrap: true,
-                          color: "#666666",
-                          size: "sm",
-                          flex: 3
-                        }
-                      ]
-                    },
-                    {
-                      type: "box",
-                      layout: "baseline",
-                      spacing: "sm",
-                      contents: [
-                        {
-                          type: "text",
-                          text: "單號",
-                          color: "#aaaaaa",
-                          size: "sm",
-                          flex: 1
-                        },
-                        {
-                          type: "text",
-                          text: reservationId || "N/A",
-                          wrap: true,
-                          color: "#666666",
-                          size: "xs",
-                          flex: 3
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            footer: {
-              type: "box",
-              layout: "vertical",
-              contents: [
-                {
-                  type: "text",
-                  text: "期待您的光臨！",
-                  align: "center",
-                  color: "#00B900",
-                  weight: "bold"
-                }
-              ]
-            }
-          }
+          altText: lineTemplate.title || "預約成功通知",
+          contents: flexContents
         }
       ]
     };
 
-    // 3. Call Line Messaging API
+    // 4. Call Line Messaging API
     const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
       method: 'POST',
       headers: {

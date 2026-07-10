@@ -1,5 +1,21 @@
-import { collection, doc, setDoc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "../firebaseConfig";
+import { collection, doc, setDoc, getDoc, getDocs, addDoc, deleteDoc, serverTimestamp, query, where } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebaseConfig";
+
+// ==========================================
+// Storage Upload
+// ==========================================
+export const uploadImage = async (file, path) => {
+  try {
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    return url;
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
+  }
+};
 
 // Get Line Settings
 export const getLineSettings = async () => {
@@ -9,25 +25,90 @@ export const getLineSettings = async () => {
     if (docSnap.exists()) {
       return docSnap.data();
     } else {
-      throw new Error("Firestore 中找不到系統設定檔 (system_config/line_settings)。如果您剛剛有儲存，可能是資料庫權限不足導致儲存失敗但未報錯。");
+      // Default structure if not found
+      return { configs: [] };
     }
   } catch (error) {
     console.error("Error fetching line settings:", error);
-    throw error;
+    return { configs: [] };
   }
 };
 
 // Save Line Settings
-export const saveLineSettings = async (liffId, channelAccessToken) => {
+export const saveLineSettings = async (settingsData) => {
   try {
     const docRef = doc(db, "system_config", "line_settings");
     await setDoc(docRef, {
-      liffId,
-      channelAccessToken,
+      ...settingsData,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   } catch (error) {
     console.error("Error saving line settings:", error);
+    throw error;
+  }
+};
+
+// Admin Password
+export const getAdminPassword = async () => {
+  try {
+    const docRef = doc(db, "system_config", "admin_settings");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().password) {
+      return docSnap.data().password;
+    }
+    // Fallback to env variable if not set in DB
+    return import.meta.env.VITE_ADMIN_PASSWORD || '1234';
+  } catch (error) {
+    console.error("Error fetching admin password:", error);
+    return import.meta.env.VITE_ADMIN_PASSWORD || '1234';
+  }
+};
+
+export const saveAdminPassword = async (password) => {
+  try {
+    const docRef = doc(db, "system_config", "admin_settings");
+    await setDoc(docRef, { password, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving admin password:", error);
+    throw error;
+  }
+};
+
+// ==========================================
+// Message Templates CRUD
+// ==========================================
+export const getMessageTemplates = async () => {
+  try {
+    const docRef = doc(db, "system_config", "message_templates");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    // Defaults
+    return {
+      clientSuccess: {
+        title: "預約已送出！",
+        text: "我們已經收到您的預約資訊。\n待管理員審核確認後，將會透過 Line 發送確認訊息給您。",
+        imageUrl: ""
+      },
+      lineConfirm: {
+        title: "預約成功確認",
+        text: "您的預約已經審核通過！請準時抵達。",
+        imageUrl: ""
+      }
+    };
+  } catch (error) {
+    console.error("Error fetching message templates:", error);
+    return null;
+  }
+};
+
+export const saveMessageTemplates = async (templates) => {
+  try {
+    const docRef = doc(db, "system_config", "message_templates");
+    await setDoc(docRef, { ...templates, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving message templates:", error);
     throw error;
   }
 };
@@ -148,6 +229,31 @@ export const saveAvailability = async (availabilityId, data) => {
     }
   } catch (error) {
     console.error("Error saving availability:", error);
+    throw error;
+  }
+};
+
+// Get Dictionary (for purposes)
+export const getDictionary = async (type = "purposes") => {
+  try {
+    const docRef = doc(db, "system_config", `dict_${type}`);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().items || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching dictionary:", error);
+    return [];
+  }
+};
+
+export const saveDictionary = async (type = "purposes", items) => {
+  try {
+    const docRef = doc(db, "system_config", `dict_${type}`);
+    await setDoc(docRef, { items, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving dictionary:", error);
     throw error;
   }
 };

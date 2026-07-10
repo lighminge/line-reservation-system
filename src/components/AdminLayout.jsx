@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Users, CalendarDays, CalendarCheck, Settings, Lock, Menu, X } from 'lucide-react';
+import { Users, CalendarDays, CalendarCheck, Settings, Lock, Menu, X, MessageSquare } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { getAdminPassword } from '../services/db';
 
 export default function AdminLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,8 +10,6 @@ export default function AdminLayout() {
   const [error, setError] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-
-  const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD;
 
   // Simple session persistence using sessionStorage for admin login
   useEffect(() => {
@@ -20,14 +19,19 @@ export default function AdminLayout() {
     }
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (password === adminPassword) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem('adminAuth', 'true');
-      setError('');
-    } else {
-      setError('密碼錯誤');
+    try {
+      const dbPassword = await getAdminPassword();
+      if (password === dbPassword) {
+        setIsAuthenticated(true);
+        sessionStorage.setItem('adminAuth', 'true');
+        setError('');
+      } else {
+        setError('密碼錯誤');
+      }
+    } catch (err) {
+      setError('驗證失敗，請稍後再試');
     }
   };
 
@@ -35,6 +39,7 @@ export default function AdminLayout() {
     { name: '預約管理', path: '/admin/reservations', icon: CalendarCheck },
     { name: '預約設定', path: '/admin/availability', icon: CalendarDays },
     { name: '用戶管理', path: '/admin/users', icon: Users },
+    { name: '訊息設定', path: '/admin/messages', icon: MessageSquare },
     { name: '系統設定', path: '/admin/settings', icon: Settings },
   ];
 
