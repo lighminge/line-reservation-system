@@ -62,7 +62,6 @@ export default function AdminAvailability() {
     const existing = availability[dateStr];
     if (existing) {
       setDaySettings({
-        isOpen: existing.isOpen || false,
         // map legacy timeSlots to new slots array if needed
         slots: existing.slots || (existing.timeSlots || []).map(t => ({
           time: t,
@@ -71,7 +70,7 @@ export default function AdminAvailability() {
         }))
       });
     } else {
-      setDaySettings({ isOpen: false, slots: [] });
+      setDaySettings({ slots: [] });
     }
     resetSlotForm();
     setIsModalOpen(true);
@@ -86,7 +85,12 @@ export default function AdminAvailability() {
     setSaving(true);
     try {
       const existingId = availability[selectedDate]?.id;
-      const dataToSave = { month: monthStr, date: selectedDate, ...daySettings };
+      const dataToSave = { 
+        month: monthStr, 
+        date: selectedDate, 
+        isOpen: daySettings.slots.length > 0, 
+        slots: daySettings.slots 
+      };
       await saveAvailability(existingId, dataToSave);
       await fetchData();
       setIsModalOpen(false);
@@ -263,11 +267,15 @@ export default function AdminAvailability() {
                   
                   {isOpen ? (
                     <div className="flex flex-col gap-1 w-full mt-1">
-                      {settings.slots?.map(s => (
-                        <div key={s.time} className="text-[10px] md:text-xs bg-green-500 text-white px-1.5 py-1 rounded shadow-sm text-center font-medium truncate">
-                          {s.time}
-                        </div>
-                      ))}
+                      {settings.slots?.map((s, idx) => {
+                        const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500', 'bg-indigo-500', 'bg-teal-500'];
+                        const colorClass = colors[idx % colors.length];
+                        return (
+                          <div key={s.time} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm text-center font-medium truncate ${colorClass}`}>
+                            {s.time}
+                          </div>
+                        );
+                      })}
                       {(!settings.slots || settings.slots.length === 0) && (
                         <div className="text-[10px] md:text-xs text-amber-600 bg-amber-50 px-1 py-1 rounded text-center">無時段</div>
                       )}
@@ -296,66 +304,9 @@ export default function AdminAvailability() {
             </div>
             
             <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              <div className="flex items-center space-x-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <input 
-                  type="checkbox" 
-                  id="isOpen"
-                  checked={daySettings.isOpen}
-                  onChange={(e) => setDaySettings({...daySettings, isOpen: e.target.checked})}
-                  className="w-5 h-5 text-green-500 rounded focus:ring-green-500 cursor-pointer"
-                />
-                <label htmlFor="isOpen" className="font-bold text-slate-700 cursor-pointer select-none">
-                  開放此日預約
-                </label>
-              </div>
-
-              {daySettings.isOpen && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 fade-in duration-300">
                   
-                  {/* Left Column: Created Slots */}
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
-                      <Clock className="w-4 h-4 mr-2" /> 已建立時段
-                    </h3>
-                    <div className="space-y-3">
-                      {daySettings.slots.length === 0 && (
-                        <div className="p-4 bg-slate-50 rounded-xl text-slate-400 text-sm text-center border border-slate-100">
-                          尚未新增任何時段
-                        </div>
-                      )}
-                      {daySettings.slots.map((slot, idx) => (
-                        <div 
-                          key={slot.time}
-                          onClick={() => editSlot(idx)}
-                          className={cn(
-                            "p-3 rounded-xl border transition-all cursor-pointer relative group",
-                            editingSlotIndex === idx ? "bg-green-50 border-green-400 shadow-sm" : "bg-white border-slate-200 hover:border-green-300 hover:shadow-md"
-                          )}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-bold text-lg text-slate-800">{slot.time}</span>
-                            <button 
-                              onClick={(e) => deleteSlot(idx, e)}
-                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {slot.purposes.map(p => (
-                              <span key={p} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{p}</span>
-                            ))}
-                          </div>
-                          <div className="text-xs text-slate-500 flex items-center">
-                            <Users className="w-3 h-3 mr-1" />
-                            上限：{slot.maxCapacity === -1 ? '無限制' : `${slot.maxCapacity} 人`}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Right Column: Slot Form */}
+                  {/* Left Column: Slot Form (Swapped to Left) */}
                   <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center text-green-700">
                       {editingSlotIndex >= 0 ? '✏️ 編輯時段' : '✨ 新增時段'}
@@ -452,8 +403,50 @@ export default function AdminAvailability() {
 
                     </div>
                   </div>
-                </div>
-              )}
+                  
+                  {/* Right Column: Created Slots (Swapped to Right) */}
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
+                      <Clock className="w-4 h-4 mr-2" /> 已建立時段
+                    </h3>
+                    <div className="space-y-3">
+                      {daySettings.slots.length === 0 && (
+                        <div className="p-4 bg-slate-50 rounded-xl text-slate-400 text-sm text-center border border-slate-100">
+                          尚未新增任何時段
+                        </div>
+                      )}
+                      {daySettings.slots.map((slot, idx) => (
+                        <div 
+                          key={slot.time}
+                          onClick={() => editSlot(idx)}
+                          className={cn(
+                            "p-3 rounded-xl border transition-all cursor-pointer relative group",
+                            editingSlotIndex === idx ? "bg-green-50 border-green-400 shadow-sm" : "bg-white border-slate-200 hover:border-green-300 hover:shadow-md"
+                          )}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="font-bold text-lg text-slate-800">{slot.time}</span>
+                            <button 
+                              onClick={(e) => deleteSlot(idx, e)}
+                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {slot.purposes.map(p => (
+                              <span key={p} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{p}</span>
+                            ))}
+                          </div>
+                          <div className="text-xs text-slate-500 flex items-center">
+                            <Users className="w-3 h-3 mr-1" />
+                            上限：{slot.maxCapacity === -1 ? '無限制' : `${slot.maxCapacity} 人`}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+              </div>
             </div>
             
             <div className="p-4 border-t border-slate-100 flex space-x-3 bg-slate-50 shrink-0">

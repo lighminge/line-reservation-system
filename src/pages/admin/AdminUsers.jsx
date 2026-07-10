@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsers, saveAdminUser, deleteUser, uploadImage } from '../../services/db';
-import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User } from 'lucide-react';
+import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates } from '../../services/db';
+import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export default function AdminUsers() {
@@ -9,6 +9,12 @@ export default function AdminUsers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Message Modal state
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [messageTarget, setMessageTarget] = useState(null);
+  const [messageText, setMessageText] = useState('');
+  const [messageSending, setMessageSending] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -33,6 +39,51 @@ export default function AdminUsers() {
     const data = await getAllUsers();
     setUsers(data);
     setLoading(false);
+  };
+
+  const handleOpenMessageModal = (user) => {
+    setMessageTarget(user);
+    setMessageText('');
+    setIsMessageModalOpen(true);
+  };
+
+  const loadTemplate = async () => {
+    const templates = await getMessageTemplates();
+    if (templates && templates.lineConfirm) {
+      setMessageText(templates.lineConfirm.text);
+    } else {
+      alert("無法載入樣板");
+    }
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!messageText) return;
+    
+    setMessageSending(true);
+    try {
+      const response = await fetch('/api/send-custom-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: messageTarget.userId,
+          text: messageText,
+          title: "系統通知"
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        alert("訊息發送成功！");
+        setIsMessageModalOpen(false);
+      } else {
+        alert("發送失敗：" + data.message);
+      }
+    } catch (error) {
+      alert("發送發生錯誤：" + error.message);
+    } finally {
+      setMessageSending(false);
+    }
   };
 
   const handleOpenModal = (user = null) => {
@@ -167,6 +218,11 @@ export default function AdminUsers() {
                     <td className="p-4 text-slate-600 hidden md:table-cell">{user.interests || '-'}</td>
                     <td className="p-4 text-slate-600 max-w-[200px] truncate hidden lg:table-cell">{user.notes || '-'}</td>
                     <td className="p-4 text-right space-x-2">
+                      {user.userId && (
+                        <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="傳送訊息">
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      )}
                       <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -281,6 +337,54 @@ export default function AdminUsers() {
                 </button>
                 <button type="submit" disabled={saving} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '完成並儲存'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Message Modal */}
+      {isMessageModalOpen && messageTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+                <Send className="w-5 h-5 mr-2 text-green-500" />
+                傳送訊息給 {messageTarget.displayName}
+              </h2>
+              <button onClick={() => setIsMessageModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSendMessage} className="p-6 space-y-5">
+              <div>
+                <div className="flex justify-between items-end mb-2">
+                  <label className="text-sm font-bold text-slate-700">訊息內容</label>
+                  <button 
+                    type="button" 
+                    onClick={loadTemplate}
+                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded"
+                  >
+                    帶入「Line 確認推播訊息」樣板
+                  </button>
+                </div>
+                <textarea 
+                  value={messageText} 
+                  onChange={e => setMessageText(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-40 resize-none" 
+                  placeholder="請輸入要傳送給客戶的訊息內容..."
+                  required
+                />
+              </div>
+
+              <div className="pt-4 flex space-x-3 shrink-0">
+                <button type="button" onClick={() => setIsMessageModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors">
+                  取消
+                </button>
+                <button type="submit" disabled={messageSending} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
+                  {messageSending ? <Loader2 className="w-5 h-5 animate-spin" /> : '傳送訊息'}
                 </button>
               </div>
             </form>
