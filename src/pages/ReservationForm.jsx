@@ -53,8 +53,8 @@ export default function ReservationForm() {
       const userProfile = await liff.getProfile();
       setProfile(userProfile);
       
-      // Auto save user profile to db
-      await saveUserProfile(userProfile.userId, userProfile.displayName);
+      // Auto save user profile to db (include activeConfig name)
+      await saveUserProfile(userProfile.userId, userProfile.displayName, activeConfig.name || "預設 Line 官方");
       
       // Fetch availability for current month
       await fetchAvailability(currentMonth);

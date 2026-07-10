@@ -113,21 +113,28 @@ export const saveMessageTemplates = async (templates) => {
   }
 };
 
-// Save or update user profile from LIFF
-export const saveUserProfile = async (userId, displayName) => {
+// ==========================================
+// Client: User & Reservation
+// ==========================================
+export const saveUserProfile = async (userId, displayName, lineGroup = null) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
     
     if (!userSnap.exists()) {
-      await setDoc(userRef, {
+      const data = {
         userId,
         displayName,
         createdAt: serverTimestamp()
-      });
+      };
+      if (lineGroup) data.lineGroup = lineGroup;
+      
+      await setDoc(userRef, data);
     } else {
       // Update name if changed
-      await setDoc(userRef, { displayName }, { merge: true });
+      const updateData = { displayName };
+      if (lineGroup) updateData.lineGroup = lineGroup;
+      await setDoc(userRef, updateData, { merge: true });
     }
   } catch (error) {
     console.error("Error saving user profile:", error);

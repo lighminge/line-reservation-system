@@ -216,7 +216,14 @@ export default function AdminUsers() {
                         </div>
                       )}
                     </td>
-                    <td className="p-4 font-bold text-slate-800">{user.displayName || '未提供'}</td>
+                    <td className="p-4">
+                      <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
+                      {user.lineGroup && (
+                        <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block mt-1 font-medium border border-green-200">
+                          Line 官方：{user.lineGroup}
+                        </div>
+                      )}
+                    </td>
                     <td className="p-4 text-slate-600">{user.gender || '-'}</td>
                     <td className="p-4 text-slate-600">{user.birthday || '-'}</td>
                     <td className="p-4 text-slate-600 hidden md:table-cell">{user.interests || '-'}</td>
