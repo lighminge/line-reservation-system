@@ -1,20 +1,32 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates } from '../../services/db';
-import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
+import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates, getDictTags, saveDictTags, getDictInterests, saveDictInterests } from '../../services/db';
+import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag, Heart } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { getZodiac, zodiacs } from '../../utils/zodiac';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [saving, setSaving] = useState(false);
+  
+  // Global Dictionaries
+  const [globalTags, setGlobalTags] = useState([]);
+  const [globalInterests, setGlobalInterests] = useState([]);
 
   // Search, Filter, Pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [filterGroup, setFilterGroup] = useState('all'); // 'all', 'none', or specific group name
+  const [filterGender, setFilterGender] = useState('all');
+  const [filterZodiac, setFilterZodiac] = useState('all');
+  const [filterInterest, setFilterInterest] = useState('all');
+  const [filterTag, setFilterTag] = useState('all');
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Edit Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Delete Modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -32,32 +44,42 @@ export default function AdminUsers() {
   const [formData, setFormData] = useState({
     displayName: '',
     gender: '',
-    birthday: '',
-    interests: '',
+    bYear: '',
+    bMonth: '',
+    bDay: '',
+    interests: [],
     notes: '',
     pictureUrl: '',
     tags: [],
     lineGroup: ''
   });
+  
   const [tagInput, setTagInput] = useState('');
+  const [interestInput, setInterestInput] = useState('');
   
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetchUsers();
+    fetchData();
   }, []);
 
   // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterGroup, pageSize]);
+  }, [searchTerm, filterGroup, filterGender, filterZodiac, filterInterest, filterTag, pageSize]);
 
-  const fetchUsers = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const data = await getAllUsers();
-    setUsers(data);
+    const [userData, gTags, gInterests] = await Promise.all([
+      getAllUsers(),
+      getDictTags(),
+      getDictInterests()
+    ]);
+    setUsers(userData);
+    setGlobalTags(gTags || []);
+    setGlobalInterests(gInterests || []);
     setLoading(false);
   };
 
@@ -69,15 +91,36 @@ export default function AdminUsers() {
     if (filterGroup === 'none' && u.lineGroup) return false;
     if (filterGroup !== 'all' && filterGroup !== 'none' && u.lineGroup !== filterGroup) return false;
 
-    // 2. Keyword Search
+    // 2. Gender Filter
+    if (filterGender !== 'all' && u.gender !== filterGender) return false;
+
+    // 3. Zodiac Filter
+    if (filterZodiac !== 'all') {
+      const [y, m, d] = (u.birthday || '').split('-');
+      const z = getZodiac(m, d);
+      if (!z || z.name !== filterZodiac) return false;
+    }
+
+    // 4. Interest Filter
+    if (filterInterest !== 'all') {
+      // Handle both string and array for backward compatibility
+      const uInts = Array.isArray(u.interests) ? u.interests : (u.interests ? u.interests.split(',').map(i => i.trim()) : []);
+      if (!uInts.includes(filterInterest)) return false;
+    }
+
+    // 5. Tag Filter
+    if (filterTag !== 'all') {
+      const uTags = u.tags || [];
+      if (!uTags.includes(filterTag)) return false;
+    }
+
+    // 6. Keyword Search
     if (searchTerm.trim() !== '') {
       const q = searchTerm.toLowerCase();
       const matchName = (u.displayName || '').toLowerCase().includes(q);
-      const matchInterests = (u.interests || '').toLowerCase().includes(q);
       const matchNotes = (u.notes || '').toLowerCase().includes(q);
-      const matchTags = (u.tags || []).some(t => t.toLowerCase().includes(q));
       
-      if (!matchName && !matchInterests && !matchNotes && !matchTags) return false;
+      if (!matchName && !matchNotes) return false;
     }
     return true;
   });
@@ -92,7 +135,7 @@ export default function AdminUsers() {
     safeCurrentPage * pageSize
   );
 
-  // Handlers for Message Modal
+  // Message Handlers
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
     setMessageText('');
@@ -142,7 +185,7 @@ export default function AdminUsers() {
     }
   };
 
-  // Handlers for Delete Modal
+  // Delete Handlers
   const openDeleteConfirm = (id) => {
     setUserToDelete(id);
     setIsDeleteModalOpen(true);
@@ -153,7 +196,8 @@ export default function AdminUsers() {
     setIsDeleting(true);
     try {
       await deleteUser(userToDelete);
-      await fetchUsers();
+      const data = await getAllUsers();
+      setUsers(data);
       setIsDeleteModalOpen(false);
     } catch (error) {
       alert("刪除失敗: " + error.message);
@@ -163,15 +207,20 @@ export default function AdminUsers() {
     }
   };
 
-  // Handlers for Edit Modal
+  // Edit Handlers
   const handleOpenModal = (user = null) => {
     if (user) {
       setEditingUser(user);
+      
+      const [y, m, d] = (user.birthday || '').split('-');
+      
       setFormData({
         displayName: user.displayName || '',
         gender: user.gender || '',
-        birthday: user.birthday || '',
-        interests: user.interests || '',
+        bYear: y || '',
+        bMonth: m || '',
+        bDay: d || '',
+        interests: Array.isArray(user.interests) ? user.interests : (user.interests ? user.interests.split(',').map(i=>i.trim()).filter(Boolean) : []),
         notes: user.notes || '',
         pictureUrl: user.pictureUrl || '',
         tags: user.tags || [],
@@ -180,11 +229,12 @@ export default function AdminUsers() {
       setImagePreview(user.pictureUrl || '');
     } else {
       setEditingUser(null);
-      setFormData({ displayName: '', gender: '', birthday: '', interests: '', notes: '', pictureUrl: '', tags: [], lineGroup: '' });
+      setFormData({ displayName: '', gender: '', bYear: '', bMonth: '', bDay: '', interests: [], notes: '', pictureUrl: '', tags: [], lineGroup: '' });
       setImagePreview('');
     }
     setImageFile(null);
     setTagInput('');
+    setInterestInput('');
     setIsModalOpen(true);
   };
 
@@ -206,16 +256,43 @@ export default function AdminUsers() {
     }
   };
 
-  const addTag = (e) => {
-    e.preventDefault();
-    if (tagInput.trim() !== '' && !formData.tags.includes(tagInput.trim())) {
-      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+  // Tag & Interest Management
+  const addTag = async (val) => {
+    const cleanVal = val.trim();
+    if (cleanVal !== '' && !formData.tags.includes(cleanVal)) {
+      setFormData({ ...formData, tags: [...formData.tags, cleanVal] });
       setTagInput('');
+      
+      // Update global dict if new
+      if (!globalTags.includes(cleanVal)) {
+        const newGlobalTags = [...globalTags, cleanVal];
+        setGlobalTags(newGlobalTags);
+        await saveDictTags(newGlobalTags);
+      }
     }
   };
 
   const removeTag = (tagToRemove) => {
     setFormData({ ...formData, tags: formData.tags.filter(t => t !== tagToRemove) });
+  };
+
+  const addInterest = async (val) => {
+    const cleanVal = val.trim();
+    if (cleanVal !== '' && !formData.interests.includes(cleanVal)) {
+      setFormData({ ...formData, interests: [...formData.interests, cleanVal] });
+      setInterestInput('');
+      
+      // Update global dict if new
+      if (!globalInterests.includes(cleanVal)) {
+        const newGlobalInterests = [...globalInterests, cleanVal];
+        setGlobalInterests(newGlobalInterests);
+        await saveDictInterests(newGlobalInterests);
+      }
+    }
+  };
+
+  const removeInterest = (interestToRemove) => {
+    setFormData({ ...formData, interests: formData.interests.filter(i => i !== interestToRemove) });
   };
 
   const handleSubmit = async (e) => {
@@ -224,22 +301,31 @@ export default function AdminUsers() {
     try {
       let finalImageUrl = formData.pictureUrl;
       
-      // Upload image if selected
       if (imageFile) {
         const path = `users/${Date.now()}_${imageFile.name}`;
         finalImageUrl = await uploadImage(imageFile, path);
       }
       
-      // Do not save lineGroup here to prevent overwriting it accidentally,
-      // it should ideally only come from LIFF, but we keep it read-only in the form.
+      // Assemble birthday
+      let birthdayStr = '';
+      if (formData.bYear || formData.bMonth || formData.bDay) {
+        birthdayStr = `${formData.bYear || '0000'}-${(formData.bMonth || '00').padStart(2, '0')}-${(formData.bDay || '00').padStart(2, '0')}`;
+      }
+      
       const dataToSave = { 
-        ...formData, 
+        displayName: formData.displayName,
+        gender: formData.gender,
+        birthday: birthdayStr,
+        interests: formData.interests,
+        notes: formData.notes,
+        tags: formData.tags,
         pictureUrl: finalImageUrl 
       };
       
       await saveAdminUser(editingUser?.id, dataToSave);
       
-      await fetchUsers(); // Refresh the list
+      const data = await getAllUsers();
+      setUsers(data);
       handleCloseModal();
     } catch (error) {
       alert("儲存失敗: " + error.message);
@@ -248,8 +334,28 @@ export default function AdminUsers() {
     }
   };
 
+  // Helper for rendering Birthday options
+  const years = Array.from({length: 100}, (_, i) => new Date().getFullYear() - i);
+  const months = Array.from({length: 12}, (_, i) => i + 1);
+  
+  // Calculate days based on selected month and year
+  const getDaysInMonth = (month, year) => {
+    if (!month) return Array.from({length: 31}, (_, i) => i + 1);
+    const m = parseInt(month, 10);
+    const y = parseInt(year, 10) || 2000; // Leap year check fallback
+    return new Date(y, m, 0).getDate();
+  };
+  const days = Array.from({length: getDaysInMonth(formData.bMonth, formData.bYear)}, (_, i) => i + 1);
+
+  const currentZodiac = getZodiac(formData.bMonth, formData.bDay);
+
+  // Filter Helper
+  const getDisplayInterests = (user) => {
+    return Array.isArray(user.interests) ? user.interests : (user.interests ? user.interests.split(',').map(i=>i.trim()).filter(Boolean) : []);
+  };
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">用戶管理</h1>
@@ -265,31 +371,93 @@ export default function AdminUsers() {
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4">
+        {/* Top row: Keyword Search */}
         <div className="relative flex-1 w-full">
           <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
-            placeholder="搜尋名稱、興趣、備註、或自訂標籤..."
+            placeholder="搜尋名稱、備註關鍵字..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white"
           />
         </div>
         
-        <div className="flex items-center space-x-3 w-full md:w-auto">
-          <span className="text-sm font-bold text-slate-500 whitespace-nowrap">類別</span>
-          <select 
-            value={filterGroup}
-            onChange={(e) => setFilterGroup(e.target.value)}
-            className="w-full md:w-48 p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
-          >
-            <option value="all">全部</option>
-            <option value="none">無分類</option>
-            {uniqueGroups.map(g => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-          </select>
+        {/* Bottom row: Dropdown filters */}
+        <div className="flex flex-wrap items-center gap-3 w-full text-sm">
+          
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-500 whitespace-nowrap">Line官方群組</span>
+            <select 
+              value={filterGroup}
+              onChange={(e) => setFilterGroup(e.target.value)}
+              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+            >
+              <option value="all">全部</option>
+              <option value="none">無分類</option>
+              {uniqueGroups.map(g => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-500 whitespace-nowrap">性別</span>
+            <select 
+              value={filterGender}
+              onChange={(e) => setFilterGender(e.target.value)}
+              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+            >
+              <option value="all">全部</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-500 whitespace-nowrap">星座</span>
+            <select 
+              value={filterZodiac}
+              onChange={(e) => setFilterZodiac(e.target.value)}
+              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+            >
+              <option value="all">全部</option>
+              {zodiacs.map(z => (
+                <option key={z.name} value={z.name}>{z.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-500 whitespace-nowrap">自訂標籤</span>
+            <select 
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
+            >
+              <option value="all">全部</option>
+              {globalTags.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="font-bold text-slate-500 whitespace-nowrap">興趣分類</span>
+            <select 
+              value={filterInterest}
+              onChange={(e) => setFilterInterest(e.target.value)}
+              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
+            >
+              <option value="all">全部</option>
+              {globalInterests.map(i => (
+                <option key={i} value={i}>{i}</option>
+              ))}
+            </select>
+          </div>
+
         </div>
       </div>
       
@@ -302,7 +470,7 @@ export default function AdminUsers() {
           <select 
             value={pageSize} 
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="border border-slate-200 rounded p-1 outline-none focus:border-green-500"
+            className="border border-slate-200 rounded p-1 outline-none focus:border-green-500 bg-white"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -316,75 +484,91 @@ export default function AdminUsers() {
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
                 <th className="p-4 font-semibold w-16">頭像</th>
-                <th className="p-4 font-semibold">名稱 & 標籤</th>
-                <th className="p-4 font-semibold">性別</th>
-                <th className="p-4 font-semibold">生日</th>
-                <th className="p-4 font-semibold hidden md:table-cell">興趣</th>
-                <th className="p-4 font-semibold hidden lg:table-cell">備註</th>
+                <th className="p-4 font-semibold">名稱 & 群組</th>
+                <th className="p-4 font-semibold">性別 / 生日</th>
+                <th className="p-4 font-semibold">標籤 / 興趣</th>
+                <th className="p-4 font-semibold">備註</th>
                 <th className="p-4 font-semibold text-right">操作</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-400">
+                  <td colSpan="6" className="p-8 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
+                  <td colSpan="6" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
-                displayedUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="p-4">
-                      {user.pictureUrl ? (
-                        <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
-                          <User className="w-5 h-5" />
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                displayedUsers.map((user) => {
+                  const uZodiac = user.birthday ? getZodiac(user.birthday.split('-')[1], user.birthday.split('-')[2]) : null;
+                  const uInterests = getDisplayInterests(user);
+                  return (
+                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="p-4">
+                        {user.pictureUrl ? (
+                          <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+                            <User className="w-5 h-5" />
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
                         {user.lineGroup && (
-                          <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200 whitespace-nowrap">
+                          <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block mt-1 font-medium border border-green-200 whitespace-nowrap">
                             Line 官方：{user.lineGroup}
                           </div>
                         )}
-                        {(user.tags || []).map(t => (
-                          <div key={t} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium border border-slate-200 whitespace-nowrap">
-                            #{t}
+                      </td>
+                      <td className="p-4">
+                        <div className="text-slate-600 text-sm">{user.gender || '性別未提供'}</div>
+                        {user.birthday && user.birthday !== '0000-00-00' && (
+                          <div className="text-xs text-slate-500 mt-1 flex items-center">
+                            {user.birthday} 
+                            {uZodiac && <span className="ml-1 text-purple-500 font-medium">({uZodiac.name})</span>}
                           </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-600">{user.gender || '-'}</td>
-                    <td className="p-4 text-slate-600">{user.birthday || '-'}</td>
-                    <td className="p-4 text-slate-600 hidden md:table-cell">{user.interests || '-'}</td>
-                    <td className="p-4 text-slate-600 max-w-[200px] truncate hidden lg:table-cell">{user.notes || '-'}</td>
-                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
-                      {user.userId && (
-                        <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="傳送訊息">
-                          <MessageSquare className="w-4 h-4" />
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(user.tags || []).map(t => (
+                            <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                              <Tag className="w-3 h-3 mr-1" />{t}
+                            </div>
+                          ))}
+                          {uInterests.map(i => (
+                            <div key={i} className="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded flex items-center border border-pink-100">
+                              <Heart className="w-3 h-3 mr-1" />{i}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-600 max-w-[200px] truncate text-sm">{user.notes || '-'}</td>
+                      <td className="p-4 text-right space-x-2 whitespace-nowrap">
+                        {user.userId && (
+                          <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="傳送訊息">
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                          <Edit2 className="w-4 h-4" />
                         </button>
-                      )}
-                      <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => openDeleteConfirm(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                        <button onClick={() => openDeleteConfirm(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -445,7 +629,7 @@ export default function AdminUsers() {
       {/* Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
               <h2 className="text-xl font-bold text-slate-800 flex items-center">
                 {editingUser ? '✏️ 編輯用戶' : '✨ 新增用戶'}
@@ -455,10 +639,10 @@ export default function AdminUsers() {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-5">
+            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
               
               {/* Photo Upload Section */}
-              <div className="flex flex-col items-center mb-6">
+              <div className="flex flex-col items-center mb-2">
                 <div 
                   onClick={() => fileInputRef.current?.click()}
                   className="w-24 h-24 rounded-full border-4 border-slate-100 bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer hover:border-green-200 transition-colors relative group"
@@ -484,27 +668,27 @@ export default function AdminUsers() {
                   accept="image/*" 
                   className="hidden" 
                 />
+                <div className="text-xs text-slate-400 mt-2 font-medium">支援 JPG, PNG 格式，建議大小不超過 5MB</div>
               </div>
 
               {/* Line Group Badge */}
               {formData.lineGroup && (
-                <div className="flex justify-center -mt-4 mb-4">
+                <div className="flex justify-center -mt-2 mb-2">
                   <div className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 font-bold">
                     來自 Line 官方：{formData.lineGroup}
                   </div>
                 </div>
               )}
 
-              <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">名稱 <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" value={formData.displayName} onChange={e => setFormData({...formData, displayName: e.target.value})}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors" required
-                  placeholder="輸入客戶名稱"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">名稱 <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" value={formData.displayName} onChange={e => setFormData({...formData, displayName: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors" required
+                    placeholder="輸入客戶名稱"
+                  />
+                </div>
                 <div>
                   <label className="text-sm font-bold text-slate-700 block mb-1">性別</label>
                   <select 
@@ -517,48 +701,139 @@ export default function AdminUsers() {
                     <option value="其他">其他</option>
                   </select>
                 </div>
-                <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">生日</label>
-                  <input 
-                    type="date" value={formData.birthday} onChange={e => setFormData({...formData, birthday: e.target.value})}
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors"
-                  />
+              </div>
+
+              {/* Birthday and Zodiac */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <label className="text-sm font-bold text-slate-700 block mb-2">生日</label>
+                <div className="flex items-center space-x-2">
+                  <select 
+                    value={formData.bYear} onChange={e => setFormData({...formData, bYear: e.target.value})}
+                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                  >
+                    <option value="">年</option>
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                  <span className="text-slate-400 font-bold">/</span>
+                  <select 
+                    value={formData.bMonth} onChange={e => {
+                      const m = e.target.value;
+                      setFormData(prev => {
+                        // Check if day is out of bounds for new month
+                        let newD = prev.bDay;
+                        const maxDays = getDaysInMonth(m, prev.bYear);
+                        if (newD && parseInt(newD) > maxDays) newD = '';
+                        return {...prev, bMonth: m, bDay: newD};
+                      });
+                    }}
+                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                  >
+                    <option value="">月</option>
+                    {months.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <span className="text-slate-400 font-bold">/</span>
+                  <select 
+                    value={formData.bDay} onChange={e => setFormData({...formData, bDay: e.target.value})}
+                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                  >
+                    <option value="">日</option>
+                    {days.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">興趣 / 喜好</label>
-                <input 
-                  type="text" value={formData.interests} onChange={e => setFormData({...formData, interests: e.target.value})}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors" 
-                  placeholder="例如：瑜珈, 游泳"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">自訂標籤 (Tags)</label>
-                <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
-                  {(formData.tags || []).map(t => (
-                    <div key={t} className="bg-slate-200 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {t}
-                      <button type="button" onClick={() => removeTag(t)} className="ml-1 text-slate-400 hover:text-red-500">
-                        <X className="w-3 h-3" />
-                      </button>
+                {/* Zodiac Preview */}
+                {currentZodiac && (
+                  <div className="mt-4 flex items-center justify-center p-3 bg-white rounded-xl border border-purple-100 shadow-sm animate-in zoom-in-95 duration-300">
+                    <img src={`/images/zodiacs/${currentZodiac.en}.jpg`} alt={currentZodiac.name} className="w-12 h-12 object-cover rounded-full border-2 border-purple-200 mr-3 shadow-sm" />
+                    <div>
+                      <div className="text-sm text-slate-500 font-medium">專屬星座</div>
+                      <div className="text-lg font-extrabold text-purple-600 tracking-wider">{currentZodiac.name}</div>
                     </div>
-                  ))}
-                  <input 
-                    type="text"
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') addTag(e) }}
-                    className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1"
-                    placeholder="輸入標籤後按 Enter..."
-                  />
-                  <button type="button" onClick={addTag} className="text-xs bg-slate-300 text-slate-700 px-2 py-1 rounded hover:bg-green-500 hover:text-white transition-colors">
-                    新增
-                  </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Tags and Interests Management */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Custom Tags */}
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">自訂標籤 (Tags)</label>
+                  
+                  {/* Select from existing */}
+                  {globalTags.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {globalTags.filter(t => !formData.tags.includes(t)).map(t => (
+                        <button 
+                          key={t} type="button" onClick={() => addTag(t)}
+                          className="text-[10px] bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 px-2 py-1 rounded transition-colors border border-slate-200"
+                        >
+                          + {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
+                    {(formData.tags || []).map(t => (
+                      <div key={t} className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center shadow-sm">
+                        <Tag className="w-3 h-3 mr-1" />
+                        {t}
+                        <button type="button" onClick={() => removeTag(t)} className="ml-1 text-blue-400 hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <input 
+                      type="text"
+                      value={tagInput}
+                      onChange={e => setTagInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } }}
+                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-slate-700"
+                      placeholder="輸入新標籤後按 Enter..."
+                    />
+                  </div>
                 </div>
+
+                {/* Interests */}
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">興趣 / 喜好</label>
+                  
+                  {/* Select from existing */}
+                  {globalInterests.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {globalInterests.filter(i => !formData.interests.includes(i)).map(i => (
+                        <button 
+                          key={i} type="button" onClick={() => addInterest(i)}
+                          className="text-[10px] bg-slate-100 hover:bg-pink-100 text-slate-500 hover:text-pink-600 px-2 py-1 rounded transition-colors border border-slate-200"
+                        >
+                          + {i}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-pink-500 focus-within:ring-2 focus-within:ring-pink-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
+                    {(formData.interests || []).map(i => (
+                      <div key={i} className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center shadow-sm">
+                        <Heart className="w-3 h-3 mr-1" />
+                        {i}
+                        <button type="button" onClick={() => removeInterest(i)} className="ml-1 text-pink-400 hover:text-red-500 transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <input 
+                      type="text"
+                      value={interestInput}
+                      onChange={e => setInterestInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addInterest(interestInput); } }}
+                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-slate-700"
+                      placeholder="輸入新興趣後按 Enter..."
+                    />
+                  </div>
+                </div>
+
               </div>
 
               <div>

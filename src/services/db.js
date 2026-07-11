@@ -114,6 +114,57 @@ export const saveMessageTemplates = async (templates) => {
 };
 
 // ==========================================
+// Dict Management (Tags and Interests)
+// ==========================================
+export const getDictTags = async () => {
+  try {
+    const docRef = doc(db, "system_config", "dict_tags");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().tags) {
+      return docSnap.data().tags;
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching dict_tags:", error);
+    return [];
+  }
+};
+
+export const saveDictTags = async (tags) => {
+  try {
+    const docRef = doc(db, "system_config", "dict_tags");
+    await setDoc(docRef, { tags, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving dict_tags:", error);
+    throw error;
+  }
+};
+
+export const getDictInterests = async () => {
+  try {
+    const docRef = doc(db, "system_config", "dict_interests");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().interests) {
+      return docSnap.data().interests;
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching dict_interests:", error);
+    return [];
+  }
+};
+
+export const saveDictInterests = async (interests) => {
+  try {
+    const docRef = doc(db, "system_config", "dict_interests");
+    await setDoc(docRef, { interests, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving dict_interests:", error);
+    throw error;
+  }
+};
+
+// ==========================================
 // Client: User & Reservation
 // ==========================================
 export const saveUserProfile = async (userId, displayName, lineGroup = null, pictureUrl = null) => {
