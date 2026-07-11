@@ -916,6 +916,7 @@ export default function AdminReservations() {
           })
         )}
       </div>
+      )}
 
       {/* Export Excel Modal */}
       {exportModal.isOpen && (
