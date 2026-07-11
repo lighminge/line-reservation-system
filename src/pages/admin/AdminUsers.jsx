@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates } from '../../services/db';
-import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 export default function AdminUsers() {
@@ -10,6 +10,18 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  // Search, Filter, Pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterGroup, setFilterGroup] = useState('all'); // 'all', 'none', or specific group name
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Delete Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Message Modal state
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null);
   const [messageText, setMessageText] = useState('');
@@ -23,8 +35,11 @@ export default function AdminUsers() {
     birthday: '',
     interests: '',
     notes: '',
-    pictureUrl: ''
+    pictureUrl: '',
+    tags: [],
+    lineGroup: ''
   });
+  const [tagInput, setTagInput] = useState('');
   
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -34,6 +49,11 @@ export default function AdminUsers() {
     fetchUsers();
   }, []);
 
+  // Reset to page 1 when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterGroup, pageSize]);
+
   const fetchUsers = async () => {
     setLoading(true);
     const data = await getAllUsers();
@@ -41,6 +61,38 @@ export default function AdminUsers() {
     setLoading(false);
   };
 
+  // Derived state for Search & Filter
+  const uniqueGroups = [...new Set(users.map(u => u.lineGroup).filter(Boolean))];
+  
+  const filteredUsers = users.filter(u => {
+    // 1. Group Filter
+    if (filterGroup === 'none' && u.lineGroup) return false;
+    if (filterGroup !== 'all' && filterGroup !== 'none' && u.lineGroup !== filterGroup) return false;
+
+    // 2. Keyword Search
+    if (searchTerm.trim() !== '') {
+      const q = searchTerm.toLowerCase();
+      const matchName = (u.displayName || '').toLowerCase().includes(q);
+      const matchInterests = (u.interests || '').toLowerCase().includes(q);
+      const matchNotes = (u.notes || '').toLowerCase().includes(q);
+      const matchTags = (u.tags || []).some(t => t.toLowerCase().includes(q));
+      
+      if (!matchName && !matchInterests && !matchNotes && !matchTags) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  
+  // Guard against out of bound page
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  
+  const displayedUsers = filteredUsers.slice(
+    (safeCurrentPage - 1) * pageSize,
+    safeCurrentPage * pageSize
+  );
+
+  // Handlers for Message Modal
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
     setMessageText('');
@@ -90,6 +142,28 @@ export default function AdminUsers() {
     }
   };
 
+  // Handlers for Delete Modal
+  const openDeleteConfirm = (id) => {
+    setUserToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteUser(userToDelete);
+      await fetchUsers();
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      alert("刪除失敗: " + error.message);
+    } finally {
+      setIsDeleting(false);
+      setUserToDelete(null);
+    }
+  };
+
+  // Handlers for Edit Modal
   const handleOpenModal = (user = null) => {
     if (user) {
       setEditingUser(user);
@@ -99,15 +173,18 @@ export default function AdminUsers() {
         birthday: user.birthday || '',
         interests: user.interests || '',
         notes: user.notes || '',
-        pictureUrl: user.pictureUrl || ''
+        pictureUrl: user.pictureUrl || '',
+        tags: user.tags || [],
+        lineGroup: user.lineGroup || ''
       });
       setImagePreview(user.pictureUrl || '');
     } else {
       setEditingUser(null);
-      setFormData({ displayName: '', gender: '', birthday: '', interests: '', notes: '', pictureUrl: '' });
+      setFormData({ displayName: '', gender: '', birthday: '', interests: '', notes: '', pictureUrl: '', tags: [], lineGroup: '' });
       setImagePreview('');
     }
     setImageFile(null);
+    setTagInput('');
     setIsModalOpen(true);
   };
 
@@ -129,6 +206,18 @@ export default function AdminUsers() {
     }
   };
 
+  const addTag = (e) => {
+    e.preventDefault();
+    if (tagInput.trim() !== '' && !formData.tags.includes(tagInput.trim())) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tagToRemove) });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -141,7 +230,14 @@ export default function AdminUsers() {
         finalImageUrl = await uploadImage(imageFile, path);
       }
       
-      await saveAdminUser(editingUser?.id, { ...formData, pictureUrl: finalImageUrl });
+      // Do not save lineGroup here to prevent overwriting it accidentally,
+      // it should ideally only come from LIFF, but we keep it read-only in the form.
+      const dataToSave = { 
+        ...formData, 
+        pictureUrl: finalImageUrl 
+      };
+      
+      await saveAdminUser(editingUser?.id, dataToSave);
       
       await fetchUsers(); // Refresh the list
       handleCloseModal();
@@ -152,31 +248,70 @@ export default function AdminUsers() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("確定要刪除這位用戶嗎？")) {
-      try {
-        await deleteUser(id);
-        await fetchUsers();
-      } catch (error) {
-        alert("刪除失敗");
-      }
-    }
-  };
-
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">用戶管理</h1>
           <p className="text-slate-500 mt-1">管理所有使用者的基本資料與照片</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm"
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm whitespace-nowrap"
         >
           <Plus className="w-5 h-5" />
           <span>新增用戶</span>
         </button>
+      </div>
+
+      {/* Search and Filter Controls */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input 
+            type="text" 
+            placeholder="搜尋名稱、興趣、備註、或自訂標籤..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white"
+          />
+        </div>
+        
+        <div className="flex items-center space-x-3 w-full md:w-auto">
+          <span className="text-sm font-bold text-slate-500 whitespace-nowrap">類別</span>
+          <select 
+            value={filterGroup}
+            onChange={(e) => setFilterGroup(e.target.value)}
+            className="w-full md:w-48 p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+          >
+            <option value="all">全部</option>
+            <option value="none">無分類</option>
+            {uniqueGroups.map(g => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center px-1">
+        <div className="text-sm font-bold text-slate-500">
+          目前查詢結果：共 <span className="text-green-600 text-lg">{filteredUsers.length}</span> 筆
+        </div>
+        <div className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
+          <span>每頁顯示</span>
+          <select 
+            value={pageSize} 
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="border border-slate-200 rounded p-1 outline-none focus:border-green-500"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+          <span>筆</span>
+        </div>
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -185,7 +320,7 @@ export default function AdminUsers() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
                 <th className="p-4 font-semibold w-16">頭像</th>
-                <th className="p-4 font-semibold">名稱</th>
+                <th className="p-4 font-semibold">名稱 & 標籤</th>
                 <th className="p-4 font-semibold">性別</th>
                 <th className="p-4 font-semibold">生日</th>
                 <th className="p-4 font-semibold hidden md:table-cell">興趣</th>
@@ -200,12 +335,12 @@ export default function AdminUsers() {
                     <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-500">目前尚無用戶資料</td>
+                  <td colSpan="7" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
-                users.map((user) => (
+                displayedUsers.map((user) => (
                   <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       {user.pictureUrl ? (
@@ -218,17 +353,24 @@ export default function AdminUsers() {
                     </td>
                     <td className="p-4">
                       <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
-                      {user.lineGroup && (
-                        <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block mt-1 font-medium border border-green-200">
-                          Line 官方：{user.lineGroup}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {user.lineGroup && (
+                          <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200 whitespace-nowrap">
+                            Line 官方：{user.lineGroup}
+                          </div>
+                        )}
+                        {(user.tags || []).map(t => (
+                          <div key={t} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium border border-slate-200 whitespace-nowrap">
+                            #{t}
+                          </div>
+                        ))}
+                      </div>
                     </td>
                     <td className="p-4 text-slate-600">{user.gender || '-'}</td>
                     <td className="p-4 text-slate-600">{user.birthday || '-'}</td>
                     <td className="p-4 text-slate-600 hidden md:table-cell">{user.interests || '-'}</td>
                     <td className="p-4 text-slate-600 max-w-[200px] truncate hidden lg:table-cell">{user.notes || '-'}</td>
-                    <td className="p-4 text-right space-x-2">
+                    <td className="p-4 text-right space-x-2 whitespace-nowrap">
                       {user.userId && (
                         <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="傳送訊息">
                           <MessageSquare className="w-4 h-4" />
@@ -237,7 +379,7 @@ export default function AdminUsers() {
                       <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button onClick={() => openDeleteConfirm(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </td>
@@ -247,9 +389,60 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+            <div className="text-sm text-slate-500 font-medium hidden sm:block">
+              顯示第 {(safeCurrentPage - 1) * pageSize + 1} 到 {Math.min(safeCurrentPage * pageSize, filteredUsers.length)} 筆
+            </div>
+            <div className="flex space-x-1 items-center mx-auto sm:mx-0">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                // Show a limited number of page buttons to prevent overflow
+                if (
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg text-sm font-bold transition-colors",
+                        safeCurrentPage === page ? "bg-green-500 text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === safeCurrentPage - 2 || page === safeCurrentPage + 2) {
+                  return <span key={page} className="text-slate-400">...</span>;
+                }
+                return null;
+              })}
+
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modal */}
+      {/* Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -293,6 +486,15 @@ export default function AdminUsers() {
                 />
               </div>
 
+              {/* Line Group Badge */}
+              {formData.lineGroup && (
+                <div className="flex justify-center -mt-4 mb-4">
+                  <div className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-200 font-bold">
+                    來自 Line 官方：{formData.lineGroup}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-bold text-slate-700 block mb-1">名稱 <span className="text-red-500">*</span></label>
                 <input 
@@ -334,6 +536,32 @@ export default function AdminUsers() {
               </div>
 
               <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">自訂標籤 (Tags)</label>
+                <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
+                  {(formData.tags || []).map(t => (
+                    <div key={t} className="bg-slate-200 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center">
+                      <Tag className="w-3 h-3 mr-1" />
+                      {t}
+                      <button type="button" onClick={() => removeTag(t)} className="ml-1 text-slate-400 hover:text-red-500">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <input 
+                    type="text"
+                    value={tagInput}
+                    onChange={e => setTagInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addTag(e) }}
+                    className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1"
+                    placeholder="輸入標籤後按 Enter..."
+                  />
+                  <button type="button" onClick={addTag} className="text-xs bg-slate-300 text-slate-700 px-2 py-1 rounded hover:bg-green-500 hover:text-white transition-colors">
+                    新增
+                  </button>
+                </div>
+              </div>
+
+              <div>
                 <label className="text-sm font-bold text-slate-700 block mb-1">備註</label>
                 <textarea 
                   value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})}
@@ -351,6 +579,27 @@ export default function AdminUsers() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除</h3>
+            <p className="text-slate-500 mb-6 font-medium">刪除後將無法復原，您確定要刪除這筆用戶資料嗎？</p>
+            <div className="flex space-x-3">
+              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+                取消
+              </button>
+              <button onClick={confirmDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
+                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定刪除'}
+              </button>
+            </div>
           </div>
         </div>
       )}

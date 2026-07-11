@@ -116,7 +116,7 @@ export const saveMessageTemplates = async (templates) => {
 // ==========================================
 // Client: User & Reservation
 // ==========================================
-export const saveUserProfile = async (userId, displayName, lineGroup = null) => {
+export const saveUserProfile = async (userId, displayName, lineGroup = null, pictureUrl = null) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
@@ -128,12 +128,21 @@ export const saveUserProfile = async (userId, displayName, lineGroup = null) => 
         createdAt: serverTimestamp()
       };
       if (lineGroup) data.lineGroup = lineGroup;
+      if (pictureUrl) data.pictureUrl = pictureUrl;
       
       await setDoc(userRef, data);
     } else {
-      // Update name if changed
+      // Update name and line config if changed
       const updateData = { displayName };
       if (lineGroup) updateData.lineGroup = lineGroup;
+      
+      // Only set pictureUrl if the database doesn't have one, or if we want to constantly update it
+      // The requirement says: "當有新的使用者從line開啟預約畫面，然後新增到系統時，可以把該使用者的頭像圖片直接抓到到用戶管理的頭像裡來嗎"
+      // If the user hasn't set one manually in admin, it's nice to keep it updated.
+      if (pictureUrl && !userSnap.data().pictureUrl) {
+        updateData.pictureUrl = pictureUrl;
+      }
+      
       await setDoc(userRef, updateData, { merge: true });
     }
   } catch (error) {
