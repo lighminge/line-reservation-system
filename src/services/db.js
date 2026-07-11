@@ -7,39 +7,54 @@ import { db, storage } from "../firebaseConfig";
 // ==========================================
 export const uploadImage = async (file, path) => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-        const max = 1024; // Compress to max 1024px to easily fit in Firestore 1MB limit
-        
-        if (width > max || height > max) {
-          if (width > height) {
-            height = Math.round(height * (max / width));
-            width = max;
-          } else {
-            width = Math.round(width * (max / height));
-            height = max;
+    const timeout = setTimeout(() => {
+      reject(new Error("圖片處理超時，請重試或換一張圖片"));
+    }, 10000);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          const max = 800; // Compress to max 800px to ensure it's very small
+          
+          if (width > max || height > max) {
+            if (width > height) {
+              height = Math.round(height * (max / width));
+              width = max;
+            } else {
+              width = Math.round(width * (max / height));
+              height = max;
+            }
           }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to base64 JPEG with 0.8 quality
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
-        resolve(dataUrl);
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+          clearTimeout(timeout);
+          resolve(dataUrl);
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error("圖片載入失敗"));
+        };
       };
-      img.onerror = (e) => reject(new Error("Image processing failed"));
-    };
-    reader.onerror = (e) => reject(new Error("File reading failed"));
+      reader.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error("檔案讀取失敗"));
+      };
+    } catch (e) {
+      clearTimeout(timeout);
+      reject(e);
+    }
   });
 };
 
