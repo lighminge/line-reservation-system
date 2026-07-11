@@ -200,7 +200,7 @@ export default async function handler(req, res) {
     };
 
     // If an image URL is provided, add hero section
-    if (lineTemplate.imageUrl) {
+    if (lineTemplate.imageUrl && lineTemplate.imageUrl.startsWith('http')) {
       flexContents.hero = {
         type: "image",
         url: lineTemplate.imageUrl,

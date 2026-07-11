@@ -8,53 +8,24 @@ import { db, storage } from "../firebaseConfig";
 export const uploadImage = async (file, path) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
-      reject(new Error("圖片處理超時，請重試或換一張圖片"));
+      reject(new Error("上傳超時：請確認 Firebase Storage 的 Rules 已設為允許讀寫 (allow read, write: if true;)，或檢查網路連線。"));
     }, 10000);
 
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          let width = img.width;
-          let height = img.height;
-          const max = 800; // Compress to max 800px to ensure it's very small
-          
-          if (width > max || height > max) {
-            if (width > height) {
-              height = Math.round(height * (max / width));
-              width = max;
-            } else {
-              width = Math.round(width * (max / height));
-              height = max;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          clearTimeout(timeout);
-          resolve(dataUrl);
-        };
-        img.onerror = () => {
-          clearTimeout(timeout);
-          reject(new Error("圖片載入失敗"));
-        };
-      };
-      reader.onerror = () => {
+    const storageRef = ref(storage, path);
+    uploadBytes(storageRef, file)
+      .then(snapshot => getDownloadURL(snapshot.ref))
+      .then(url => {
         clearTimeout(timeout);
-        reject(new Error("檔案讀取失敗"));
-      };
-    } catch (e) {
-      clearTimeout(timeout);
-      reject(e);
-    }
+        resolve(url);
+      })
+      .catch(error => {
+        clearTimeout(timeout);
+        let errorMsg = error.message;
+        if (errorMsg.includes('unauthorized')) {
+          errorMsg = "權限不足，請至 Firebase Console 開啟 Storage 的讀寫權限。";
+        }
+        reject(new Error(errorMsg));
+      });
   });
 };
 
