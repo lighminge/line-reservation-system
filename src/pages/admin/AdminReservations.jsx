@@ -18,9 +18,14 @@ export default function AdminReservations() {
   // New states for calendar
   const [viewMode, setViewMode] = useState('TIME'); // 'TIME' or 'USER'
   const [calendarPurpose, setCalendarPurpose] = useState('ALL');
+  const [calendarStatus, setCalendarStatus] = useState('ALL');
 
-  // New state for pending wall user filters
+  // New states for pending/confirmed wall filters
+  const [pendingPurposeFilter, setPendingPurposeFilter] = useState('ALL');
   const [pendingUserFilters, setPendingUserFilters] = useState({}); // { [purpose]: userId }
+  
+  const [confirmedPurposeFilter, setConfirmedPurposeFilter] = useState('ALL');
+  const [confirmedUserFilters, setConfirmedUserFilters] = useState({}); // { [purpose]: userId }
   
   // Export state
   const [exportModal, setExportModal] = useState({ isOpen: false, purpose: 'ALL', status: 'ALL', sort: 'DATE' });
@@ -61,7 +66,6 @@ export default function AdminReservations() {
       const otherPending = reservations.filter(
         r => r.id !== res.id &&
              r.userId === res.userId &&
-             r.date === res.date &&
              r.purpose === res.purpose &&
              r.status === 'pending'
       );
@@ -112,8 +116,14 @@ export default function AdminReservations() {
   const startDay = startOfMonth(currentMonth).getDay();
   const paddingDays = Array.from({ length: startDay }, (_, i) => i);
 
-  // Group active (non-cancelled) reservations for calendar
-  const activeReservations = reservations.filter(r => r.status !== 'cancelled' && (calendarPurpose === 'ALL' || r.purpose === calendarPurpose));
+  // Group reservations for calendar based on filters
+  const activeReservations = reservations.filter(r => {
+    if (calendarPurpose !== 'ALL' && r.purpose !== calendarPurpose) return false;
+    
+    // Status filter
+    if (calendarStatus === 'ALL') return true; // ALL now includes cancelled as requested
+    return r.status === calendarStatus;
+  });
   
   const reservationsByDate = activeReservations.reduce((acc, res) => {
     if (!acc[res.date]) acc[res.date] = [];
@@ -132,6 +142,19 @@ export default function AdminReservations() {
     if (!pendingTree[purpose][r.date][r.userId]) pendingTree[purpose][r.date][r.userId] = [];
     
     pendingTree[purpose][r.date][r.userId].push(r);
+  });
+
+  // For confirmed section
+  const confirmedRes = reservations.filter(r => r.status === 'confirmed');
+  
+  const confirmedTree = {};
+  confirmedRes.forEach(r => {
+    const purpose = r.purpose || '未指定項目';
+    if (!confirmedTree[purpose]) confirmedTree[purpose] = {};
+    if (!confirmedTree[purpose][r.date]) confirmedTree[purpose][r.date] = {};
+    if (!confirmedTree[purpose][r.date][r.userId]) confirmedTree[purpose][r.date][r.userId] = [];
+    
+    confirmedTree[purpose][r.date][r.userId].push(r);
   });
 
   // Calculate unique colors for users based on their ID string
@@ -241,6 +264,17 @@ export default function AdminReservations() {
 
             <div className="flex items-center space-x-2">
               <select 
+                value={calendarStatus}
+                onChange={(e) => setCalendarStatus(e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
+              >
+                <option value="ALL">全部狀態</option>
+                <option value="pending">待審核</option>
+                <option value="confirmed">已核准</option>
+                <option value="cancelled">已取消</option>
+              </select>
+              
+              <select 
                 value={calendarPurpose}
                 onChange={(e) => setCalendarPurpose(e.target.value)}
                 className="p-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
@@ -313,10 +347,14 @@ export default function AdminReservations() {
                 const sortedRes = [...dayReservations].sort((a,b) => a.time.localeCompare(b.time));
                 blocks = sortedRes.map(r => {
                   const userName = users[r.userId] || '未知';
+                  let icon = '';
+                  if (r.status === 'confirmed') icon = '✓ ';
+                  if (r.status === 'cancelled') icon = '✕ ';
+                  
                   return {
                     id: r.id,
-                    text: `${userName} ${r.time}`,
-                    color: getUserColor(r.userId)
+                    text: `${icon}${userName} ${r.time}`,
+                    color: r.status === 'cancelled' ? 'bg-slate-400' : getUserColor(r.userId)
                   };
                 });
               }
@@ -356,17 +394,33 @@ export default function AdminReservations() {
 
       {/* Pending Reservations Wall */}
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-slate-800 flex items-center mb-6">
-          <Clock className="w-6 h-6 mr-2 text-amber-500" />
-          待審核預約
-        </h2>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+            <Clock className="w-6 h-6 mr-2 text-amber-500" />
+            待審核預約
+          </h2>
+          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg w-full md:w-auto">
+            <select 
+              value={pendingPurposeFilter}
+              onChange={(e) => setPendingPurposeFilter(e.target.value)}
+              className="bg-white border border-slate-200 text-slate-700 text-sm outline-none w-full min-w-[150px] font-medium p-2 rounded-md focus:border-blue-500"
+            >
+              <option value="ALL">全部項目</option>
+              {purposesDict.map(p => (
+                <option key={p.id} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         
-        {Object.keys(pendingTree).length === 0 ? (
+        {Object.keys(pendingTree).filter(p => pendingPurposeFilter === 'ALL' || p === pendingPurposeFilter).length === 0 ? (
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
             目前沒有任何待審核的預約
           </div>
         ) : (
-          Object.keys(pendingTree).map(purpose => {
+          Object.keys(pendingTree)
+            .filter(purpose => pendingPurposeFilter === 'ALL' || purpose === pendingPurposeFilter)
+            .map(purpose => {
             
             // Calculate unique users for this purpose
             const uniqueUsersMap = {}; // { userId: { name, firstDate } }
@@ -542,6 +596,220 @@ export default function AdminReservations() {
                   }) && selectedUserId && (
                     <div className="text-center p-8 text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
                       該用戶在此項目沒有待審核的預約
+                    </div>
+                  )}
+
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Confirmed Reservations Wall */}
+      <div className="space-y-6 mt-12 border-t-2 border-slate-200/60 pt-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+            <Check className="w-6 h-6 mr-2 text-green-500" />
+            已核准預約
+          </h2>
+          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg w-full md:w-auto">
+            <select 
+              value={confirmedPurposeFilter}
+              onChange={(e) => setConfirmedPurposeFilter(e.target.value)}
+              className="bg-white border border-slate-200 text-slate-700 text-sm outline-none w-full min-w-[150px] font-medium p-2 rounded-md focus:border-blue-500"
+            >
+              <option value="ALL">全部項目</option>
+              {purposesDict.map(p => (
+                <option key={p.id} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        {Object.keys(confirmedTree).filter(p => confirmedPurposeFilter === 'ALL' || p === confirmedPurposeFilter).length === 0 ? (
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+            目前沒有任何已核准的預約
+          </div>
+        ) : (
+          Object.keys(confirmedTree)
+            .filter(purpose => confirmedPurposeFilter === 'ALL' || purpose === confirmedPurposeFilter)
+            .map(purpose => {
+            
+            // Calculate unique users for this purpose to populate the user dropdown
+            const uniqueUsersMap = {};
+            
+            Object.keys(confirmedTree[purpose]).forEach(d => {
+              Object.keys(confirmedTree[purpose][d]).forEach(uId => {
+                if (!uniqueUsersMap[uId]) {
+                  uniqueUsersMap[uId] = {
+                    id: uId,
+                    name: users[uId] || '未知用戶',
+                    firstDate: d
+                  };
+                }
+              });
+            });
+
+            const sortedUsers = Object.values(uniqueUsersMap).sort((a, b) => a.name.localeCompare(b.name));
+            const selectedUserId = confirmedUserFilters[purpose] || '';
+
+            return (
+              <div key={purpose} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+                <div className="bg-green-600 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <h3 className="text-xl font-bold text-white flex items-center">
+                    項目：{purpose} 
+                    <span className="ml-3 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
+                      總計 {
+                        Object.values(confirmedTree[purpose]).reduce((sum, dates) => 
+                          sum + Object.values(dates).reduce((count, userRes) => count + userRes.length, 0), 0
+                        )
+                      } 筆
+                    </span>
+                  </h3>
+                  
+                  {/* User Filter Dropdown */}
+                  <div className="flex items-center space-x-2 bg-green-700/50 p-1.5 rounded-lg w-full md:w-auto">
+                    <User className="w-4 h-4 text-green-100 ml-1 shrink-0" />
+                    <select 
+                      value={selectedUserId}
+                      onChange={(e) => setConfirmedUserFilters({...confirmedUserFilters, [purpose]: e.target.value})}
+                      className="bg-transparent text-white text-sm outline-none w-full min-w-[150px] font-medium"
+                    >
+                      <option value="" className="text-green-50">所有用戶</option>
+                      {sortedUsers.map(u => (
+                        <option key={u.id} value={u.id} className="text-green-50">
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="p-6 space-y-8 bg-slate-50">
+                  {Object.keys(confirmedTree[purpose]).sort().map(dateStr => {
+                    // Flatten all reservations for this date
+                    let allDateRes = [];
+                    Object.keys(confirmedTree[purpose][dateStr]).forEach(uId => {
+                       if (selectedUserId && uId !== selectedUserId) return;
+                       allDateRes.push(...confirmedTree[purpose][dateStr][uId]);
+                    });
+
+                    if (allDateRes.length === 0) return null;
+
+                    // Sort by time
+                    allDateRes.sort((a,b) => a.time.localeCompare(b.time));
+
+                    return (
+                      <div key={dateStr} className="space-y-4">
+                        <div className="bg-slate-200/50 px-4 py-3 rounded-xl border border-slate-200">
+                          <h4 className="text-lg font-bold text-slate-700 flex items-center">
+                            <CalendarIcon className="w-5 h-5 mr-2 text-slate-500" />
+                            {dateStr}
+                          </h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {allDateRes.map(res => {
+                            const u = fullUsers[res.userId] || {};
+                            const uTags = u.tags || [];
+                            const uInterests = Array.isArray(u.interests) ? u.interests : (u.interests ? u.interests.split(',').map(i=>i.trim()).filter(Boolean) : []);
+                            const uName = users[res.userId] || '未知用戶';
+
+                            return (
+                              <div key={res.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+                                {/* Header */}
+                                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                  <div className="flex items-center space-x-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner ${getUserColor(res.userId)}`}>
+                                      {uName.charAt(0)}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-slate-800">{uName}</div>
+                                      <div className="text-xs text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md inline-block mt-1">
+                                        Line: {u.displayName || '未綁定'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Info Body */}
+                                <div className="p-4 space-y-3 flex-1">
+                                  {u.email && (
+                                    <div className="flex items-start text-sm">
+                                      <span className="text-slate-400 w-12 shrink-0">Email</span>
+                                      <span className="text-slate-700 truncate">{u.email}</span>
+                                    </div>
+                                  )}
+                                  {u.phone && (
+                                    <div className="flex items-start text-sm">
+                                      <span className="text-slate-400 w-12 shrink-0">手機</span>
+                                      <span className="text-slate-700">{u.phone}</span>
+                                    </div>
+                                  )}
+                                  
+                                  {(uTags.length > 0 || uInterests.length > 0) && (
+                                    <div className="pt-3 border-t border-slate-100 mt-2 space-y-2">
+                                      {uTags.length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                          <Tag className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                                          <div className="flex flex-wrap gap-1">
+                                            {uTags.map(tag => (
+                                              <span key={tag} className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-blue-100">{tag}</span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {uInterests.length > 0 && (
+                                        <div className="flex items-start gap-2">
+                                          <Heart className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                                          <div className="flex flex-wrap gap-1">
+                                            {uInterests.map(interest => (
+                                              <span key={interest} className="bg-rose-50 text-rose-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-rose-100">{interest}</span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Res Details */}
+                                <div className="p-4 flex-1 flex flex-col gap-3 bg-slate-50/50">
+                                  <div className="bg-white border border-green-200 rounded-xl p-3 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                                    <div className="font-bold text-slate-700 text-lg flex items-center pl-2">
+                                      <Clock className="w-5 h-5 mr-2 text-green-500" />
+                                      {res.time}
+                                    </div>
+                                    
+                                    {/* Action button inside card */}
+                                    <div className="flex gap-2">
+                                      <button 
+                                        onClick={() => handleCancel(res.id)}
+                                        disabled={confirmingId === res.id}
+                                        className="flex-1 bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center"
+                                      >
+                                        取消預約
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {/* Empty state when filtered */}
+                  {Object.keys(confirmedTree[purpose]).every(dateStr => {
+                    if (!selectedUserId) return false;
+                    return !confirmedTree[purpose][dateStr][selectedUserId];
+                  }) && selectedUserId && (
+                    <div className="text-center p-8 text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
+                      該用戶在此項目沒有已核准的預約
                     </div>
                   )}
 
