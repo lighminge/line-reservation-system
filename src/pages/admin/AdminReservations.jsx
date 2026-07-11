@@ -357,15 +357,24 @@ export default function AdminReservations() {
               if (viewMode === 'TIME') {
                 const byTime = {};
                 dayReservations.forEach(r => {
-                  if (!byTime[r.time]) byTime[r.time] = 0;
-                  byTime[r.time]++;
+                  if (!byTime[r.time]) byTime[r.time] = { confirmed: 0, cancelled: 0 };
+                  if (r.status === 'cancelled') {
+                    byTime[r.time].cancelled++;
+                  } else {
+                    byTime[r.time].confirmed++;
+                  }
                 });
                 const sortedTimes = Object.keys(byTime).sort();
                 blocks = sortedTimes.map((t, idx) => {
                   const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500', 'bg-indigo-500', 'bg-teal-500'];
+                  const confirmedCount = byTime[t].confirmed;
+                  const cancelledCount = byTime[t].cancelled;
+                  let text = `${t} (${confirmedCount}筆)`;
+                  if (cancelledCount > 0) text += ` (取消${cancelledCount}筆)`;
+                  
                   return {
                     id: t,
-                    text: `${t} (${byTime[t]}筆)`,
+                    text: text,
                     color: colors[idx % colors.length]
                   };
                 });
@@ -422,8 +431,8 @@ export default function AdminReservations() {
                     {blocks.length > 0 ? (
                       blocks.map(b => (
                         <div key={b.id} className="flex items-start gap-1 w-full mt-1">
-                          {viewMode === 'USER' && b.status === 'confirmed' && <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
-                          {viewMode === 'USER' && b.status === 'cancelled' && <XCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />}
+                          {viewMode === 'USER' && b.status === 'confirmed' && <Check strokeWidth={4} className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
+                          {viewMode === 'USER' && b.status === 'cancelled' && <X strokeWidth={4} className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />}
                           <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm font-medium line-clamp-2 leading-tight ${b.color}`}>
                             {b.text}
                           </div>
