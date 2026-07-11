@@ -6,15 +6,41 @@ import { db, storage } from "../firebaseConfig";
 // Storage Upload
 // ==========================================
 export const uploadImage = async (file, path) => {
-  try {
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    return url;
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        const max = 1024; // Compress to max 1024px to easily fit in Firestore 1MB limit
+        
+        if (width > max || height > max) {
+          if (width > height) {
+            height = Math.round(height * (max / width));
+            width = max;
+          } else {
+            width = Math.round(width * (max / height));
+            height = max;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to base64 JPEG with 0.8 quality
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        resolve(dataUrl);
+      };
+      img.onerror = (e) => reject(new Error("Image processing failed"));
+    };
+    reader.onerror = (e) => reject(new Error("File reading failed"));
+  });
 };
 
 // Get Line Settings
