@@ -190,32 +190,35 @@ export default function ReservationForm() {
   }
 
   if (submitSuccess) {
-    const successTpl = templates?.clientSuccess || {
-      title: "預約已送出！",
-      text: "我們已經收到您的預約資訊。\n待管理員審核確認後，將會透過 Line 發送確認訊息給您。"
-    };
-
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden text-center max-w-sm w-full animate-in zoom-in duration-300">
-          {successTpl.imageUrl && (
-            <img src={successTpl.imageUrl} alt="Success" className="w-full h-40 object-cover" />
-          )}
-          <div className="p-8">
-            <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">{successTpl.title}</h2>
-            <p className="text-slate-600 whitespace-pre-line leading-relaxed mb-8">
-              {successTpl.text}
-            </p>
-            <button 
-              onClick={closeLiff}
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-slate-800/20"
-            >
-              完成並關閉
-            </button>
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden text-center max-w-sm w-full animate-in zoom-in duration-300 p-8">
+          <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-8 h-8" />
           </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-6">已收到您的預約</h2>
+          
+          <div className="bg-slate-50 rounded-2xl p-5 mb-8 text-left space-y-3 border border-slate-100">
+            <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+              <span className="text-slate-400 font-medium text-sm">預約日期</span>
+              <span className="font-bold text-slate-700">{formData.date}</span>
+            </div>
+            <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+              <span className="text-slate-400 font-medium text-sm">預約時間</span>
+              <span className="font-bold text-slate-700">{formData.time}</span>
+            </div>
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-slate-400 font-medium text-sm">預約項目</span>
+              <span className="font-bold text-slate-700">{formData.purpose || '一般預約'}</span>
+            </div>
+          </div>
+
+          <button 
+            onClick={closeLiff}
+            className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-slate-800/20"
+          >
+            完成並關閉
+          </button>
         </div>
       </div>
     );

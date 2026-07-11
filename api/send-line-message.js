@@ -89,116 +89,6 @@ export default async function handler(req, res) {
     let messageText = lineTemplate.text || "您好！我們已經收到您的預約。";
     messageText = messageText.replace(/{好友的顯示名稱}/g, nickname).replace(/{帳號名稱}/g, accountName);
 
-    // 3. Construct the Line push message payload
-    const flexContents = {
-      type: "bubble",
-      body: {
-        type: "box",
-        layout: "vertical",
-        spacing: "md",
-        contents: [
-          {
-            type: "text",
-            text: messageText,
-            wrap: true,
-            size: "sm",
-            weight: "regular"
-          },
-          {
-            type: "separator",
-            margin: "lg"
-          },
-          {
-            type: "box",
-            layout: "vertical",
-            margin: "lg",
-            spacing: "sm",
-            contents: [
-              {
-                type: "box",
-                layout: "baseline",
-                spacing: "sm",
-                contents: [
-                  {
-                    type: "text",
-                    text: "日期",
-                    color: "#aaaaaa",
-                    size: "sm",
-                    flex: 1
-                  },
-                  {
-                    type: "text",
-                    text: date,
-                    wrap: true,
-                    color: "#666666",
-                    size: "sm",
-                    flex: 3
-                  }
-                ]
-              },
-              {
-                type: "box",
-                layout: "baseline",
-                spacing: "sm",
-                contents: [
-                  {
-                    type: "text",
-                    text: "時間",
-                    color: "#aaaaaa",
-                    size: "sm",
-                    flex: 1
-                  },
-                  {
-                    type: "text",
-                    text: time,
-                    wrap: true,
-                    color: "#666666",
-                    size: "sm",
-                    flex: 3
-                  }
-                ]
-              },
-              {
-                type: "box",
-                layout: "baseline",
-                spacing: "sm",
-                contents: [
-                  {
-                    type: "text",
-                    text: "項目",
-                    color: "#aaaaaa",
-                    size: "sm",
-                    flex: 1
-                  },
-                  {
-                    type: "text",
-                    text: req.body.purpose || "一般預約",
-                    wrap: true,
-                    color: "#666666",
-                    size: "sm",
-                    flex: 3
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      footer: {
-        type: "box",
-        layout: "vertical",
-        contents: [
-          {
-            type: "text",
-            text: "期待您的光臨！",
-            align: "center",
-            color: "#00B900",
-            weight: "bold"
-          }
-        ]
-      }
-    };
-
     let finalImageUrl = lineTemplate.imageUrl;
     if (finalImageUrl && finalImageUrl.startsWith('internal://')) {
       const docId = finalImageUrl.replace('internal://', '');
@@ -207,32 +97,109 @@ export default async function handler(req, res) {
       finalImageUrl = `${protocol}://${host}/api/image?id=${docId}`;
     }
 
-    // If an image URL is provided, add hero section
+    const titleText = lineTemplate.title || "預約成功通知";
+
+    // Text details array to be reused
+    const detailsBoxContents = [
+      {
+        type: "box",
+        layout: "baseline",
+        spacing: "sm",
+        contents: [
+          { type: "text", text: "日期", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: date, wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+        ]
+      },
+      {
+        type: "box",
+        layout: "baseline",
+        spacing: "sm",
+        contents: [
+          { type: "text", text: "時間", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: time, wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+        ]
+      },
+      {
+        type: "box",
+        layout: "baseline",
+        spacing: "sm",
+        contents: [
+          { type: "text", text: "項目", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: req.body.purpose || "一般預約", wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+        ]
+      }
+    ];
+
+    let flexContents = {};
+
     if (finalImageUrl && finalImageUrl.startsWith('http')) {
-      flexContents.hero = {
-        type: "image",
-        url: finalImageUrl,
-        size: "full",
-        aspectRatio: "1.51:1",
-        aspectMode: "cover"
+      // Background Image Overlay Design
+      flexContents = {
+        type: "bubble",
+        body: {
+          type: "box",
+          layout: "vertical",
+          paddingAll: "0px",
+          contents: [
+            {
+              type: "image",
+              url: finalImageUrl,
+              size: "full",
+              aspectMode: "cover",
+              aspectRatio: "4:5",
+              gravity: "center"
+            },
+            {
+              type: "box",
+              layout: "vertical",
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#000000B3",
+              paddingAll: "xl",
+              justifyContent: "center",
+              contents: [
+                { type: "text", text: titleText, weight: "bold", size: "xl", color: "#ffffff", wrap: true },
+                { type: "separator", margin: "md", color: "#ffffff44" },
+                { type: "text", text: messageText, wrap: true, size: "sm", color: "#e0e0e0", margin: "md" },
+                { type: "separator", margin: "lg", color: "#ffffff44" },
+                { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
+              ]
+            }
+          ]
+        }
+      };
+    } else {
+      // Fallback Default Design without Image
+      flexContents = {
+        type: "bubble",
+        header: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            { type: "text", text: titleText, weight: "bold", size: "xl", color: "#ffffff" }
+          ],
+          backgroundColor: "#00B900"
+        },
+        body: {
+          type: "box",
+          layout: "vertical",
+          spacing: "md",
+          contents: [
+            { type: "text", text: messageText, wrap: true, size: "sm", weight: "regular" },
+            { type: "separator", margin: "lg" },
+            { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
+          ]
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            { type: "text", text: "期待您的光臨！", align: "center", color: "#00B900", weight: "bold" }
+          ]
+        }
       };
     }
-    
-    // Add header
-    flexContents.header = {
-      type: "box",
-      layout: "vertical",
-      contents: [
-        {
-          type: "text",
-          text: lineTemplate.title || "預約成功確認",
-          weight: "bold",
-          size: "xl",
-          color: "#ffffff"
-        }
-      ],
-      backgroundColor: "#00B900"
-    };
 
     const messagePayload = {
       to: userId,

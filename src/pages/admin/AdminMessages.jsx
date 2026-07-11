@@ -117,9 +117,9 @@ export default function AdminMessages() {
           <div className="bg-blue-600 p-5 text-white flex justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
-              前台預約成功畫面
+              客戶預約成功推播 (LINE)
             </h2>
-            <span className="text-blue-100 text-sm">客戶預約後顯示</span>
+            <span className="text-blue-100 text-sm">客戶送出預約後收到</span>
           </div>
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
@@ -165,7 +165,7 @@ export default function AdminMessages() {
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
                     <span className="text-sm text-slate-500 group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
                     <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
-                    <span className="text-xs text-slate-400">Line建議長寬比 800x600</span>
+                    <p className="text-xs text-slate-400 mt-1">※此圖片將作為 LINE 推播訊息的背景圖，文字會覆疊其上。建議長寬比 4:5 (例如 800x1000)，或直式照片效果最佳。</p>
                   </>
                 )}
               </div>
@@ -228,8 +228,9 @@ export default function AdminMessages() {
                 ) : (
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
-                    <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳卡片橫幅圖片 (比例建議 1.51:1 或 800x530)</span>
+                    <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳圖片</span>
                     <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
+                    <p className="text-xs text-slate-400 mt-1">※此圖片將作為管理員確認後，發送給客戶的 LINE 推播訊息背景圖。建議長寬比 4:5 (例如 800x1000) 效果最佳。</p>
                   </>
                 )}
               </div>
