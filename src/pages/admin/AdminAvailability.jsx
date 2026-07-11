@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle } from 'lucide-react';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, startOfDay, parseISO } from 'date-fns';
+import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations } from '../../services/db';
 
@@ -8,8 +8,11 @@ export default function AdminAvailability() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availability, setAvailability] = useState({});
   const [reservations, setReservations] = useState([]);
-  const [purposesDict, setPurposesDict] = useState([]);
+  const [purposesDict, setPurposesDict] = useState([]); // Array of { id, name, endDate, createdAt }
   const [loading, setLoading] = useState(false);
+  
+  // Calendar Filter
+  const [filterPurpose, setFilterPurpose] = useState(''); // '' means all, 'ACTIVE', 'EXPIRED', or specific purpose ID/name
   
   // Modal state
   const [selectedDate, setSelectedDate] = useState(null);
@@ -25,13 +28,16 @@ export default function AdminAvailability() {
     ampm: 'AM',
     hour: '10',
     minute: '00',
-    purposes: [],
-    maxCapacity: -1 // -1 means unlimited
+    purposes: [], // Array of purpose names
+    maxCapacity: -1
   });
 
-  // Dictionary management
-  const [showDictManager, setShowDictManager] = useState(false);
-  const [newDictWord, setNewDictWord] = useState('');
+  // Purpose management Modal
+  const [showPurposeManager, setShowPurposeManager] = useState(false);
+  const [purposePage, setPurposePage] = useState(1);
+  const [purposeFilter, setPurposeFilter] = useState('ALL'); // 'ALL', 'ACTIVE', 'EXPIRED'
+  const [editingPurposeId, setEditingPurposeId] = useState(null);
+  const [purposeForm, setPurposeForm] = useState({ name: '', endDate: '' });
 
   // Custom Alert/Confirm Modals
   const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
@@ -50,16 +56,66 @@ export default function AdminAvailability() {
       getDictionary('purposes'),
       getAdminReservations()
     ]);
+    
+    // Auto-migrate strings to objects if needed
+    let migratedDict = [...dictData];
+    let needsMigration = false;
+    migratedDict = migratedDict.map(item => {
+      if (typeof item === 'string') {
+        needsMigration = true;
+        return {
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+          name: item,
+          endDate: '',
+          createdAt: new Date().toISOString()
+        };
+      }
+      return item;
+    });
+
+    if (needsMigration) {
+      await saveDictionary('purposes', migratedDict);
+    }
+
     setAvailability(availData);
-    setPurposesDict(dictData);
+    setPurposesDict(migratedDict);
     setReservations(resData);
     setLoading(false);
   };
 
+  // --- Calendar Logistics ---
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
   const startDay = startOfMonth(currentMonth).getDay();
   const paddingDays = Array.from({ length: startDay }, (_, i) => i);
+  const today = startOfDay(new Date());
 
+  const getFilteredSlotsForDay = (dateStr) => {
+    const settings = availability[dateStr];
+    if (!settings?.isOpen) return null;
+    let slots = settings.slots || [];
+    
+    if (filterPurpose) {
+      if (filterPurpose === 'ACTIVE') {
+        // Only show slots that have at least one active purpose
+        slots = slots.filter(s => s.purposes.some(pName => {
+          const pObj = purposesDict.find(pd => pd.name === pName);
+          return !pObj?.endDate || !isBefore(parseISO(pObj.endDate), today);
+        }));
+      } else if (filterPurpose === 'EXPIRED') {
+        // Only show slots that have at least one expired purpose
+        slots = slots.filter(s => s.purposes.some(pName => {
+          const pObj = purposesDict.find(pd => pd.name === pName);
+          return pObj?.endDate && isBefore(parseISO(pObj.endDate), today);
+        }));
+      } else {
+        // Specific purpose name
+        slots = slots.filter(s => s.purposes.includes(filterPurpose));
+      }
+    }
+    return slots;
+  };
+
+  // --- Day Modal Logic ---
   const openModal = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     setSelectedDate(dateStr);
@@ -110,15 +166,6 @@ export default function AdminAvailability() {
       return;
     }
     
-    // Check if purposes in dict, if not add them
-    slotForm.purposes.forEach(async p => {
-      if (!purposesDict.includes(p)) {
-        const newDict = [...purposesDict, p];
-        await saveDictionary('purposes', newDict);
-        setPurposesDict(newDict);
-      }
-    });
-
     let h = parseInt(slotForm.hour);
     if (slotForm.ampm === 'PM' && h < 12) h += 12;
     if (slotForm.ampm === 'AM' && h === 12) h = 0;
@@ -170,10 +217,9 @@ export default function AdminAvailability() {
   };
 
   const deleteSlot = (index, e) => {
-    e.stopPropagation(); // prevent opening edit
+    e.stopPropagation();
     const slot = daySettings.slots[index];
     
-    // Check for existing reservations
     const hasReservation = reservations.some(r => r.date === selectedDate && r.time === slot.time);
     if (hasReservation) {
       setAlertModal({ isOpen: true, message: "該時段已有客戶預約，無法刪除！" });
@@ -193,29 +239,74 @@ export default function AdminAvailability() {
     });
   };
 
-  const togglePurpose = (purpose) => {
+  const togglePurpose = (purposeName) => {
     const p = [...slotForm.purposes];
-    const idx = p.indexOf(purpose);
+    const idx = p.indexOf(purposeName);
     if (idx >= 0) p.splice(idx, 1);
-    else p.push(purpose);
+    else p.push(purposeName);
     setSlotForm({ ...slotForm, purposes: p });
   };
 
-  // Dict management
-  const addDictWord = async () => {
-    if (newDictWord && !purposesDict.includes(newDictWord)) {
-      const newDict = [...purposesDict, newDictWord];
+  // --- Purpose Manager Logic ---
+  const filteredPurposes = purposesDict.filter(p => {
+    if (purposeFilter === 'ALL') return true;
+    const isExp = p.endDate && isBefore(parseISO(p.endDate), today);
+    if (purposeFilter === 'ACTIVE') return !isExp;
+    if (purposeFilter === 'EXPIRED') return isExp;
+    return true;
+  });
+
+  const purposesPerPage = 5;
+  const purposeTotalPages = Math.max(1, Math.ceil(filteredPurposes.length / purposesPerPage));
+  const currentPurposeList = filteredPurposes.slice((purposePage - 1) * purposesPerPage, purposePage * purposesPerPage);
+
+  const startEditPurpose = (p) => {
+    const hasRes = reservations.some(r => r.purpose === p.name);
+    if (hasRes) {
+      setAlertModal({ isOpen: true, message: "此項目已有客戶預約，無法編輯名稱與結束日期！" });
+      return;
+    }
+    setEditingPurposeId(p.id);
+    setPurposeForm({ name: p.name, endDate: p.endDate || '' });
+  };
+
+  const savePurpose = async () => {
+    if (!purposeForm.name.trim()) return;
+    
+    let newDict = [...purposesDict];
+    if (editingPurposeId) {
+      newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, name: purposeForm.name, endDate: purposeForm.endDate } : p);
+    } else {
+      newDict.push({
+        id: Date.now().toString(),
+        name: purposeForm.name.trim(),
+        endDate: purposeForm.endDate,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    try {
       await saveDictionary('purposes', newDict);
       setPurposesDict(newDict);
-      setNewDictWord('');
+      setEditingPurposeId(null);
+      setPurposeForm({ name: '', endDate: '' });
+    } catch (e) {
+      setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
     }
   };
-  const removeDictWord = async (word) => {
+
+  const deletePurpose = (p) => {
+    const hasRes = reservations.some(r => r.purpose === p.name);
+    if (hasRes) {
+      setAlertModal({ isOpen: true, message: "此項目已有客戶預約，無法刪除！" });
+      return;
+    }
+
     setConfirmModal({
       isOpen: true,
-      message: `確定要從辭庫刪除「${word}」嗎？`,
+      message: `確定要刪除「${p.name}」項目嗎？`,
       onConfirm: async () => {
-        const newDict = purposesDict.filter(w => w !== word);
+        const newDict = purposesDict.filter(item => item.id !== p.id);
         await saveDictionary('purposes', newDict);
         setPurposesDict(newDict);
         setConfirmModal({ isOpen: false, message: '', onConfirm: null });
@@ -225,35 +316,61 @@ export default function AdminAvailability() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">預約設定</h1>
           <p className="text-slate-500 mt-1">設定每日可預約的時段、項目與人數上限</p>
         </div>
         <button 
-          onClick={() => setShowDictManager(true)}
+          onClick={() => {
+            setShowPurposeManager(true);
+            setEditingPurposeId(null);
+            setPurposeForm({ name: '', endDate: '' });
+          }}
           className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm"
         >
-          <BookOpen className="w-5 h-5" />
-          <span>管理常用辭庫</span>
+          <List className="w-5 h-5" />
+          <span>管理預約項目</span>
         </button>
       </div>
 
       {/* Calendar View */}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h2 className="text-xl font-bold text-slate-800">{format(currentMonth, 'yyyy 年 MM 月')}</h2>
-          <div className="flex space-x-2">
-            <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
-            </button>
-            <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-              <ChevronRight className="w-5 h-5 text-slate-600" />
-            </button>
+        
+        {/* Top bar with filter */}
+        <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-white gap-4">
+          <div className="flex items-center space-x-2 w-full md:w-auto">
+            <span className="text-sm font-bold text-slate-600 whitespace-nowrap">顯示項目：</span>
+            <select 
+              value={filterPurpose}
+              onChange={(e) => setFilterPurpose(e.target.value)}
+              className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm w-full md:w-auto"
+            >
+              <option value="">顯示全部</option>
+              <option value="ACTIVE">⚡ 還可以預約的項目</option>
+              <option value="EXPIRED">⏳ 已結束的項目</option>
+              <optgroup label="指定項目">
+                {purposesDict.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <h2 className="text-xl font-bold text-slate-800">{format(currentMonth, 'yyyy 年 MM 月')}</h2>
+            <div className="flex space-x-2">
+              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                <ChevronLeft className="w-5 h-5 text-slate-600" />
+              </button>
+              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
+                <ChevronRight className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="p-6 relative min-h-[500px]">
+        <div className="p-6 relative min-h-[500px] bg-slate-50/30">
           {loading && (
             <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10">
               <Loader2 className="w-8 h-8 animate-spin text-green-500" />
@@ -271,8 +388,8 @@ export default function AdminAvailability() {
             
             {days.map(date => {
               const dateStr = format(date, 'yyyy-MM-dd');
-              const settings = availability[dateStr];
-              const isOpen = settings?.isOpen;
+              const filteredSlots = getFilteredSlotsForDay(dateStr);
+              const isOpen = filteredSlots !== null;
 
               return (
                 <div
@@ -281,7 +398,7 @@ export default function AdminAvailability() {
                   className={cn(
                     "min-h-[140px] p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-start relative hover:shadow-md cursor-pointer",
                     isToday(date) ? "border-green-400 ring-1 ring-green-400" : "border-slate-200 hover:border-green-300",
-                    isOpen ? "bg-white" : "bg-slate-50/50"
+                    isOpen ? "bg-white" : "bg-slate-50/80"
                   )}
                 >
                   <span className={cn("text-sm font-bold mb-2", isToday(date) ? "text-green-600" : "text-slate-700")}>
@@ -290,7 +407,7 @@ export default function AdminAvailability() {
                   
                   {isOpen ? (
                     <div className="flex flex-col gap-1 w-full mt-1">
-                      {settings.slots?.map((s, idx) => {
+                      {filteredSlots.length > 0 ? filteredSlots.map((s, idx) => {
                         const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500', 'bg-indigo-500', 'bg-teal-500'];
                         const colorClass = colors[idx % colors.length];
                         return (
@@ -298,9 +415,8 @@ export default function AdminAvailability() {
                             {s.time}
                           </div>
                         );
-                      })}
-                      {(!settings.slots || settings.slots.length === 0) && (
-                        <div className="text-[10px] md:text-xs text-amber-600 bg-amber-50 px-1 py-1 rounded text-center">無時段</div>
+                      }) : (
+                        <div className="text-[10px] md:text-xs text-amber-600 bg-amber-50 px-1 py-1 rounded text-center border border-amber-100">無符合時段</div>
                       )}
                     </div>
                   ) : (
@@ -356,19 +472,23 @@ export default function AdminAvailability() {
                   <div className="mb-4">
                     <label className="text-sm font-bold text-slate-700 block mb-2">提供預約項目 (可複選)</label>
                     <div className="flex flex-wrap gap-2">
-                      {purposesDict.map(p => (
-                        <button 
-                          key={p} type="button"
-                          onClick={() => togglePurpose(p)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-                            slotForm.purposes.includes(p) ? "bg-green-100 text-green-700 border-green-200" : "bg-white text-slate-600 border-slate-200 hover:border-green-300"
-                          )}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                      {purposesDict.length === 0 && <span className="text-xs text-slate-400">請先建立常用辭庫</span>}
+                      {purposesDict.map(p => {
+                        const isExp = p.endDate && isBefore(parseISO(p.endDate), today);
+                        return (
+                          <button 
+                            key={p.id} type="button"
+                            onClick={() => togglePurpose(p.name)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+                              slotForm.purposes.includes(p.name) ? "bg-green-100 text-green-700 border-green-200" : "bg-white text-slate-600 border-slate-200 hover:border-green-300",
+                              isExp && "opacity-50 line-through"
+                            )}
+                          >
+                            {p.name} {isExp && '(已結束)'}
+                          </button>
+                        );
+                      })}
+                      {purposesDict.length === 0 && <span className="text-xs text-slate-400">請先建立預約項目</span>}
                     </div>
                   </div>
 
@@ -409,7 +529,7 @@ export default function AdminAvailability() {
               {/* Right Column: Existing Slots */}
               <div className="flex-1">
                 <h3 className="font-bold text-slate-700 mb-3 flex items-center">
-                  <CheckCircleIcon className="w-4 h-4 mr-2 text-blue-500" />
+                  <CheckCircle2 className="w-4 h-4 mr-2 text-blue-500" />
                   已建立的時段
                 </h3>
                 <div className="space-y-3">
@@ -419,7 +539,6 @@ export default function AdminAvailability() {
                     </div>
                   ) : (
                     daySettings.slots.map((s, idx) => {
-                      // Calculate slot reservations
                       const slotRes = reservations.filter(r => r.date === selectedDate && r.time === s.time);
                       const confirmedCount = slotRes.filter(r => r.status === 'confirmed').length;
                       const totalCount = slotRes.length;
@@ -441,7 +560,6 @@ export default function AdminAvailability() {
                             <div className="text-xs text-white/80 mt-1 truncate max-w-[150px]">
                               {s.purposes.join(', ')}
                             </div>
-                            {/* Reservation counts display */}
                             <div className="text-[10px] mt-1 bg-white/20 inline-block px-1.5 py-0.5 rounded">
                               已預約: {totalCount} 人 (已確認: {confirmedCount} 人)
                             </div>
@@ -473,44 +591,158 @@ export default function AdminAvailability() {
         </div>
       )}
 
-      {/* Dictionary Manager Modal */}
-      {showDictManager && (
+      {/* Purpose Manager Modal */}
+      {showPurposeManager && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
               <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2 text-slate-500" />
-                常用辭庫管理
+                <List className="w-5 h-5 mr-2 text-slate-500" />
+                管理預約項目
               </h2>
-              <button onClick={() => setShowDictManager(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setShowPurposeManager(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
+            
             <div className="p-6">
-              <div className="flex space-x-2 mb-6">
-                <input 
-                  type="text" 
-                  value={newDictWord}
-                  onChange={e => setNewDictWord(e.target.value)}
-                  placeholder="輸入新的服務項目..."
-                  className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-slate-500 focus:ring-2 focus:ring-slate-200 outline-none transition-colors"
-                />
-                <button onClick={addDictWord} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl transition-colors font-medium whitespace-nowrap">
-                  新增
-                </button>
+              
+              {/* Add/Edit Form */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+                <h3 className="font-bold text-slate-700 mb-3 text-sm">{editingPurposeId ? '編輯項目' : '新增預約項目'}</h3>
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">項目名稱</label>
+                    <input 
+                      type="text" 
+                      value={purposeForm.name}
+                      onChange={e => setPurposeForm({...purposeForm, name: e.target.value})}
+                      placeholder="例如：剪髮、燙髮"
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">結束日期 (選填)</label>
+                    <input 
+                      type="date" 
+                      value={purposeForm.endDate}
+                      onChange={e => setPurposeForm({...purposeForm, endDate: e.target.value})}
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button 
+                      onClick={savePurpose}
+                      disabled={!purposeForm.name.trim()}
+                      className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-colors h-[42px]"
+                    >
+                      {editingPurposeId ? '儲存' : '新增'}
+                    </button>
+                    {editingPurposeId && (
+                      <button 
+                        onClick={() => {
+                          setEditingPurposeId(null);
+                          setPurposeForm({ name: '', endDate: '' });
+                        }}
+                        className="bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-2 rounded-lg font-bold transition-colors h-[42px] ml-2"
+                      >
+                        取消
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                {purposesDict.map(word => (
-                  <div key={word} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-slate-200 transition-colors">
-                    <span className="font-medium text-slate-700">{word}</span>
-                    <button onClick={() => removeDictWord(word)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                {purposesDict.length === 0 && <div className="text-center text-slate-400 py-4">目前沒有任何辭庫資料</div>}
+              {/* Filter */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm font-bold text-slate-600">
+                  總計：{filteredPurposes.length} 筆
+                </div>
+                <select 
+                  value={purposeFilter}
+                  onChange={e => {
+                    setPurposeFilter(e.target.value);
+                    setPurposePage(1);
+                  }}
+                  className="p-2 border border-slate-200 rounded-lg bg-white text-sm outline-none font-medium"
+                >
+                  <option value="ALL">顯示全部</option>
+                  <option value="ACTIVE">還可以預約項目</option>
+                  <option value="EXPIRED">預約項目已結束</option>
+                </select>
               </div>
+
+              {/* List */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3 w-16">序號</th>
+                      <th className="px-4 py-3">項目名稱</th>
+                      <th className="px-4 py-3 w-32">結束日期</th>
+                      <th className="px-4 py-3 w-24">狀態</th>
+                      <th className="px-4 py-3 w-24 text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentPurposeList.map((p, idx) => {
+                      const absoluteIdx = (purposePage - 1) * purposesPerPage + idx + 1;
+                      const isExp = p.endDate && isBefore(parseISO(p.endDate), today);
+                      return (
+                        <tr key={p.id} className="border-b border-slate-100 bg-white hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-500">{absoluteIdx}</td>
+                          <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
+                          <td className="px-4 py-3 text-slate-600">{p.endDate || '無期限'}</td>
+                          <td className="px-4 py-3">
+                            {isExp ? (
+                              <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">已結束</span>
+                            ) : (
+                              <span className="bg-green-50 text-green-600 px-2 py-1 rounded text-xs font-bold border border-green-100">開放中</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right flex justify-end space-x-1">
+                            <button onClick={() => startEditPurpose(p)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors">
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => deletePurpose(p)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {currentPurposeList.length === 0 && (
+                      <tr>
+                        <td colSpan="5" className="text-center py-8 text-slate-400">目前沒有符合的項目資料</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {purposeTotalPages > 1 && (
+                <div className="flex justify-center items-center mt-6 space-x-4">
+                  <button 
+                    disabled={purposePage === 1}
+                    onClick={() => setPurposePage(p => p - 1)}
+                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm font-bold text-slate-600">
+                    {purposePage} / {purposeTotalPages}
+                  </span>
+                  <button 
+                    disabled={purposePage === purposeTotalPages}
+                    onClick={() => setPurposePage(p => p + 1)}
+                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
@@ -554,26 +786,5 @@ export default function AdminAvailability() {
       )}
 
     </div>
-  );
-}
-
-// Inline Icon component
-function CheckCircleIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
   );
 }

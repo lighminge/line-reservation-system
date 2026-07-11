@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import liff from '@line/liff';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isBefore, startOfDay, addMonths } from 'date-fns';
-import { Calendar, Clock, Loader2, CheckCircle2 } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isBefore, startOfDay, addMonths, parseISO } from 'date-fns';
+import { Calendar, Clock, Loader2, CheckCircle2, Tag, Trash2, List } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { getAvailability, getLineSettings, addReservation, saveUserProfile, getAdminReservations, getMessageTemplates } from '../services/db';
+import { getAvailability, getLineSettings, addReservation, saveUserProfile, getAdminReservations, getMessageTemplates, updateReservationStatus, getDictionary } from '../services/db';
 
 export default function ReservationForm() {
   const [liffError, setLiffError] = useState(null);
@@ -13,12 +13,16 @@ export default function ReservationForm() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availability, setAvailability] = useState({});
   const [reservations, setReservations] = useState([]);
+  const [purposesDict, setPurposesDict] = useState([]);
   const [templates, setTemplates] = useState(null);
   
-  const [formData, setFormData] = useState({ date: '', time: '', purpose: '' });
-  const [selectedSlot, setSelectedSlot] = useState(null); // the slot object
+  // Step 1: purpose, Step 2: date, Step 3: time
+  const [formData, setFormData] = useState({ purpose: '', date: '', time: '' });
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     initLiffAndData();
@@ -26,14 +30,23 @@ export default function ReservationForm() {
 
   const initLiffAndData = async () => {
     try {
-      const [settings, resData, tpls] = await Promise.all([
+      const [settings, resData, tpls, pDict] = await Promise.all([
         getLineSettings(),
         getAdminReservations(),
-        getMessageTemplates()
+        getMessageTemplates(),
+        getDictionary('purposes')
       ]);
       
       setReservations(resData);
       setTemplates(tpls);
+      
+      // Filter out expired purposes for client side
+      const today = startOfDay(new Date());
+      const activePurposes = pDict.filter(p => {
+        if (!p.endDate) return true;
+        return !isBefore(parseISO(p.endDate), today);
+      });
+      setPurposesDict(activePurposes);
 
       const activeConfig = (settings.configs || []).find(c => c.isActive) || settings.configs?.[0];
       
@@ -53,7 +66,6 @@ export default function ReservationForm() {
       const userProfile = await liff.getProfile();
       setProfile(userProfile);
       
-      // Auto save user profile to db (include activeConfig name and pictureUrl)
       await saveUserProfile(
         userProfile.userId, 
         userProfile.displayName, 
@@ -61,7 +73,6 @@ export default function ReservationForm() {
         userProfile.pictureUrl
       );
       
-      // Fetch availability for current month
       await fetchAvailability(currentMonth);
 
     } catch (err) {
@@ -91,7 +102,7 @@ export default function ReservationForm() {
     }
     
     if (!formData.date || !formData.time || !formData.purpose) {
-      alert("請完整選擇日期、時間與服務項目");
+      alert("請完整選擇預約項目、日期與時間");
       return;
     }
 
@@ -99,42 +110,52 @@ export default function ReservationForm() {
     try {
       await addReservation(profile.userId, formData);
       setSubmitSuccess(true);
-    } catch (error) {
-      alert("預約失敗，請稍後再試。");
+      // Refresh reservations
+      const resData = await getAdminReservations();
+      setReservations(resData);
+    } catch (err) {
+      alert("預約失敗：" + err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
-  const startDay = startOfMonth(currentMonth).getDay();
-  const paddingDays = Array.from({ length: startDay }, (_, i) => i);
-  const today = startOfDay(new Date());
+  const handleCancelReservation = async (resId) => {
+    if (window.confirm('確定要取消這筆預約嗎？')) {
+      setIsCancelling(true);
+      try {
+        await updateReservationStatus(resId, 'cancelled');
+        alert("已成功取消預約！");
+        const resData = await getAdminReservations();
+        setReservations(resData);
+      } catch (err) {
+        alert("取消失敗：" + err.message);
+      } finally {
+        setIsCancelling(false);
+      }
+    }
+  };
 
-  // Determine available slots for the selected date
-  const selectedDaySettings = availability[formData.date];
-  const availableSlots = selectedDaySettings?.slots || [];
-  
-  const userReservationsToday = reservations.filter(
-    r => r.userId === profile?.userId && r.date === formData.date
-  );
-  
-  // Calculate remaining capacity for a slot
-  const getSlotCapacityInfo = (timeStr, maxCapacity) => {
-    if (maxCapacity === -1) return { isFull: false, text: '可預約' };
-    const currentCount = reservations.filter(r => r.date === formData.date && r.time === timeStr).length;
-    const remaining = maxCapacity - currentCount;
-    return {
-      isFull: remaining <= 0,
-      text: remaining <= 0 ? '已額滿' : `剩餘 ${remaining} 位`
-    };
+  const closeLiff = () => {
+    try {
+      if (liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        // Fallback for external browser testing
+        setSubmitSuccess(false);
+        setFormData({ purpose: '', date: '', time: '' });
+      }
+    } catch (e) {
+      setSubmitSuccess(false);
+      setFormData({ purpose: '', date: '', time: '' });
+    }
   };
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-green-500" />
-        <span className="ml-3 text-slate-500 font-medium">系統初始化中...</span>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-12 h-12 animate-spin text-green-500" />
+        <p className="text-slate-500 font-medium">系統初始化中...</p>
       </div>
     );
   }
@@ -142,7 +163,7 @@ export default function ReservationForm() {
   if (liffError) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center max-w-sm w-full">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-red-100 text-center max-w-sm w-full">
           <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-2xl">⚠️</span>
           </div>
@@ -174,10 +195,10 @@ export default function ReservationForm() {
               {successTpl.text}
             </p>
             <button 
-              onClick={() => liff.closeWindow()}
+              onClick={closeLiff}
               className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-slate-800/20"
             >
-              關閉視窗
+              完成並關閉
             </button>
           </div>
         </div>
@@ -185,8 +206,46 @@ export default function ReservationForm() {
     );
   }
 
+  // Derived data
+  const today = startOfDay(new Date());
+  
+  // My reservations
+  const userReservations = reservations.filter(r => r.userId === profile?.userId && r.status !== 'cancelled');
+  const userReservationsToday = userReservations.filter(r => r.date === formData.date);
+
+  // Available dates for the selected purpose
+  const getIsDateAvailable = (dateStr) => {
+    const settings = availability[dateStr];
+    if (!settings?.isOpen || !settings.slots) return false;
+    if (!formData.purpose) return true; // If no purpose selected yet, just check if open
+    
+    // Check if any slot on this day has the selected purpose
+    return settings.slots.some(s => s.purposes.includes(formData.purpose));
+  };
+
+  const getAvailableSlots = () => {
+    if (!formData.date || !formData.purpose) return [];
+    const settings = availability[formData.date];
+    if (!settings?.slots) return [];
+    // Only return slots that offer the chosen purpose
+    return settings.slots.filter(s => s.purposes.includes(formData.purpose));
+  };
+
+  const availableSlots = getAvailableSlots();
+
+  const getSlotCapacityInfo = (timeStr, maxCap) => {
+    if (maxCap === -1) return { isFull: false, text: '可預約' };
+    const resCount = reservations.filter(r => r.date === formData.date && r.time === timeStr && r.status !== 'cancelled').length;
+    if (resCount >= maxCap) return { isFull: true, text: '已額滿' };
+    return { isFull: false, text: `剩 ${maxCap - resCount} 位` };
+  };
+
+  const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
+  const startDay = startOfMonth(currentMonth).getDay();
+  const paddingDays = Array.from({ length: startDay }, (_, i) => i);
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 pb-24">
       <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         
         {/* Header Profile */}
@@ -204,76 +263,141 @@ export default function ReservationForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
+
+          {/* User's existing active reservations globally */}
+          {userReservations.length > 0 && !formData.purpose && (
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl animate-in fade-in duration-300">
+              <div className="text-sm font-bold text-blue-800 mb-3 flex items-center">
+                <Clock className="w-4 h-4 mr-1.5" /> 您的近期預約：
+              </div>
+              <div className="space-y-2">
+                {userReservations.map(r => (
+                  <div key={r.id} className="bg-white px-3 py-2 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between text-sm">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-800">{r.date} {r.time}</span>
+                      <span className="text-slate-500 text-xs">{r.purpose}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("text-xs font-bold px-2 py-1 rounded-full", r.status === 'confirmed' ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700")}>
+                        {r.status === 'confirmed' ? '已確認' : '待審核'}
+                      </span>
+                      <button 
+                        type="button"
+                        disabled={isCancelling}
+                        onClick={() => handleCancelReservation(r.id)}
+                        className="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
-          {/* Calendar Section */}
+          {/* Step 1: Select Purpose */}
           <section>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
+              <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                <List className="w-4 h-4" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800">1. 選擇預約日期</h2>
+              <h2 className="text-lg font-bold text-slate-800">1. 選擇預約項目</h2>
             </div>
             
-            <div className="bg-slate-50 rounded-2xl p-4 md:p-6 border border-slate-100">
-              <div className="flex justify-between items-center mb-6">
-                <button type="button" onClick={() => handleMonthChange(addMonths(currentMonth, -1))} className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1 bg-white rounded-lg shadow-sm">
-                  &lt;
+            <div className="grid grid-cols-2 gap-3">
+              {purposesDict.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setFormData({ purpose: p.name, date: '', time: '' })}
+                  className={cn(
+                    "py-4 px-3 rounded-2xl text-base font-bold transition-all border-2",
+                    formData.purpose === p.name ? "bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-600/20" : "bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50"
+                  )}
+                >
+                  {p.name}
                 </button>
-                <span className="font-bold text-slate-800 text-lg">{format(currentMonth, 'yyyy 年 MM 月')}</span>
-                <button type="button" onClick={() => handleMonthChange(addMonths(currentMonth, 1))} className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1 bg-white rounded-lg shadow-sm">
-                  &gt;
-                </button>
-              </div>
-
-              <div className="grid grid-cols-7 gap-2 text-center text-sm font-bold text-slate-400 mb-4">
-                {['日', '一', '二', '三', '四', '五', '六'].map(day => <div key={day}>{day}</div>)}
-              </div>
-
-              <div className="grid grid-cols-7 gap-2">
-                {paddingDays.map(i => <div key={`padding-${i}`} />)}
-                
-                {days.map(date => {
-                  const dateStr = format(date, 'yyyy-MM-dd');
-                  const isPast = isBefore(date, today);
-                  const isAvailable = availability[dateStr]?.isOpen;
-                  const isSelected = formData.date === dateStr;
-                  const isDisabled = isPast || !isAvailable;
-
-                  return (
-                    <button
-                      key={dateStr}
-                      type="button"
-                      disabled={isDisabled}
-                      onClick={() => {
-                        setFormData({ date: dateStr, time: '', purpose: '' });
-                        setSelectedSlot(null);
-                      }}
-                      className={cn(
-                        "aspect-square flex items-center justify-center rounded-full text-sm font-bold transition-all relative",
-                        isSelected && "bg-green-500 text-white shadow-md shadow-green-500/30 ring-2 ring-green-500 ring-offset-2",
-                        !isSelected && !isDisabled && "bg-white text-slate-700 hover:bg-green-50 hover:text-green-600 shadow-sm",
-                        isDisabled && "text-slate-300 cursor-not-allowed"
-                      )}
-                    >
-                      {format(date, 'd')}
-                      {isAvailable && !isPast && !isSelected && (
-                        <div className="absolute bottom-1 w-1 h-1 bg-green-400 rounded-full"></div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              ))}
+              {purposesDict.length === 0 && (
+                <div className="col-span-2 text-center text-slate-400 py-4 bg-slate-50 rounded-xl">
+                  目前沒有開放預約的項目
+                </div>
+              )}
             </div>
           </section>
 
-          {/* Time & Purpose Section */}
+          {/* Step 2: Calendar Section */}
+          {formData.purpose && (
+            <section className="animate-in slide-in-from-top-4 duration-300 fade-in">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-bold text-slate-800">2. 選擇預約日期</h2>
+              </div>
+              
+              <div className="bg-slate-50 rounded-2xl p-4 md:p-6 border border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                  <button type="button" onClick={() => handleMonthChange(addMonths(currentMonth, -1))} className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1 bg-white rounded-lg shadow-sm">
+                    &lt;
+                  </button>
+                  <span className="font-bold text-slate-800 text-lg">{format(currentMonth, 'yyyy 年 MM 月')}</span>
+                  <button type="button" onClick={() => handleMonthChange(addMonths(currentMonth, 1))} className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1 bg-white rounded-lg shadow-sm">
+                    &gt;
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7 gap-2 text-center text-sm font-bold text-slate-400 mb-4">
+                  {['日', '一', '二', '三', '四', '五', '六'].map(day => <div key={day}>{day}</div>)}
+                </div>
+
+                <div className="grid grid-cols-7 gap-2">
+                  {paddingDays.map(i => <div key={`padding-${i}`} />)}
+                  
+                  {days.map(date => {
+                    const dateStr = format(date, 'yyyy-MM-dd');
+                    const isPast = isBefore(date, today);
+                    const isAvailable = getIsDateAvailable(dateStr);
+                    const isSelected = formData.date === dateStr;
+                    const isDisabled = isPast || !isAvailable;
+
+                    return (
+                      <button
+                        key={dateStr}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => {
+                          setFormData({ ...formData, date: dateStr, time: '' });
+                          setSelectedSlot(null);
+                        }}
+                        className={cn(
+                          "aspect-square flex items-center justify-center rounded-full text-sm font-bold transition-all relative",
+                          isSelected && "bg-green-500 text-white shadow-md shadow-green-500/30 ring-2 ring-green-500 ring-offset-2",
+                          !isSelected && !isDisabled && "bg-white text-slate-700 hover:bg-green-50 hover:text-green-600 shadow-sm",
+                          isDisabled && "text-slate-300 cursor-not-allowed"
+                        )}
+                      >
+                        {format(date, 'd')}
+                        {isAvailable && !isPast && !isSelected && (
+                          <div className="absolute bottom-1 w-1 h-1 bg-green-400 rounded-full"></div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Step 3: Time Section */}
           {formData.date && (
             <section className="animate-in slide-in-from-top-4 duration-300 fade-in">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                   <Clock className="w-4 h-4" />
                 </div>
-                <h2 className="text-lg font-bold text-slate-800">2. 選擇時段與項目</h2>
+                <h2 className="text-lg font-bold text-slate-800">3. 選擇時段</h2>
               </div>
               
               {availableSlots.length > 0 ? (
@@ -283,11 +407,21 @@ export default function ReservationForm() {
                   {userReservationsToday.length > 0 && (
                     <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-4">
                       <div className="text-sm font-bold text-blue-800 mb-2">💡 您本日已預約：</div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-2">
                         {userReservationsToday.map(r => (
-                          <div key={r.id} className="text-xs bg-white text-blue-700 px-2 py-1 rounded shadow-sm font-medium border border-blue-100 flex items-center">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {r.time} ({r.purpose}) - {r.status === 'confirmed' ? '已確認' : '待審核'}
+                          <div key={r.id} className="text-sm bg-white text-blue-800 px-3 py-2 rounded-xl shadow-sm font-medium border border-blue-100 flex items-center justify-between">
+                            <span className="flex items-center"><Clock className="w-4 h-4 mr-2" /> {r.time} ({r.purpose})</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] bg-blue-100 px-2 py-0.5 rounded text-blue-600">{r.status === 'confirmed' ? '已確認' : '待審核'}</span>
+                              <button 
+                                type="button"
+                                disabled={isCancelling}
+                                onClick={() => handleCancelReservation(r.id)}
+                                className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -311,7 +445,7 @@ export default function ReservationForm() {
                       } else if (isFull) {
                         statusClass = "bg-red-50 text-red-500";
                       } else if (isSelected) {
-                        statusClass = "bg-green-100 text-green-700";
+                        statusClass = "bg-blue-100 text-blue-700";
                       }
 
                       return (
@@ -320,15 +454,15 @@ export default function ReservationForm() {
                           type="button"
                           disabled={isDisabled}
                           onClick={() => {
-                            setFormData({ ...formData, time: slot.time, purpose: '' });
+                            setFormData({ ...formData, time: slot.time });
                             setSelectedSlot(slot);
                           }}
                           className={cn(
                             "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all relative overflow-hidden",
-                            isSelected ? "border-green-500 bg-green-50 shadow-sm" : isDisabled ? "border-slate-100 bg-slate-50 opacity-70 cursor-not-allowed" : "border-slate-200 bg-white hover:border-green-300"
+                            isSelected ? "border-blue-500 bg-blue-50 shadow-sm" : isDisabled ? "border-slate-100 bg-slate-50 opacity-70 cursor-not-allowed" : "border-slate-200 bg-white hover:border-blue-300"
                           )}
                         >
-                          <span className={cn("text-xl font-bold mb-1", isSelected ? "text-green-600" : isDisabled ? "text-slate-400" : "text-slate-700")}>
+                          <span className={cn("text-xl font-bold mb-1", isSelected ? "text-blue-600" : isDisabled ? "text-slate-400" : "text-slate-700")}>
                             {slot.time}
                           </span>
                           <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", statusClass)}>
@@ -338,33 +472,11 @@ export default function ReservationForm() {
                       );
                     })}
                   </div>
-
-                  {/* Purposes Selection for the selected slot */}
-                  {selectedSlot && (
-                    <div className="animate-in zoom-in-95 duration-200">
-                      <label className="text-sm font-bold text-slate-700 block mb-3 pl-1">請選擇服務項目</label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {selectedSlot.purposes.map(purpose => (
-                          <button
-                            key={purpose}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, purpose })}
-                            className={cn(
-                              "py-3 px-2 rounded-xl text-sm font-bold transition-all border-2",
-                              formData.purpose === purpose ? "bg-slate-800 border-slate-800 text-white shadow-md shadow-slate-800/20" : "bg-white border-slate-200 text-slate-600 hover:border-slate-400"
-                            )}
-                          >
-                            {purpose}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="bg-amber-50 text-amber-600 p-6 rounded-2xl text-center border border-amber-100">
                   <span className="text-2xl mb-2 block">😌</span>
-                  <p className="font-medium">很抱歉，此日期目前沒有開放時段</p>
+                  <p className="font-medium">此日期沒有開放「{formData.purpose}」的時段</p>
                 </div>
               )}
             </section>

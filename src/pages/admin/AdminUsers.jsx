@@ -3,6 +3,7 @@ import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplate
 import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag, Heart } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getZodiac, zodiacs } from '../../utils/zodiac';
+import ZodiacIcon from '../../components/ZodiacIcon';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -744,7 +745,9 @@ export default function AdminUsers() {
                 {/* Zodiac Preview */}
                 {currentZodiac && (
                   <div className="mt-4 flex items-center justify-center p-3 bg-white rounded-xl border border-purple-100 shadow-sm animate-in zoom-in-95 duration-300">
-                    <img src={`/images/zodiacs/${currentZodiac.en}.jpg`} alt={currentZodiac.name} className="w-12 h-12 object-cover rounded-full border-2 border-purple-200 mr-3 shadow-sm" />
+                    <div className="w-12 h-12 rounded-full border-2 border-purple-200 mr-3 shadow-sm bg-purple-50 flex items-center justify-center">
+                      <ZodiacIcon name={currentZodiac.en} className="w-8 h-8 text-purple-600" />
+                    </div>
                     <div>
                       <div className="text-sm text-slate-500 font-medium">專屬星座</div>
                       <div className="text-lg font-extrabold text-purple-600 tracking-wider">{currentZodiac.name}</div>

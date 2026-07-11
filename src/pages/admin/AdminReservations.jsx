@@ -239,7 +239,14 @@ export default function AdminReservations() {
             <div key={purpose} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
               <div className="bg-slate-800 p-4">
                 <h3 className="text-xl font-bold text-white flex items-center">
-                  項目：{purpose}
+                  項目：{purpose} 
+                  <span className="ml-3 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
+                    總共 {
+                      Object.values(pendingTree[purpose]).reduce((sum, dates) => 
+                        sum + Object.values(dates).reduce((count, userRes) => count + userRes.length, 0), 0
+                      )
+                    } 筆預約
+                  </span>
                 </h3>
               </div>
               
