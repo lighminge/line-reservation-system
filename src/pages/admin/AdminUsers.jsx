@@ -218,9 +218,9 @@ export default function AdminUsers() {
       setFormData({
         displayName: user.displayName || '',
         gender: user.gender || '',
-        bYear: y || '',
-        bMonth: m || '',
-        bDay: d || '',
+        bYear: y ? parseInt(y).toString() : '',
+        bMonth: m ? parseInt(m).toString() : '',
+        bDay: d ? parseInt(d).toString() : '',
         interests: Array.isArray(user.interests) ? user.interests : (user.interests ? user.interests.split(',').map(i=>i.trim()).filter(Boolean) : []),
         notes: user.notes || '',
         pictureUrl: user.pictureUrl || '',

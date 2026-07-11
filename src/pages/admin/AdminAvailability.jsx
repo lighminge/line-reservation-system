@@ -8,11 +8,12 @@ export default function AdminAvailability() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availability, setAvailability] = useState({});
   const [reservations, setReservations] = useState([]);
-  const [purposesDict, setPurposesDict] = useState([]); // Array of { id, name, endDate, createdAt }
+  const [purposesDict, setPurposesDict] = useState([]); 
   const [loading, setLoading] = useState(false);
   
-  // Calendar Filter
-  const [filterPurpose, setFilterPurpose] = useState(''); // '' means all, 'ACTIVE', 'EXPIRED', or specific purpose ID/name
+  // Calendar Filter (split into two)
+  const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL', 'ACTIVE', 'EXPIRED'
+  const [filterPurpose, setFilterPurpose] = useState('ALL'); // 'ALL' or specific purpose name
   
   // Modal state
   const [selectedDate, setSelectedDate] = useState(null);
@@ -28,14 +29,14 @@ export default function AdminAvailability() {
     ampm: 'AM',
     hour: '10',
     minute: '00',
-    purposes: [], // Array of purpose names
+    purposes: [],
     maxCapacity: -1
   });
 
   // Purpose management Modal
   const [showPurposeManager, setShowPurposeManager] = useState(false);
   const [purposePage, setPurposePage] = useState(1);
-  const [purposeFilter, setPurposeFilter] = useState('ALL'); // 'ALL', 'ACTIVE', 'EXPIRED'
+  const [purposeFilter, setPurposeFilter] = useState('ALL'); 
   const [editingPurposeId, setEditingPurposeId] = useState(null);
   const [purposeForm, setPurposeForm] = useState({ name: '', endDate: '' });
 
@@ -57,7 +58,6 @@ export default function AdminAvailability() {
       getAdminReservations()
     ]);
     
-    // Auto-migrate strings to objects if needed
     let migratedDict = [...dictData];
     let needsMigration = false;
     migratedDict = migratedDict.map(item => {
@@ -83,7 +83,6 @@ export default function AdminAvailability() {
     setLoading(false);
   };
 
-  // --- Calendar Logistics ---
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
   const startDay = startOfMonth(currentMonth).getDay();
   const paddingDays = Array.from({ length: startDay }, (_, i) => i);
@@ -94,28 +93,27 @@ export default function AdminAvailability() {
     if (!settings?.isOpen) return null;
     let slots = settings.slots || [];
     
-    if (filterPurpose) {
-      if (filterPurpose === 'ACTIVE') {
-        // Only show slots that have at least one active purpose
-        slots = slots.filter(s => s.purposes.some(pName => {
-          const pObj = purposesDict.find(pd => pd.name === pName);
-          return !pObj?.endDate || !isBefore(parseISO(pObj.endDate), today);
-        }));
-      } else if (filterPurpose === 'EXPIRED') {
-        // Only show slots that have at least one expired purpose
-        slots = slots.filter(s => s.purposes.some(pName => {
-          const pObj = purposesDict.find(pd => pd.name === pName);
-          return pObj?.endDate && isBefore(parseISO(pObj.endDate), today);
-        }));
-      } else {
-        // Specific purpose name
-        slots = slots.filter(s => s.purposes.includes(filterPurpose));
-      }
+    // 1. Filter by Status
+    if (filterStatus === 'ACTIVE') {
+      slots = slots.filter(s => s.purposes.some(pName => {
+        const pObj = purposesDict.find(pd => pd.name === pName);
+        return !pObj?.endDate || !isBefore(parseISO(pObj.endDate), today);
+      }));
+    } else if (filterStatus === 'EXPIRED') {
+      slots = slots.filter(s => s.purposes.some(pName => {
+        const pObj = purposesDict.find(pd => pd.name === pName);
+        return pObj?.endDate && isBefore(parseISO(pObj.endDate), today);
+      }));
     }
+
+    // 2. Filter by Purpose
+    if (filterPurpose !== 'ALL') {
+      slots = slots.filter(s => s.purposes.includes(filterPurpose));
+    }
+    
     return slots;
   };
 
-  // --- Day Modal Logic ---
   const openModal = (date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     setSelectedDate(dateStr);
@@ -220,7 +218,7 @@ export default function AdminAvailability() {
     e.stopPropagation();
     const slot = daySettings.slots[index];
     
-    const hasReservation = reservations.some(r => r.date === selectedDate && r.time === slot.time);
+    const hasReservation = reservations.some(r => r.date === selectedDate && r.time === slot.time && r.status !== 'cancelled');
     if (hasReservation) {
       setAlertModal({ isOpen: true, message: "該時段已有客戶預約，無法刪除！" });
       return;
@@ -261,11 +259,6 @@ export default function AdminAvailability() {
   const currentPurposeList = filteredPurposes.slice((purposePage - 1) * purposesPerPage, purposePage * purposesPerPage);
 
   const startEditPurpose = (p) => {
-    const hasRes = reservations.some(r => r.purpose === p.name);
-    if (hasRes) {
-      setAlertModal({ isOpen: true, message: "此項目已有客戶預約，無法編輯名稱與結束日期！" });
-      return;
-    }
     setEditingPurposeId(p.id);
     setPurposeForm({ name: p.name, endDate: p.endDate || '' });
   };
@@ -275,6 +268,15 @@ export default function AdminAvailability() {
     
     let newDict = [...purposesDict];
     if (editingPurposeId) {
+      const p = newDict.find(x => x.id === editingPurposeId);
+      const hasRes = reservations.some(r => r.purpose === p.name);
+      
+      // If it has reservations, we don't allow modifying name, only end date
+      if (hasRes && purposeForm.name !== p.name) {
+        setAlertModal({ isOpen: true, message: "此項目已有客戶預約，名稱無法修改！(但可修改結束日期)" });
+        return;
+      }
+      
       newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, name: purposeForm.name, endDate: purposeForm.endDate } : p);
     } else {
       newDict.push({
@@ -339,25 +341,35 @@ export default function AdminAvailability() {
         
         {/* Top bar with filter */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-white gap-4">
-          <div className="flex items-center space-x-2 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
             <span className="text-sm font-bold text-slate-600 whitespace-nowrap">顯示項目：</span>
-            <select 
-              value={filterPurpose}
-              onChange={(e) => setFilterPurpose(e.target.value)}
-              className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm w-full md:w-auto"
-            >
-              <option value="">顯示全部</option>
-              <option value="ACTIVE">⚡ 還可以預約的項目</option>
-              <option value="EXPIRED">⏳ 已結束的項目</option>
-              <optgroup label="指定項目">
+            
+            {/* Split filters: Status and Purpose */}
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <select 
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm font-medium flex-1 md:flex-none"
+              >
+                <option value="ALL">全部狀態</option>
+                <option value="ACTIVE">⚡ 開放中</option>
+                <option value="EXPIRED">⏳ 已結束</option>
+              </select>
+              
+              <select 
+                value={filterPurpose}
+                onChange={(e) => setFilterPurpose(e.target.value)}
+                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm font-medium flex-1 md:flex-none min-w-[120px]"
+              >
+                <option value="ALL">指定項目 (全部)</option>
                 {purposesDict.map(p => (
                   <option key={p.id} value={p.name}>{p.name}</option>
                 ))}
-              </optgroup>
-            </select>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 shrink-0">
             <h2 className="text-xl font-bold text-slate-800">{format(currentMonth, 'yyyy 年 MM 月')}</h2>
             <div className="flex space-x-2">
               <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
@@ -410,9 +422,14 @@ export default function AdminAvailability() {
                       {filteredSlots.length > 0 ? filteredSlots.map((s, idx) => {
                         const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500', 'bg-indigo-500', 'bg-teal-500'];
                         const colorClass = colors[idx % colors.length];
+                        
+                        // Calculate total reservations for this slot (ignoring cancelled)
+                        const slotResCount = reservations.filter(r => r.date === dateStr && r.time === s.time && r.status !== 'cancelled').length;
+                        
                         return (
-                          <div key={s.time} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm text-center font-medium truncate ${colorClass}`}>
-                            {s.time}
+                          <div key={s.time} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm text-center font-medium truncate flex justify-center items-center gap-1 ${colorClass}`}>
+                            <span>{s.time}</span>
+                            {slotResCount > 0 && <span className="bg-white/20 px-1 rounded-sm">({slotResCount}人)</span>}
                           </div>
                         );
                       }) : (
@@ -539,7 +556,8 @@ export default function AdminAvailability() {
                     </div>
                   ) : (
                     daySettings.slots.map((s, idx) => {
-                      const slotRes = reservations.filter(r => r.date === selectedDate && r.time === s.time);
+                      // Fix: only count active reservations
+                      const slotRes = reservations.filter(r => r.date === selectedDate && r.time === s.time && r.status !== 'cancelled');
                       const confirmedCount = slotRes.filter(r => r.status === 'confirmed').length;
                       const totalCount = slotRes.length;
 
@@ -617,8 +635,9 @@ export default function AdminAvailability() {
                       type="text" 
                       value={purposeForm.name}
                       onChange={e => setPurposeForm({...purposeForm, name: e.target.value})}
+                      disabled={editingPurposeId && reservations.some(r => r.purpose === purposesDict.find(x => x.id === editingPurposeId)?.name)}
                       placeholder="例如：剪髮、燙髮"
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                   <div className="flex-1">

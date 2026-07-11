@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import liff from '@line/liff';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isBefore, startOfDay, addMonths, parseISO } from 'date-fns';
-import { Calendar, Clock, Loader2, CheckCircle2, Tag, Trash2, List } from 'lucide-react';
+import { Calendar, Clock, Loader2, CheckCircle2, Tag, Trash2, List, AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { getAvailability, getLineSettings, addReservation, saveUserProfile, getAdminReservations, getMessageTemplates, updateReservationStatus, getDictionary } from '../services/db';
 
@@ -22,6 +22,10 @@ export default function ReservationForm() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // My Reservations enhancements
+  const [myResFilter, setMyResFilter] = useState('ALL');
+  const [cancelModal, setCancelModal] = useState({ isOpen: false, resId: null });
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
@@ -40,7 +44,6 @@ export default function ReservationForm() {
       setReservations(resData);
       setTemplates(tpls);
       
-      // Filter out expired purposes for client side
       const today = startOfDay(new Date());
       const activePurposes = pDict.filter(p => {
         if (!p.endDate) return true;
@@ -110,7 +113,6 @@ export default function ReservationForm() {
     try {
       await addReservation(profile.userId, formData);
       setSubmitSuccess(true);
-      // Refresh reservations
       const resData = await getAdminReservations();
       setReservations(resData);
     } catch (err) {
@@ -120,19 +122,18 @@ export default function ReservationForm() {
     }
   };
 
-  const handleCancelReservation = async (resId) => {
-    if (window.confirm('確定要取消這筆預約嗎？')) {
-      setIsCancelling(true);
-      try {
-        await updateReservationStatus(resId, 'cancelled');
-        alert("已成功取消預約！");
-        const resData = await getAdminReservations();
-        setReservations(resData);
-      } catch (err) {
-        alert("取消失敗：" + err.message);
-      } finally {
-        setIsCancelling(false);
-      }
+  const confirmCancel = async () => {
+    if (!cancelModal.resId) return;
+    setIsCancelling(true);
+    try {
+      await updateReservationStatus(cancelModal.resId, 'cancelled');
+      const resData = await getAdminReservations();
+      setReservations(resData);
+      setCancelModal({ isOpen: false, resId: null });
+    } catch (err) {
+      alert("取消失敗：" + err.message);
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -141,7 +142,6 @@ export default function ReservationForm() {
       if (liff.isInClient()) {
         liff.closeWindow();
       } else {
-        // Fallback for external browser testing
         setSubmitSuccess(false);
         setFormData({ purpose: '', date: '', time: '' });
       }
@@ -206,20 +206,21 @@ export default function ReservationForm() {
     );
   }
 
-  // Derived data
   const today = startOfDay(new Date());
   
-  // My reservations
-  const userReservations = reservations.filter(r => r.userId === profile?.userId && r.status !== 'cancelled');
-  const userReservationsToday = userReservations.filter(r => r.date === formData.date);
+  // ALL My reservations
+  const allUserReservations = reservations.filter(r => r.userId === profile?.userId && r.status !== 'cancelled');
+  
+  // FILTERED My reservations
+  const filteredUserReservations = allUserReservations.filter(r => myResFilter === 'ALL' || r.purpose === myResFilter);
+  
+  // Today's reservations for the time slot selection prevention
+  const userReservationsToday = allUserReservations.filter(r => r.date === formData.date);
 
-  // Available dates for the selected purpose
   const getIsDateAvailable = (dateStr) => {
     const settings = availability[dateStr];
     if (!settings?.isOpen || !settings.slots) return false;
-    if (!formData.purpose) return true; // If no purpose selected yet, just check if open
-    
-    // Check if any slot on this day has the selected purpose
+    if (!formData.purpose) return true;
     return settings.slots.some(s => s.purposes.includes(formData.purpose));
   };
 
@@ -227,7 +228,6 @@ export default function ReservationForm() {
     if (!formData.date || !formData.purpose) return [];
     const settings = availability[formData.date];
     if (!settings?.slots) return [];
-    // Only return slots that offer the chosen purpose
     return settings.slots.filter(s => s.purposes.includes(formData.purpose));
   };
 
@@ -244,11 +244,13 @@ export default function ReservationForm() {
   const startDay = startOfMonth(currentMonth).getDay();
   const paddingDays = Array.from({ length: startDay }, (_, i) => i);
 
+  // Get unique purposes from all user reservations for the dropdown
+  const uniqueUserPurposes = [...new Set(allUserReservations.map(r => r.purpose))];
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 pb-24">
       <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         
-        {/* Header Profile */}
         <div className="bg-slate-800 p-6 md:p-8 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-700 via-slate-800 to-slate-900 -z-10"></div>
           {profile?.pictureUrl ? (
@@ -265,38 +267,57 @@ export default function ReservationForm() {
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
 
           {/* User's existing active reservations globally */}
-          {userReservations.length > 0 && !formData.purpose && (
-            <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl animate-in fade-in duration-300">
-              <div className="text-sm font-bold text-blue-800 mb-3 flex items-center">
-                <Clock className="w-4 h-4 mr-1.5" /> 您的近期預約：
+          {allUserReservations.length > 0 && !formData.purpose && (
+            <div className="bg-blue-50 border border-blue-100 p-4 md:p-5 rounded-2xl animate-in fade-in duration-300 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
+                <div className="text-sm font-bold text-blue-800 flex items-center">
+                  <Clock className="w-4 h-4 mr-1.5" /> 您的近期預約 <span className="ml-1 opacity-70">({allUserReservations.length}筆)</span>
+                </div>
+                
+                {uniqueUserPurposes.length > 1 && (
+                  <select 
+                    value={myResFilter}
+                    onChange={e => setMyResFilter(e.target.value)}
+                    className="p-1.5 text-xs bg-white border border-blue-200 rounded-lg outline-none text-blue-800 font-medium"
+                  >
+                    <option value="ALL">全部項目</option>
+                    {uniqueUserPurposes.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                )}
               </div>
+              
               <div className="space-y-2">
-                {userReservations.map(r => (
-                  <div key={r.id} className="bg-white px-3 py-2 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between text-sm">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-slate-800">{r.date} {r.time}</span>
-                      <span className="text-slate-500 text-xs">{r.purpose}</span>
+                {filteredUserReservations.length === 0 ? (
+                  <div className="text-center text-xs text-blue-600/70 py-2">該項目沒有預約紀錄</div>
+                ) : (
+                  filteredUserReservations.map(r => (
+                    <div key={r.id} className="bg-white px-3 py-2.5 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between text-sm transition-all hover:shadow-md">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-slate-800">{r.date} {r.time}</span>
+                        <span className="text-slate-500 text-xs font-medium">{r.purpose}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full", r.status === 'confirmed' ? "bg-green-100 text-green-700 border border-green-200" : "bg-amber-100 text-amber-700 border border-amber-200")}>
+                          {r.status === 'confirmed' ? '已確認' : '待審核'}
+                        </span>
+                        <button 
+                          type="button"
+                          disabled={isCancelling}
+                          onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
+                          className="p-2 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("text-xs font-bold px-2 py-1 rounded-full", r.status === 'confirmed' ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700")}>
-                        {r.status === 'confirmed' ? '已確認' : '待審核'}
-                      </span>
-                      <button 
-                        type="button"
-                        disabled={isCancelling}
-                        onClick={() => handleCancelReservation(r.id)}
-                        className="p-1.5 bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           )}
           
-          {/* Step 1: Select Purpose */}
           <section>
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
@@ -327,7 +348,6 @@ export default function ReservationForm() {
             </div>
           </section>
 
-          {/* Step 2: Calendar Section */}
           {formData.purpose && (
             <section className="animate-in slide-in-from-top-4 duration-300 fade-in">
               <div className="flex items-center space-x-2 mb-4">
@@ -390,7 +410,6 @@ export default function ReservationForm() {
             </section>
           )}
 
-          {/* Step 3: Time Section */}
           {formData.date && (
             <section className="animate-in slide-in-from-top-4 duration-300 fade-in">
               <div className="flex items-center space-x-2 mb-4">
@@ -403,7 +422,6 @@ export default function ReservationForm() {
               {availableSlots.length > 0 ? (
                 <div className="space-y-6">
                   
-                  {/* User's existing reservations today */}
                   {userReservationsToday.length > 0 && (
                     <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-4">
                       <div className="text-sm font-bold text-blue-800 mb-2">💡 您本日已預約：</div>
@@ -412,11 +430,11 @@ export default function ReservationForm() {
                           <div key={r.id} className="text-sm bg-white text-blue-800 px-3 py-2 rounded-xl shadow-sm font-medium border border-blue-100 flex items-center justify-between">
                             <span className="flex items-center"><Clock className="w-4 h-4 mr-2" /> {r.time} ({r.purpose})</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] bg-blue-100 px-2 py-0.5 rounded text-blue-600">{r.status === 'confirmed' ? '已確認' : '待審核'}</span>
+                              <span className="text-[10px] font-bold bg-blue-100 px-2 py-0.5 rounded-full text-blue-600 border border-blue-200">{r.status === 'confirmed' ? '已確認' : '待審核'}</span>
                               <button 
                                 type="button"
                                 disabled={isCancelling}
-                                onClick={() => handleCancelReservation(r.id)}
+                                onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
                                 className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -428,7 +446,6 @@ export default function ReservationForm() {
                     </div>
                   )}
 
-                  {/* Slots Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     {availableSlots.map(slot => {
                       const { isFull, text } = getSlotCapacityInfo(slot.time, slot.maxCapacity);
@@ -482,7 +499,6 @@ export default function ReservationForm() {
             </section>
           )}
 
-          {/* Submit Button */}
           <div className="pt-4">
             <button
               type="submit"
@@ -502,6 +518,36 @@ export default function ReservationForm() {
 
         </form>
       </div>
+
+      {/* Cancel Confirm Modal */}
+      {cancelModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">取消預約</h3>
+            <p className="text-slate-500 mb-6 font-medium text-sm">確定要取消這筆預約嗎？<br/>取消後若需重新預約，將以系統最新剩餘名額為準。</p>
+            <div className="flex space-x-3">
+              <button 
+                disabled={isCancelling}
+                onClick={() => setCancelModal({ isOpen: false, resId: null })} 
+                className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors disabled:opacity-50"
+              >
+                返回保留
+              </button>
+              <button 
+                onClick={confirmCancel} 
+                disabled={isCancelling}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex items-center justify-center disabled:opacity-50"
+              >
+                {isCancelling ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定取消'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
