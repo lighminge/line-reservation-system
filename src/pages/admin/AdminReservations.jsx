@@ -3,6 +3,8 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
+import * as XLSX from 'xlsx';
+import { Download } from 'lucide-react';
 
 export default function AdminReservations() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -19,6 +21,9 @@ export default function AdminReservations() {
 
   // New state for pending wall user filters
   const [pendingUserFilters, setPendingUserFilters] = useState({}); // { [purpose]: userId }
+  
+  // Export state
+  const [exportModal, setExportModal] = useState({ isOpen: false, purpose: 'ALL', status: 'ALL', sort: 'DATE' });
 
   useEffect(() => {
     fetchData();
@@ -139,13 +144,73 @@ export default function AdminReservations() {
     return colors[Math.abs(hash) % colors.length];
   };
 
+  const getExportCount = () => {
+    let toExport = reservations;
+    if (exportModal.purpose !== 'ALL') toExport = toExport.filter(r => r.purpose === exportModal.purpose);
+    if (exportModal.status !== 'ALL') toExport = toExport.filter(r => r.status === exportModal.status);
+    return toExport.length;
+  };
+
+  const handleExport = () => {
+    let toExport = reservations;
+    
+    // filter purpose
+    if (exportModal.purpose !== 'ALL') {
+      toExport = toExport.filter(r => r.purpose === exportModal.purpose);
+    }
+    
+    // filter status
+    if (exportModal.status !== 'ALL') {
+      toExport = toExport.filter(r => r.status === exportModal.status);
+    }
+    
+    // sort
+    toExport = [...toExport].sort((a, b) => {
+      if (exportModal.sort === 'DATE') {
+        return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+      } else {
+        const nameA = users[a.userId] || '';
+        const nameB = users[b.userId] || '';
+        if (nameA === nameB) {
+          return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+        }
+        return nameA.localeCompare(nameB);
+      }
+    });
+    
+    // format data
+    const exportData = toExport.map((r, i) => ({
+      '序號': i + 1,
+      '預約日期': r.date,
+      '預約時間': r.time,
+      '預約項目': r.purpose,
+      '客戶名稱': users[r.userId] || '未知用戶',
+      '狀態': r.status === 'confirmed' ? '已確認' : r.status === 'cancelled' ? '已取消' : '待審核',
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Reservations");
+    
+    XLSX.writeFile(wb, `預約名單_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
+    
+    setExportModal({ ...exportModal, isOpen: false });
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">預約管理</h1>
           <p className="text-slate-500 mt-1">審核並管理所有客戶的預約，發送確認通知</p>
         </div>
+        <button 
+          onClick={() => setExportModal({ ...exportModal, isOpen: true })}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm font-bold"
+        >
+          <Download className="w-5 h-5" />
+          <span>匯出Excel檔案</span>
+        </button>
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -367,10 +432,12 @@ export default function AdminReservations() {
 
                     return (
                       <div key={dateStr} className="space-y-4">
-                        <h4 className="text-lg font-bold text-slate-700 border-b-2 border-slate-200 pb-2 flex items-center">
-                          <CalendarIcon className="w-5 h-5 mr-2 text-slate-400" />
-                          {dateStr}
-                        </h4>
+                        <div className="bg-slate-200/50 px-4 py-3 rounded-xl border border-slate-200">
+                          <h4 className="text-lg font-bold text-slate-700 flex items-center">
+                            <CalendarIcon className="w-5 h-5 mr-2 text-slate-500" />
+                            {dateStr}
+                          </h4>
+                        </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                           {userIds.map(userId => {
@@ -382,8 +449,8 @@ export default function AdminReservations() {
                             // Total reservations for this user today (only active ones)
                             const totalResToday = reservations.filter(r => r.userId === userId && r.date === dateStr && r.status !== 'cancelled').length;
                             
-                            // Total total reservations for this user ever (active ones)
-                            const totalResAll = reservations.filter(r => r.userId === userId && r.status !== 'cancelled').length;
+                            // Total total reservations for this user in this purpose (active ones)
+                            const totalResPurpose = reservations.filter(r => r.userId === userId && r.purpose === purpose && r.status !== 'cancelled').length;
 
                             return (
                               <div key={userId} className="bg-white border border-slate-200 rounded-2xl flex flex-col overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -402,7 +469,7 @@ export default function AdminReservations() {
                                     <h5 className="font-bold text-slate-800 text-lg truncate">{u.displayName || '未知用戶'}</h5>
                                     <div className="text-xs text-slate-500 font-medium mb-2 flex flex-col gap-1">
                                       <span>本日總計：<span className="text-slate-800 font-bold">{totalResToday}</span> 筆</span>
-                                      <span>歷史總計：<span className="text-slate-800 font-bold">{totalResAll}</span> 筆</span>
+                                      <span>本項目總計：<span className="text-slate-800 font-bold">{totalResPurpose}</span> 筆</span>
                                     </div>
                                     <div className="flex flex-wrap gap-1">
                                       {uTags.map(t => (
@@ -484,6 +551,85 @@ export default function AdminReservations() {
           })
         )}
       </div>
+
+      {/* Export Excel Modal */}
+      {exportModal.isOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-800 flex items-center">
+                <Download className="w-5 h-5 mr-2 text-emerald-500" />
+                匯出預約資料至 Excel
+              </h3>
+              <button onClick={() => setExportModal({ ...exportModal, isOpen: false })} className="text-slate-400 hover:text-slate-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">選取預約項目</label>
+                <select 
+                  value={exportModal.purpose}
+                  onChange={(e) => setExportModal({ ...exportModal, purpose: e.target.value })}
+                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                >
+                  <option value="ALL">全部項目</option>
+                  {purposesDict.map(p => (
+                    <option key={p.id} value={p.name}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">選取預約狀態</label>
+                <select 
+                  value={exportModal.status}
+                  onChange={(e) => setExportModal({ ...exportModal, status: e.target.value })}
+                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                >
+                  <option value="ALL">全部狀態</option>
+                  <option value="pending">待審核</option>
+                  <option value="confirmed">已確認</option>
+                  <option value="cancelled">已取消</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-700 block mb-1">排序條件</label>
+                <select 
+                  value={exportModal.sort}
+                  onChange={(e) => setExportModal({ ...exportModal, sort: e.target.value })}
+                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                >
+                  <option value="DATE">依日期排序 (舊到新)</option>
+                  <option value="NAME">依名稱排序 (筆畫/字母)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 mb-6 flex items-center justify-between">
+              <span className="font-bold text-emerald-800">符合條件總筆數</span>
+              <span className="text-xl font-black text-emerald-600">{getExportCount()} 筆</span>
+            </div>
+
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => setExportModal({ ...exportModal, isOpen: false })}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors"
+              >
+                取消
+              </button>
+              <button 
+                onClick={handleExport}
+                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-colors flex justify-center items-center"
+              >
+                確定匯出
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

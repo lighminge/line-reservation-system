@@ -26,6 +26,7 @@ export default function ReservationForm() {
   // My Reservations enhancements
   const [myResFilter, setMyResFilter] = useState('ALL');
   const [cancelModal, setCancelModal] = useState({ isOpen: false, resId: null });
+  const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
@@ -247,6 +248,20 @@ export default function ReservationForm() {
   // Get unique purposes from all user reservations for the dropdown
   const uniqueUserPurposes = [...new Set(allUserReservations.map(r => r.purpose))];
 
+  const handleSelectPurpose = (p) => {
+    if (p.userLimit && p.userLimit !== -1) {
+      const currentCount = allUserReservations.filter(r => r.purpose === p.name).length;
+      if (currentCount >= p.userLimit) {
+        setAlertModal({ 
+          isOpen: true, 
+          message: `您在此項目「${p.name}」的預約次數已達上限 (${p.userLimit}次)！\n請先完成或取消現有預約。` 
+        });
+        return;
+      }
+    }
+    setFormData({ purpose: p.name, date: '', time: '' });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 pb-24">
       <div className="max-w-lg mx-auto bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
@@ -274,7 +289,7 @@ export default function ReservationForm() {
                   <Clock className="w-4 h-4 mr-1.5" /> 您的近期預約 <span className="ml-1 opacity-70">({allUserReservations.length}筆)</span>
                 </div>
                 
-                {uniqueUserPurposes.length > 1 && (
+                {uniqueUserPurposes.length > 0 && (
                   <select 
                     value={myResFilter}
                     onChange={e => setMyResFilter(e.target.value)}
@@ -292,11 +307,14 @@ export default function ReservationForm() {
                 {filteredUserReservations.length === 0 ? (
                   <div className="text-center text-xs text-blue-600/70 py-2">該項目沒有預約紀錄</div>
                 ) : (
-                  filteredUserReservations.map(r => (
+                  filteredUserReservations.map((r, i) => (
                     <div key={r.id} className="bg-white px-3 py-2.5 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between text-sm transition-all hover:shadow-md">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-slate-800">{r.date} {r.time}</span>
-                        <span className="text-slate-500 text-xs font-medium">{r.purpose}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-800">{r.date} {r.time}</span>
+                          <span className="text-slate-500 text-xs font-medium">{r.purpose}</span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full", r.status === 'confirmed' ? "bg-green-100 text-green-700 border border-green-200" : "bg-amber-100 text-amber-700 border border-amber-200")}>
@@ -318,35 +336,53 @@ export default function ReservationForm() {
             </div>
           )}
           
-          <section>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                <List className="w-4 h-4" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-800">1. 選擇預約項目</h2>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              {purposesDict.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setFormData({ purpose: p.name, date: '', time: '' })}
-                  className={cn(
-                    "py-4 px-3 rounded-2xl text-base font-bold transition-all border-2",
-                    formData.purpose === p.name ? "bg-purple-600 border-purple-600 text-white shadow-lg shadow-purple-600/20" : "bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50"
-                  )}
-                >
-                  {p.name}
-                </button>
-              ))}
-              {purposesDict.length === 0 && (
-                <div className="col-span-2 text-center text-slate-400 py-4 bg-slate-50 rounded-xl">
-                  目前沒有開放預約的項目
+          {!formData.purpose ? (
+            <section className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                  <List className="w-4 h-4" />
                 </div>
-              )}
+                <h2 className="text-lg font-bold text-slate-800">1. 選擇預約項目</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {purposesDict.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleSelectPurpose(p)}
+                    className="bg-white border-2 border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50 py-4 px-3 rounded-2xl text-base font-bold transition-all"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+                {purposesDict.length === 0 && (
+                  <div className="col-span-2 text-center text-slate-400 py-4 bg-slate-50 rounded-xl">
+                    目前沒有開放預約的項目
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : (
+            <div className="flex justify-between items-center bg-purple-50 p-4 rounded-2xl border border-purple-100 animate-in fade-in duration-300 shadow-sm">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
+                  <List className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-purple-600 mb-0.5">已選擇項目</div>
+                  <div className="text-base font-bold text-slate-800">{formData.purpose}</div>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setFormData({ purpose: '', date: '', time: '' })}
+                className="px-4 py-2 bg-white hover:bg-purple-100 text-purple-700 text-sm font-bold rounded-lg transition-colors border border-purple-200 shadow-sm shrink-0"
+              >
+                重新選擇
+              </button>
             </div>
-          </section>
+          )}
 
           {formData.purpose && (
             <section className="animate-in slide-in-from-top-4 duration-300 fade-in">
@@ -544,6 +580,25 @@ export default function ReservationForm() {
                 {isCancelling ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定取消'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      {alertModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">提示</h3>
+            <p className="text-slate-500 mb-6 font-medium text-sm whitespace-pre-line leading-relaxed">{alertModal.message}</p>
+            <button 
+              onClick={() => setAlertModal({ isOpen: false, message: '' })}
+              className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-colors flex justify-center items-center"
+            >
+              確定
+            </button>
           </div>
         </div>
       )}

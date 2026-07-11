@@ -38,7 +38,7 @@ export default function AdminAvailability() {
   const [purposePage, setPurposePage] = useState(1);
   const [purposeFilter, setPurposeFilter] = useState('ALL'); 
   const [editingPurposeId, setEditingPurposeId] = useState(null);
-  const [purposeForm, setPurposeForm] = useState({ name: '', endDate: '' });
+  const [purposeForm, setPurposeForm] = useState({ name: '', endDate: '', userLimit: -1 });
 
   // Custom Alert/Confirm Modals
   const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
@@ -260,7 +260,7 @@ export default function AdminAvailability() {
 
   const startEditPurpose = (p) => {
     setEditingPurposeId(p.id);
-    setPurposeForm({ name: p.name, endDate: p.endDate || '' });
+    setPurposeForm({ name: p.name, endDate: p.endDate || '', userLimit: p.userLimit !== undefined ? p.userLimit : -1 });
   };
 
   const savePurpose = async () => {
@@ -277,12 +277,13 @@ export default function AdminAvailability() {
         return;
       }
       
-      newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, name: purposeForm.name, endDate: purposeForm.endDate } : p);
+      newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, name: purposeForm.name, endDate: purposeForm.endDate, userLimit: parseInt(purposeForm.userLimit) || -1 } : p);
     } else {
       newDict.push({
         id: Date.now().toString(),
         name: purposeForm.name.trim(),
         endDate: purposeForm.endDate,
+        userLimit: parseInt(purposeForm.userLimit) || -1,
         createdAt: new Date().toISOString()
       });
     }
@@ -291,7 +292,7 @@ export default function AdminAvailability() {
       await saveDictionary('purposes', newDict);
       setPurposesDict(newDict);
       setEditingPurposeId(null);
-      setPurposeForm({ name: '', endDate: '' });
+      setPurposeForm({ name: '', endDate: '', userLimit: -1 });
     } catch (e) {
       setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
     }
@@ -327,7 +328,7 @@ export default function AdminAvailability() {
           onClick={() => {
             setShowPurposeManager(true);
             setEditingPurposeId(null);
-            setPurposeForm({ name: '', endDate: '' });
+            setPurposeForm({ name: '', endDate: '', userLimit: -1 });
           }}
           className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm"
         >
@@ -629,7 +630,7 @@ export default function AdminAvailability() {
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
                 <h3 className="font-bold text-slate-700 mb-3 text-sm">{editingPurposeId ? '編輯項目' : '新增預約項目'}</h3>
                 <div className="flex flex-col md:flex-row gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-[120px]">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">項目名稱</label>
                     <input 
                       type="text" 
@@ -640,7 +641,20 @@ export default function AdminAvailability() {
                       className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-[100px]">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">限制預約次數</label>
+                    <select
+                      value={purposeForm.userLimit}
+                      onChange={e => setPurposeForm({...purposeForm, userLimit: parseInt(e.target.value)})}
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none bg-white"
+                    >
+                      <option value={-1}>無限制</option>
+                      {Array.from({length: 10}, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>最多 {num} 次</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 min-w-[120px]">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">結束日期 (選填)</label>
                     <input 
                       type="date" 
@@ -661,7 +675,7 @@ export default function AdminAvailability() {
                       <button 
                         onClick={() => {
                           setEditingPurposeId(null);
-                          setPurposeForm({ name: '', endDate: '' });
+                          setPurposeForm({ name: '', endDate: '', userLimit: -1 });
                         }}
                         className="bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-2 rounded-lg font-bold transition-colors h-[42px] ml-2"
                       >
@@ -698,6 +712,7 @@ export default function AdminAvailability() {
                     <tr>
                       <th className="px-4 py-3 w-16">序號</th>
                       <th className="px-4 py-3">項目名稱</th>
+                      <th className="px-4 py-3 w-28">次數上限</th>
                       <th className="px-4 py-3 w-32">結束日期</th>
                       <th className="px-4 py-3 w-24">狀態</th>
                       <th className="px-4 py-3 w-24 text-right">操作</th>
@@ -711,6 +726,13 @@ export default function AdminAvailability() {
                         <tr key={p.id} className="border-b border-slate-100 bg-white hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-500">{absoluteIdx}</td>
                           <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
+                          <td className="px-4 py-3 text-slate-600 font-medium">
+                            {p.userLimit && p.userLimit !== -1 ? (
+                              <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">限 {p.userLimit} 次</span>
+                            ) : (
+                              <span className="text-slate-400 text-xs">無限制</span>
+                            )}
+                          </td>
                           <td className="px-4 py-3 text-slate-600">{p.endDate || '無期限'}</td>
                           <td className="px-4 py-3">
                             {isExp ? (
@@ -732,7 +754,7 @@ export default function AdminAvailability() {
                     })}
                     {currentPurposeList.length === 0 && (
                       <tr>
-                        <td colSpan="5" className="text-center py-8 text-slate-400">目前沒有符合的項目資料</td>
+                        <td colSpan="6" className="text-center py-8 text-slate-400">目前沒有符合的項目資料</td>
                       </tr>
                     )}
                   </tbody>
