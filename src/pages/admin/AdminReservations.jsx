@@ -607,7 +607,7 @@ export default function AdminReservations() {
                                   <div className="flex-1 min-w-0">
                                     <h5 className="font-bold text-slate-800 text-lg truncate">{u.displayName || '未知用戶'}</h5>
                                     <div className="text-xs text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md inline-block mt-1 mb-2 w-fit">
-                                      來自那個 Line：{u.lineGroup || '未綁定群組'}
+                                      Line 官方：{u.lineGroup || '未綁定群組'}
                                     </div>
                                     <div className="text-xs text-slate-500 font-medium mb-2 flex flex-col gap-1">
                                       <span>本日總計：<span className="text-slate-800 font-bold">{totalResToday}</span> 筆</span>
@@ -821,7 +821,7 @@ export default function AdminReservations() {
                                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                                     <h5 className="font-bold text-slate-800 text-lg truncate">{uName}</h5>
                                     <div className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-1 w-fit">
-                                      來自那個 Line：{u.lineGroup || '未綁定群組'}
+                                      Line 官方：{u.lineGroup || '未綁定群組'}
                                     </div>
                                   </div>
                                 </div>
