@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations } from '../../services/db';
 
@@ -33,6 +33,10 @@ export default function AdminAvailability() {
   const [showDictManager, setShowDictManager] = useState(false);
   const [newDictWord, setNewDictWord] = useState('');
 
+  // Custom Alert/Confirm Modals
+  const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
+
   const monthStr = format(currentMonth, 'yyyy-MM');
 
   useEffect(() => {
@@ -62,7 +66,6 @@ export default function AdminAvailability() {
     const existing = availability[dateStr];
     if (existing) {
       setDaySettings({
-        // map legacy timeSlots to new slots array if needed
         slots: existing.slots || (existing.timeSlots || []).map(t => ({
           time: t,
           purposes: existing.purposes || [],
@@ -95,45 +98,52 @@ export default function AdminAvailability() {
       await fetchData();
       setIsModalOpen(false);
     } catch (error) {
-      alert("儲存失敗: " + error.message);
+      setAlertModal({ isOpen: true, message: "儲存失敗: " + error.message });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveSlot = () => {
-    if (slotForm.purposes.length === 0) {
-      alert("請至少選擇一個預約目的");
+  const addOrUpdateSlot = () => {
+    if (!slotForm.hour || !slotForm.minute || slotForm.purposes.length === 0) {
+      setAlertModal({ isOpen: true, message: "請完整填寫時間與預約目的" });
       return;
     }
     
-    // Convert 12hr to 24hr string
-    let h = parseInt(slotForm.hour);
-    if (slotForm.ampm === 'PM' && h !== 12) h += 12;
-    if (slotForm.ampm === 'AM' && h === 12) h = 0;
-    const timeStr = `${h.toString().padStart(2, '0')}:${slotForm.minute}`;
+    // Check if purposes in dict, if not add them
+    slotForm.purposes.forEach(async p => {
+      if (!purposesDict.includes(p)) {
+        const newDict = [...purposesDict, p];
+        await saveDictionary('purposes', newDict);
+        setPurposesDict(newDict);
+      }
+    });
 
+    let h = parseInt(slotForm.hour);
+    if (slotForm.ampm === 'PM' && h < 12) h += 12;
+    if (slotForm.ampm === 'AM' && h === 12) h = 0;
+    
+    const timeStr = `${h.toString().padStart(2, '0')}:${slotForm.minute}`;
+    
     const newSlot = {
       time: timeStr,
       purposes: slotForm.purposes,
       maxCapacity: slotForm.maxCapacity
     };
 
-    let newSlots = [...daySettings.slots];
+    const newSlots = [...daySettings.slots];
+    
     if (editingSlotIndex >= 0) {
       newSlots[editingSlotIndex] = newSlot;
     } else {
-      // Check if time already exists
       if (newSlots.some(s => s.time === timeStr)) {
-        alert("該時段已存在");
+        setAlertModal({ isOpen: true, message: "該時間時段已經存在！" });
         return;
       }
       newSlots.push(newSlot);
     }
-    
-    // Sort slots by time
+
     newSlots.sort((a, b) => a.time.localeCompare(b.time));
-    
     setDaySettings({ ...daySettings, slots: newSlots });
     resetSlotForm();
   };
@@ -143,9 +153,12 @@ export default function AdminAvailability() {
     const [hStr, mStr] = slot.time.split(':');
     let h = parseInt(hStr);
     let ampm = 'AM';
-    if (h >= 12) { ampm = 'PM'; if (h > 12) h -= 12; }
-    if (h === 0) h = 12;
-
+    if (h >= 12) {
+      ampm = 'PM';
+      if (h > 12) h -= 12;
+    } else if (h === 0) {
+      h = 12;
+    }
     setSlotForm({
       ampm,
       hour: h.toString(),
@@ -163,16 +176,21 @@ export default function AdminAvailability() {
     // Check for existing reservations
     const hasReservation = reservations.some(r => r.date === selectedDate && r.time === slot.time);
     if (hasReservation) {
-      alert("該時段已有客戶預約，無法刪除！");
+      setAlertModal({ isOpen: true, message: "該時段已有客戶預約，無法刪除！" });
       return;
     }
     
-    if (window.confirm(`確定要刪除 ${slot.time} 時段嗎？`)) {
-      const newSlots = [...daySettings.slots];
-      newSlots.splice(index, 1);
-      setDaySettings({ ...daySettings, slots: newSlots });
-      if (editingSlotIndex === index) resetSlotForm();
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: `確定要刪除 ${slot.time} 時段嗎？`,
+      onConfirm: () => {
+        const newSlots = [...daySettings.slots];
+        newSlots.splice(index, 1);
+        setDaySettings({ ...daySettings, slots: newSlots });
+        if (editingSlotIndex === index) resetSlotForm();
+        setConfirmModal({ isOpen: false, message: '', onConfirm: null });
+      }
+    });
   };
 
   const togglePurpose = (purpose) => {
@@ -193,11 +211,16 @@ export default function AdminAvailability() {
     }
   };
   const removeDictWord = async (word) => {
-    if (window.confirm(`確定要從辭庫刪除「${word}」嗎？`)) {
-      const newDict = purposesDict.filter(w => w !== word);
-      await saveDictionary('purposes', newDict);
-      setPurposesDict(newDict);
-    }
+    setConfirmModal({
+      isOpen: true,
+      message: `確定要從辭庫刪除「${word}」嗎？`,
+      onConfirm: async () => {
+        const newDict = purposesDict.filter(w => w !== word);
+        await saveDictionary('purposes', newDict);
+        setPurposesDict(newDict);
+        setConfirmModal({ isOpen: false, message: '', onConfirm: null });
+      }
+    });
   };
 
   return (
@@ -292,7 +315,7 @@ export default function AdminAvailability() {
 
       {/* Date Settings Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
               <h2 className="text-xl font-bold text-slate-800">
@@ -303,162 +326,147 @@ export default function AdminAvailability() {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto flex-1 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 fade-in duration-300">
+            <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-6">
+              
+              {/* Left Column: Form */}
+              <div className="flex-1 space-y-5">
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <h3 className="font-bold text-slate-700 mb-3 flex items-center">
+                    <Clock className="w-4 h-4 mr-2 text-green-500" />
+                    {editingSlotIndex >= 0 ? '編輯時段' : '新增時段'}
+                  </h3>
                   
-                  {/* Left Column: Slot Form (Swapped to Left) */}
-                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                    <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center text-green-700">
-                      {editingSlotIndex >= 0 ? '✏️ 編輯時段' : '✨ 新增時段'}
-                    </h3>
-                    
-                    <div className="space-y-5">
-                      {/* Time Pickers */}
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 block mb-1">選擇時間</label>
-                        <div className="flex space-x-2">
-                          <select 
-                            value={slotForm.ampm} onChange={e => setSlotForm({...slotForm, ampm: e.target.value})}
-                            className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
-                          >
-                            <option value="AM">上午</option>
-                            <option value="PM">下午</option>
-                          </select>
-                          <select 
-                            value={slotForm.hour} onChange={e => setSlotForm({...slotForm, hour: e.target.value})}
-                            className="flex-1 p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
-                          >
-                            {Array.from({length: 12}, (_, i) => i + 1).map(h => (
-                              <option key={h} value={h.toString()}>{h.toString().padStart(2, '0')} 點</option>
-                            ))}
-                          </select>
-                          <select 
-                            value={slotForm.minute} onChange={e => setSlotForm({...slotForm, minute: e.target.value})}
-                            className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
-                          >
-                            <option value="00">00 分</option>
-                            <option value="30">30 分</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Purposes (from Dict) */}
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 block mb-2">提供項目 (多選)</label>
-                        {purposesDict.length === 0 ? (
-                          <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">請先至右上角管理常用辭庫新增項目</div>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {purposesDict.map(p => {
-                              const selected = slotForm.purposes.includes(p);
-                              return (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  onClick={() => togglePurpose(p)}
-                                  className={cn(
-                                    "px-3 py-1.5 rounded-lg text-sm font-medium transition-all border",
-                                    selected ? "bg-emerald-500 text-white border-emerald-500 shadow-sm shadow-emerald-500/20" : "bg-white text-slate-600 border-slate-200 hover:border-emerald-500"
-                                  )}
-                                >
-                                  {p}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Capacity */}
-                      <div>
-                        <label className="text-xs font-semibold text-slate-500 block mb-1">人數上限 (預設無限制)</label>
-                        <select 
-                          value={slotForm.maxCapacity} 
-                          onChange={e => setSlotForm({...slotForm, maxCapacity: parseInt(e.target.value)})}
-                          className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
-                        >
-                          <option value={-1}>不限定</option>
-                          <option value={1}>1 人</option>
-                          <option value={2}>2 人</option>
-                          <option value={3}>3 人</option>
-                          <option value={4}>4 人</option>
-                          <option value={5}>5 人</option>
-                          <option value={10}>10 人</option>
-                        </select>
-                      </div>
-
-                      <div className="flex space-x-2 pt-2">
-                        {editingSlotIndex >= 0 && (
-                          <button onClick={resetSlotForm} className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors">
-                            取消
-                          </button>
-                        )}
-                        <button 
-                          onClick={handleSaveSlot}
-                          className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg font-medium transition-colors shadow-sm"
-                        >
-                          {editingSlotIndex >= 0 ? '儲存變更' : '加入時段'}
-                        </button>
-                      </div>
-
-                    </div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <select value={slotForm.ampm} onChange={e => setSlotForm({...slotForm, ampm: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white">
+                      <option value="AM">上午</option>
+                      <option value="PM">下午</option>
+                    </select>
+                    <select value={slotForm.hour} onChange={e => setSlotForm({...slotForm, hour: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white min-w-[60px]">
+                      {Array.from({length: 12}, (_, i) => i === 0 ? 12 : i).map(h => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                    <span>:</span>
+                    <select value={slotForm.minute} onChange={e => setSlotForm({...slotForm, minute: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white min-w-[60px]">
+                      <option value="00">00</option>
+                      <option value="30">30</option>
+                    </select>
                   </div>
-                  
-                  {/* Right Column: Created Slots (Swapped to Right) */}
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
-                      <Clock className="w-4 h-4 mr-2" /> 已建立時段
-                    </h3>
-                    <div className="space-y-3">
-                      {daySettings.slots.length === 0 && (
-                        <div className="p-4 bg-slate-50 rounded-xl text-slate-400 text-sm text-center border border-slate-100">
-                          尚未新增任何時段
-                        </div>
-                      )}
-                      {daySettings.slots.map((slot, idx) => (
-                        <div 
-                          key={slot.time}
-                          onClick={() => editSlot(idx)}
+
+                  <div className="mb-4">
+                    <label className="text-sm font-bold text-slate-700 block mb-2">提供預約項目 (可複選)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {purposesDict.map(p => (
+                        <button 
+                          key={p} type="button"
+                          onClick={() => togglePurpose(p)}
                           className={cn(
-                            "p-3 rounded-xl border transition-all cursor-pointer relative group",
-                            editingSlotIndex === idx ? "bg-green-50 border-green-400 shadow-sm" : "bg-white border-slate-200 hover:border-green-300 hover:shadow-md"
+                            "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+                            slotForm.purposes.includes(p) ? "bg-green-100 text-green-700 border-green-200" : "bg-white text-slate-600 border-slate-200 hover:border-green-300"
                           )}
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <span className="font-bold text-lg text-slate-800">{slot.time}</span>
-                            <button 
-                              onClick={(e) => deleteSlot(idx, e)}
-                              className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {slot.purposes.map(p => (
-                              <span key={p} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{p}</span>
-                            ))}
-                          </div>
-                          <div className="text-xs text-slate-500 flex items-center">
-                            <Users className="w-3 h-3 mr-1" />
-                            上限：{slot.maxCapacity === -1 ? '無限制' : `${slot.maxCapacity} 人`}
-                          </div>
-                        </div>
+                          {p}
+                        </button>
                       ))}
+                      {purposesDict.length === 0 && <span className="text-xs text-slate-400">請先建立常用辭庫</span>}
                     </div>
                   </div>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-bold text-slate-700 block mb-2">可預約人數上限</label>
+                    <select 
+                      value={slotForm.maxCapacity} 
+                      onChange={e => setSlotForm({...slotForm, maxCapacity: parseInt(e.target.value)})}
+                      className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
+                    >
+                      <option value={-1}>不限定 (無上限)</option>
+                      {Array.from({length: 20}, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>{num} 人</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={addOrUpdateSlot}
+                      className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-xl transition-colors font-medium text-sm flex items-center justify-center shadow-sm"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      {editingSlotIndex >= 0 ? '更新此時段' : '加入時段'}
+                    </button>
+                    {editingSlotIndex >= 0 && (
+                      <button 
+                        onClick={resetSlotForm}
+                        className="px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 rounded-xl transition-colors font-medium text-sm"
+                      >
+                        取消
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Right Column: Existing Slots */}
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-700 mb-3 flex items-center">
+                  <CheckCircleIcon className="w-4 h-4 mr-2 text-blue-500" />
+                  已建立的時段
+                </h3>
+                <div className="space-y-3">
+                  {daySettings.slots.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+                      <p className="text-sm">尚無時段，請在左側新增</p>
+                    </div>
+                  ) : (
+                    daySettings.slots.map((s, idx) => {
+                      // Calculate slot reservations
+                      const slotRes = reservations.filter(r => r.date === selectedDate && r.time === s.time);
+                      const confirmedCount = slotRes.filter(r => r.status === 'confirmed').length;
+                      const totalCount = slotRes.length;
+
+                      const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-rose-500', 'bg-amber-500', 'bg-indigo-500', 'bg-teal-500'];
+                      const colorClass = colors[idx % colors.length];
+                      
+                      return (
+                        <div 
+                          key={s.time}
+                          onClick={() => editSlot(idx)}
+                          className={`relative flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 text-white cursor-pointer transition-transform hover:-translate-y-0.5 shadow-sm ${colorClass}`}
+                        >
+                          <div>
+                            <div className="font-bold text-lg flex items-center">
+                              {s.time}
+                              {s.maxCapacity > 0 && <span className="ml-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">上限 {s.maxCapacity}人</span>}
+                            </div>
+                            <div className="text-xs text-white/80 mt-1 truncate max-w-[150px]">
+                              {s.purposes.join(', ')}
+                            </div>
+                            {/* Reservation counts display */}
+                            <div className="text-[10px] mt-1 bg-white/20 inline-block px-1.5 py-0.5 rounded">
+                              已預約: {totalCount} 人 (已確認: {confirmedCount} 人)
+                            </div>
+                          </div>
+                          <button 
+                            onClick={(e) => deleteSlot(idx, e)}
+                            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors absolute right-3 top-3"
+                          >
+                            <Trash2 className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+
             </div>
             
-            <div className="p-4 border-t border-slate-100 flex space-x-3 bg-slate-50 shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-200 rounded-xl transition-colors">
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex space-x-3 shrink-0">
+              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors">
                 取消
               </button>
-              <button 
-                onClick={handleSaveDay} 
-                disabled={saving} 
-                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '完成並儲存'}
+              <button onClick={handleSaveDay} disabled={saving} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '儲存當日設定'}
               </button>
             </div>
           </div>
@@ -468,54 +476,104 @@ export default function AdminAvailability() {
       {/* Dictionary Manager Modal */}
       {showDictManager && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
               <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2 text-slate-600" />
+                <BookOpen className="w-5 h-5 mr-2 text-slate-500" />
                 常用辭庫管理
               </h2>
               <button onClick={() => setShowDictManager(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
             <div className="p-6">
-              <p className="text-sm text-slate-500 mb-4">建立您的服務項目（例如：剪髮、洗髮、會議），方便在設定時段時快速點選。</p>
-              
               <div className="flex space-x-2 mb-6">
                 <input 
                   type="text" 
                   value={newDictWord}
                   onChange={e => setNewDictWord(e.target.value)}
-                  placeholder="輸入新項目"
-                  className="flex-1 p-2.5 border border-slate-200 rounded-xl outline-none focus:border-green-500 bg-slate-50"
-                  onKeyPress={e => e.key === 'Enter' && addDictWord()}
+                  placeholder="輸入新的服務項目..."
+                  className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-slate-500 focus:ring-2 focus:ring-slate-200 outline-none transition-colors"
                 />
-                <button onClick={addDictWord} className="bg-green-500 hover:bg-green-600 text-white px-4 rounded-xl transition-colors shadow-sm">
+                <button onClick={addDictWord} className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl transition-colors font-medium whitespace-nowrap">
                   新增
                 </button>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {purposesDict.length === 0 && <p className="text-center text-slate-400 py-4">辭庫目前為空</p>}
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
                 {purposesDict.map(word => (
-                  <div key={word} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <div key={word} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-3 rounded-xl hover:border-slate-200 transition-colors">
                     <span className="font-medium text-slate-700">{word}</span>
-                    <button onClick={() => removeDictWord(word)} className="text-slate-400 hover:text-red-500 p-1 rounded transition-colors">
+                    <button onClick={() => removeDictWord(word)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
+                {purposesDict.length === 0 && <div className="text-center text-slate-400 py-4">目前沒有任何辭庫資料</div>}
               </div>
             </div>
-            <div className="p-4 border-t border-slate-100 bg-slate-50">
-              <button onClick={() => setShowDictManager(false)} className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-colors">
-                關閉
+          </div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      {alertModal.isOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">提示</h3>
+            <p className="text-slate-500 mb-6 font-medium">{alertModal.message}</p>
+            <button onClick={() => setAlertModal({ isOpen: false, message: '' })} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-colors">
+              確定
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">確認執行</h3>
+            <p className="text-slate-500 mb-6 font-medium">{confirmModal.message}</p>
+            <div className="flex space-x-3">
+              <button onClick={() => setConfirmModal({ isOpen: false, message: '', onConfirm: null })} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+                取消
+              </button>
+              <button onClick={confirmModal.onConfirm} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors">
+                確定執行
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
+  );
+}
+
+// Inline Icon component
+function CheckCircleIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
   );
 }

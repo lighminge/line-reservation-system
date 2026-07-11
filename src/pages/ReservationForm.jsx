@@ -112,7 +112,12 @@ export default function ReservationForm() {
   const today = startOfDay(new Date());
 
   // Determine available slots for the selected date
-  const availableSlots = formData.date && availability[formData.date] ? (availability[formData.date].slots || []) : [];
+  const selectedDaySettings = availability[formData.date];
+  const availableSlots = selectedDaySettings?.slots || [];
+  
+  const userReservationsToday = reservations.filter(
+    r => r.userId === profile?.userId && r.date === formData.date
+  );
   
   // Calculate remaining capacity for a slot
   const getSlotCapacityInfo = (timeStr, maxCapacity) => {
@@ -273,30 +278,61 @@ export default function ReservationForm() {
               
               {availableSlots.length > 0 ? (
                 <div className="space-y-6">
+                  
+                  {/* User's existing reservations today */}
+                  {userReservationsToday.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-4">
+                      <div className="text-sm font-bold text-blue-800 mb-2">💡 您本日已預約：</div>
+                      <div className="flex flex-wrap gap-2">
+                        {userReservationsToday.map(r => (
+                          <div key={r.id} className="text-xs bg-white text-blue-700 px-2 py-1 rounded shadow-sm font-medium border border-blue-100 flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {r.time} ({r.purpose}) - {r.status === 'confirmed' ? '已確認' : '待審核'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Slots Grid */}
                   <div className="grid grid-cols-2 gap-3">
                     {availableSlots.map(slot => {
                       const { isFull, text } = getSlotCapacityInfo(slot.time, slot.maxCapacity);
                       const isSelected = formData.time === slot.time;
+                      const hasBooked = userReservationsToday.some(r => r.time === slot.time);
+                      const isDisabled = isFull || hasBooked;
+
+                      let statusText = text;
+                      let statusClass = "bg-slate-100 text-slate-500";
+                      
+                      if (hasBooked) {
+                        statusText = "已預約";
+                        statusClass = "bg-blue-100 text-blue-600";
+                      } else if (isFull) {
+                        statusClass = "bg-red-50 text-red-500";
+                      } else if (isSelected) {
+                        statusClass = "bg-green-100 text-green-700";
+                      }
+
                       return (
                         <button
                           key={slot.time}
                           type="button"
-                          disabled={isFull}
+                          disabled={isDisabled}
                           onClick={() => {
                             setFormData({ ...formData, time: slot.time, purpose: '' });
                             setSelectedSlot(slot);
                           }}
                           className={cn(
-                            "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all",
-                            isSelected ? "border-green-500 bg-green-50 shadow-sm" : isFull ? "border-slate-100 bg-slate-50 opacity-60 cursor-not-allowed" : "border-slate-200 bg-white hover:border-green-300"
+                            "flex flex-col items-center justify-center py-4 rounded-2xl border-2 transition-all relative overflow-hidden",
+                            isSelected ? "border-green-500 bg-green-50 shadow-sm" : isDisabled ? "border-slate-100 bg-slate-50 opacity-70 cursor-not-allowed" : "border-slate-200 bg-white hover:border-green-300"
                           )}
                         >
-                          <span className={cn("text-xl font-bold mb-1", isSelected ? "text-green-600" : isFull ? "text-slate-400" : "text-slate-700")}>
+                          <span className={cn("text-xl font-bold mb-1", isSelected ? "text-green-600" : isDisabled ? "text-slate-400" : "text-slate-700")}>
                             {slot.time}
                           </span>
-                          <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", isSelected ? "bg-green-100 text-green-700" : isFull ? "bg-red-50 text-red-500" : "bg-slate-100 text-slate-500")}>
-                            {text}
+                          <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", statusClass)}>
+                            {statusText}
                           </span>
                         </button>
                       );
