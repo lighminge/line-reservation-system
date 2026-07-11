@@ -199,11 +199,19 @@ export default async function handler(req, res) {
       }
     };
 
+    let finalImageUrl = lineTemplate.imageUrl;
+    if (finalImageUrl && finalImageUrl.startsWith('internal://')) {
+      const docId = finalImageUrl.replace('internal://', '');
+      const protocol = req.headers['x-forwarded-proto'] || 'https';
+      const host = req.headers.host;
+      finalImageUrl = `${protocol}://${host}/api/image?id=${docId}`;
+    }
+
     // If an image URL is provided, add hero section
-    if (lineTemplate.imageUrl && lineTemplate.imageUrl.startsWith('http')) {
+    if (finalImageUrl && finalImageUrl.startsWith('http')) {
       flexContents.hero = {
         type: "image",
-        url: lineTemplate.imageUrl,
+        url: finalImageUrl,
         size: "full",
         aspectRatio: "1.51:1",
         aspectMode: "cover"

@@ -8,25 +8,78 @@ import { db, storage } from "../firebaseConfig";
 export const uploadImage = async (file, path) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
-      reject(new Error("上傳超時：請確認 Firebase Storage 的 Rules 已設為允許讀寫 (allow read, write: if true;)，或檢查網路連線。"));
+      reject(new Error("圖片處理超時，請檢查網路連線。"));
     }, 10000);
 
-    const storageRef = ref(storage, path);
-    uploadBytes(storageRef, file)
-      .then(snapshot => getDownloadURL(snapshot.ref))
-      .then(url => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          const max = 800; // Compress
+          
+          if (width > max || height > max) {
+            if (width > height) {
+              height = Math.round(height * (max / width));
+              width = max;
+            } else {
+              width = Math.round(width * (max / height));
+              height = max;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const base64Data = canvas.toDataURL("image/jpeg", 0.7);
+          
+          try {
+            const docRef = await addDoc(collection(db, "public_images"), {
+              data: base64Data,
+              createdAt: serverTimestamp()
+            });
+            clearTimeout(timeout);
+            resolve(`internal://${docRef.id}`);
+          } catch(e) {
+            clearTimeout(timeout);
+            reject(new Error("寫入資料庫失敗：" + e.message));
+          }
+        };
+        img.onerror = () => {
+          clearTimeout(timeout);
+          reject(new Error("圖片載入失敗"));
+        };
+      };
+      reader.onerror = () => {
         clearTimeout(timeout);
-        resolve(url);
-      })
-      .catch(error => {
-        clearTimeout(timeout);
-        let errorMsg = error.message;
-        if (errorMsg.includes('unauthorized')) {
-          errorMsg = "權限不足，請至 Firebase Console 開啟 Storage 的讀寫權限。";
-        }
-        reject(new Error(errorMsg));
-      });
+        reject(new Error("檔案讀取失敗"));
+      };
+    } catch (e) {
+      clearTimeout(timeout);
+      reject(e);
+    }
   });
+};
+
+export const resolveImageUrl = async (url) => {
+  if (!url) return '';
+  if (url.startsWith('internal://')) {
+    const docId = url.replace('internal://', '');
+    try {
+      const docSnap = await getDoc(doc(db, "public_images", docId));
+      if (docSnap.exists()) return docSnap.data().data;
+    } catch(e) {
+      console.error("Error resolving image:", e);
+    }
+  }
+  return url;
 };
 
 // Get Line Settings

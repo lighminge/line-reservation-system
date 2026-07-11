@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, UploadCloud, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon } from 'lucide-react';
-import { getMessageTemplates, saveMessageTemplates, uploadImage } from '../../services/db';
+import { getMessageTemplates, saveMessageTemplates, uploadImage, resolveImageUrl } from '../../services/db';
 
 export default function AdminMessages() {
   const [templates, setTemplates] = useState({
@@ -30,8 +30,12 @@ export default function AdminMessages() {
     const data = await getMessageTemplates();
     if (data) {
       setTemplates(data);
-      setClientPreview(data.clientSuccess?.imageUrl || '');
-      setLinePreview(data.lineConfirm?.imageUrl || '');
+      if (data.clientSuccess?.imageUrl) {
+        setClientPreview(await resolveImageUrl(data.clientSuccess.imageUrl));
+      }
+      if (data.lineConfirm?.imageUrl) {
+        setLinePreview(await resolveImageUrl(data.lineConfirm.imageUrl));
+      }
     }
     setLoading(false);
   };
