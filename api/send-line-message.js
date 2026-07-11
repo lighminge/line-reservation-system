@@ -61,9 +61,33 @@ export default async function handler(req, res) {
       imageUrl: ""
     };
 
-    if (templatesSnap.exists() && templatesSnap.data().lineConfirm) {
-      lineTemplate = templatesSnap.data().lineConfirm;
+    if (templatesSnap.exists()) {
+      if (req.body.type === 'submit' && templatesSnap.data().clientSuccess) {
+        lineTemplate = templatesSnap.data().clientSuccess;
+      } else if (templatesSnap.data().lineConfirm) {
+        lineTemplate = templatesSnap.data().lineConfirm;
+      }
     }
+
+    // 2.5 Get user nickname for template variables
+    let nickname = "會員";
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists() && userSnap.data().displayName) {
+      nickname = userSnap.data().displayName;
+    }
+
+    let accountName = "系統";
+    if (settingsSnap.exists() && settingsSnap.data().configs) {
+      const configs = settingsSnap.data().configs;
+      const activeConfig = configs.find(c => c.isActive) || configs[0];
+      if (activeConfig && activeConfig.name) {
+        accountName = activeConfig.name;
+      }
+    }
+
+    let messageText = lineTemplate.text || "您好！我們已經收到您的預約。";
+    messageText = messageText.replace(/{好友的顯示名稱}/g, nickname).replace(/{帳號名稱}/g, accountName);
 
     // 3. Construct the Line push message payload
     const flexContents = {
@@ -75,7 +99,7 @@ export default async function handler(req, res) {
         contents: [
           {
             type: "text",
-            text: lineTemplate.text || "您好！我們已經收到您的預約。",
+            text: messageText,
             wrap: true,
             size: "sm",
             weight: "regular"

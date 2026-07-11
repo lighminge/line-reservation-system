@@ -116,6 +116,20 @@ export default function ReservationForm() {
       setSubmitSuccess(true);
       const resData = await getAdminReservations();
       setReservations(resData);
+      
+      // Trigger LINE push message for successful submission
+      await fetch('/api/send-line-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: profile.userId,
+          reservationId: 'NEW',
+          date: formData.date,
+          time: formData.time,
+          purpose: formData.purpose,
+          type: 'submit'
+        }),
+      }).catch(e => console.warn("Push API maybe not available:", e));
     } catch (err) {
       alert("預約失敗：" + err.message);
     } finally {
@@ -212,8 +226,10 @@ export default function ReservationForm() {
   // ALL My reservations
   const allUserReservations = reservations.filter(r => r.userId === profile?.userId && r.status !== 'cancelled');
   
-  // FILTERED My reservations
-  const filteredUserReservations = allUserReservations.filter(r => myResFilter === 'ALL' || r.purpose === myResFilter);
+  // FILTERED and SORTED My reservations
+  const filteredUserReservations = allUserReservations
+    .filter(r => myResFilter === 'ALL' || r.purpose === myResFilter)
+    .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
   
   // Today's reservations for the time slot selection prevention
   const userReservationsToday = allUserReservations.filter(r => r.date === formData.date);

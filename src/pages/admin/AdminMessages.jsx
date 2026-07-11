@@ -127,7 +127,10 @@ export default function AdminMessages() {
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">內文說明</label>
+              <label className="text-sm font-semibold text-slate-700 block mb-2">
+                內文說明
+                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+              </label>
               <textarea 
                 value={templates.clientSuccess.text}
                 onChange={e => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text: e.target.value}})}
@@ -153,6 +156,7 @@ export default function AdminMessages() {
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
                     <span className="text-sm text-slate-500 group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
+                    <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
                   </>
                 )}
               </div>
@@ -187,7 +191,10 @@ export default function AdminMessages() {
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">內文說明 (下方會自動附上時間等資訊)</label>
+              <label className="text-sm font-semibold text-slate-700 block mb-2">
+                內文說明 (下方會自動附上時間等資訊)
+                <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+              </label>
               <textarea 
                 value={templates.lineConfirm.text}
                 onChange={e => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text: e.target.value}})}
@@ -213,6 +220,7 @@ export default function AdminMessages() {
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
                     <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳卡片橫幅圖片 (比例建議 1.51:1)</span>
+                    <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
                   </>
                 )}
               </div>
