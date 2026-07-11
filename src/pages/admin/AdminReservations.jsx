@@ -421,10 +421,12 @@ export default function AdminReservations() {
                   <div className="flex flex-col gap-1 w-full mt-1">
                     {blocks.length > 0 ? (
                       blocks.map(b => (
-                        <div key={b.id} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm font-medium truncate flex items-center justify-center ${b.color}`}>
-                          {viewMode === 'USER' && b.status === 'confirmed' && <CheckCircle2 className="w-3.5 h-3.5 mr-1 shrink-0" />}
-                          {viewMode === 'USER' && b.status === 'cancelled' && <XCircle className="w-3.5 h-3.5 mr-1 shrink-0" />}
-                          <span className="truncate">{b.text}</span>
+                        <div key={b.id} className="flex items-start gap-1 w-full mt-1">
+                          {viewMode === 'USER' && b.status === 'confirmed' && <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
+                          {viewMode === 'USER' && b.status === 'cancelled' && <XCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />}
+                          <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm font-medium line-clamp-2 leading-tight ${b.color}`}>
+                            {b.text}
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -595,6 +597,9 @@ export default function AdminReservations() {
                                   
                                   <div className="flex-1 min-w-0">
                                     <h5 className="font-bold text-slate-800 text-lg truncate">{u.displayName || '未知用戶'}</h5>
+                                    <div className="text-xs text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded-md inline-block mt-1 mb-2 w-fit">
+                                      來自那個 Line：{u.lineGroup || '未綁定群組'}
+                                    </div>
                                     <div className="text-xs text-slate-500 font-medium mb-2 flex flex-col gap-1">
                                       <span>本日總計：<span className="text-slate-800 font-bold">{totalResToday}</span> 筆</span>
                                       <span>本項目總計：<span className="text-slate-800 font-bold">{totalResPurpose}</span> 筆</span>
@@ -807,7 +812,7 @@ export default function AdminReservations() {
                                   <div className="flex-1 min-w-0 flex flex-col justify-center">
                                     <h5 className="font-bold text-slate-800 text-lg truncate">{uName}</h5>
                                     <div className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-1 w-fit">
-                                      Line: {u.displayName || '未綁定'}
+                                      來自那個 Line：{u.lineGroup || '未綁定群組'}
                                     </div>
                                   </div>
                                 </div>
