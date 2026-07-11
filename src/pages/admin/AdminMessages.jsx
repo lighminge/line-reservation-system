@@ -81,7 +81,11 @@ export default function AdminMessages() {
       setLineFile(null);
       setMessage({ text: '訊息畫面設定儲存成功！', type: 'success' });
     } catch (error) {
-      setMessage({ text: '儲存失敗: ' + error.message, type: 'error' });
+      let errorMsg = error.message;
+      if (errorMsg.includes('unauthorized')) {
+        errorMsg += " (請檢查 Firebase Storage 的安全性規則是否允許寫入)";
+      }
+      setMessage({ text: '儲存失敗: ' + errorMsg, type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -157,6 +161,7 @@ export default function AdminMessages() {
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
                     <span className="text-sm text-slate-500 group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
                     <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
+                    <span className="text-xs text-slate-400">Line建議長寬比 800x600</span>
                   </>
                 )}
               </div>
@@ -219,7 +224,7 @@ export default function AdminMessages() {
                 ) : (
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
-                    <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳卡片橫幅圖片 (比例建議 1.51:1)</span>
+                    <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳卡片橫幅圖片 (比例建議 1.51:1 或 800x530)</span>
                     <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
                   </>
                 )}
