@@ -3,7 +3,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
-import { Solar } from 'lunar-javascript';
+import { getTaiwanHolidayInfo } from '../../utils/calendar';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
 
@@ -441,25 +441,7 @@ export default function AdminReservations() {
               const dayOfWeek = date.getDay();
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-              // Lunar & Holidays
-              const solar = Solar.fromDate(date);
-              const lunar = solar.getLunar();
-              const holidays = solar.getFestivals();
-              const lunarHolidays = lunar.getFestivals();
-              const jieQi = lunar.getJieQi();
-
-              // Prioritize: lunar holidays -> solar holidays -> jieQi
-              let holidayText = '';
-              let isSpecialDay = false;
-              if (lunarHolidays.length > 0) {
-                holidayText = lunarHolidays[0];
-                isSpecialDay = true;
-              } else if (holidays.length > 0) {
-                holidayText = holidays[0];
-                isSpecialDay = true;
-              } else if (jieQi) {
-                holidayText = jieQi;
-              }
+              const { holidayText, isSpecialDay } = getTaiwanHolidayInfo(date);
 
               return (
                 <div

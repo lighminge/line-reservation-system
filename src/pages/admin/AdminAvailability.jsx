@@ -3,7 +3,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations } from '../../services/db';
-import { Solar } from 'lunar-javascript';
+import { getTaiwanHolidayInfo } from '../../utils/calendar';
 
 export default function AdminAvailability() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -508,25 +508,7 @@ export default function AdminAvailability() {
               const dayOfWeek = date.getDay();
               const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-              // Lunar & Holidays
-              const solar = Solar.fromDate(date);
-              const lunar = solar.getLunar();
-              const holidays = solar.getFestivals();
-              const lunarHolidays = lunar.getFestivals();
-              const jieQi = lunar.getJieQi();
-
-              // Prioritize: lunar holidays -> solar holidays -> jieQi
-              let holidayText = '';
-              let isSpecialDay = false;
-              if (lunarHolidays.length > 0) {
-                holidayText = lunarHolidays[0];
-                isSpecialDay = true;
-              } else if (holidays.length > 0) {
-                holidayText = holidays[0];
-                isSpecialDay = true;
-              } else if (jieQi) {
-                holidayText = jieQi;
-              }
+              const { holidayText, isSpecialDay } = getTaiwanHolidayInfo(date);
 
               return (
                 <div
