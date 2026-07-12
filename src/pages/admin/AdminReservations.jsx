@@ -590,6 +590,13 @@ export default function AdminReservations() {
                     
                     if (userIds.length === 0) return null;
 
+                    // Sort userIds by their earliest reservation time on this day
+                    userIds.sort((a, b) => {
+                      const timeA = pendingTree[purpose][dateStr][a].sort((x, y) => x.time.localeCompare(y.time))[0].time;
+                      const timeB = pendingTree[purpose][dateStr][b].sort((x, y) => x.time.localeCompare(y.time))[0].time;
+                      return timeA.localeCompare(timeB);
+                    });
+
                     return (
                       <div key={dateStr} className="space-y-4">
                         <div className="bg-slate-200/50 px-4 py-3 rounded-xl border border-slate-200">

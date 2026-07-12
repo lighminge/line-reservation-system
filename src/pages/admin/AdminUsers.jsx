@@ -41,6 +41,9 @@ export default function AdminUsers() {
   const [messageSending, setMessageSending] = useState(false);
   const [sendResult, setSendResult] = useState({ text: '', type: '' });
 
+  // Delete Dict Item Modal state
+  const [dictDeleteModal, setDictDeleteModal] = useState({ isOpen: false, type: '', value: '' });
+
   // Form state
   const [formData, setFormData] = useState({
     displayName: '',
@@ -144,20 +147,28 @@ export default function AdminUsers() {
   };
 
   // Delete Global Dict Items
-  const deleteGlobalTag = async (tagToDelete) => {
-    if (window.confirm(`確定要從推薦清單中永久刪除標籤「${tagToDelete}」嗎？`)) {
-      const newTags = globalTags.filter(t => t !== tagToDelete);
-      await saveDictTags(newTags);
-      setGlobalTags(newTags);
-    }
+  const deleteGlobalTag = (tagToDelete) => {
+    setDictDeleteModal({ isOpen: true, type: 'tag', value: tagToDelete });
   };
 
-  const deleteGlobalInterest = async (interestToDelete) => {
-    if (window.confirm(`確定要從推薦清單中永久刪除興趣「${interestToDelete}」嗎？`)) {
-      const newInterests = globalInterests.filter(i => i !== interestToDelete);
+  const deleteGlobalInterest = (interestToDelete) => {
+    setDictDeleteModal({ isOpen: true, type: 'interest', value: interestToDelete });
+  };
+
+  const confirmDictDelete = async () => {
+    const { type, value } = dictDeleteModal;
+    setIsDeleting(true);
+    if (type === 'tag') {
+      const newTags = globalTags.filter(t => t !== value);
+      await saveDictTags(newTags);
+      setGlobalTags(newTags);
+    } else if (type === 'interest') {
+      const newInterests = globalInterests.filter(i => i !== value);
       await saveDictInterests(newInterests);
       setGlobalInterests(newInterests);
     }
+    setIsDeleting(false);
+    setDictDeleteModal({ isOpen: false, type: '', value: '' });
   };
 
   const loadTemplate = async () => {
@@ -907,13 +918,34 @@ export default function AdminUsers() {
             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除用戶</h3>
             <p className="text-slate-500 mb-6 font-medium">刪除後將無法復原，您確定要刪除這筆用戶資料嗎？</p>
             <div className="flex space-x-3">
               <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
                 取消
               </button>
               <button onClick={confirmDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
+                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定刪除'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dict Item Delete Confirmation Modal */}
+      {dictDeleteModal.isOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除{dictDeleteModal.type === 'tag' ? '標籤' : '興趣'}</h3>
+            <p className="text-slate-500 mb-6 font-medium">您確定要從推薦清單中永久刪除「{dictDeleteModal.value}」嗎？</p>
+            <div className="flex space-x-3">
+              <button onClick={() => setDictDeleteModal({ isOpen: false, type: '', value: '' })} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+                取消
+              </button>
+              <button onClick={confirmDictDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定刪除'}
               </button>
             </div>

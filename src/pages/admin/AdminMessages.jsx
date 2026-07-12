@@ -164,8 +164,6 @@ export default function AdminMessages() {
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
                     <span className="text-sm text-slate-500 group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
-                    <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
-                    <p className="text-xs text-slate-400 mt-1">※此圖片將作為 LINE 推播訊息的背景圖，文字會覆疊其上。建議長寬比 4:5 (例如 800x1000)，或直式照片效果最佳。</p>
                   </>
                 )}
               </div>
@@ -237,8 +235,6 @@ export default function AdminMessages() {
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
                     <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳圖片</span>
-                    <span className="text-xs text-slate-400 mt-1">支援 JPG, PNG 格式 (最大 2MB)</span>
-                    <p className="text-xs text-slate-400 mt-1">※此圖片將作為管理員確認後，發送給客戶的 LINE 推播訊息背景圖。建議長寬比 4:5 (例如 800x1000) 效果最佳。</p>
                   </>
                 )}
               </div>
