@@ -348,6 +348,20 @@ export const getAvailability = async (monthStr) => {
   }
 };
 
+export const getAllAvailability = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "availability"));
+    const data = {};
+    querySnapshot.forEach((doc) => {
+      data[doc.data().date] = { id: doc.id, ...doc.data() };
+    });
+    return data;
+  } catch (error) {
+    console.error("Error fetching all availability:", error);
+    return {};
+  }
+};
+
 export const saveAvailability = async (availabilityId, data) => {
   try {
     if (availabilityId) {

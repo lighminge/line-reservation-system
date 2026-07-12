@@ -508,19 +508,23 @@ export default function AdminUsers() {
                   <td colSpan="6" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
-                displayedUsers.map((user) => {
+                displayedUsers.map((user, idx) => {
                   const uZodiac = user.birthday ? getZodiac(user.birthday.split('-')[1], user.birthday.split('-')[2]) : null;
                   const uInterests = getDisplayInterests(user);
+                  const globalIdx = (safeCurrentPage - 1) * pageSize + idx + 1;
                   return (
                     <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="p-4">
-                        {user.pictureUrl ? (
-                          <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
-                            <User className="w-5 h-5" />
-                          </div>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <span className="text-slate-400 font-medium w-6 text-right shrink-0">{globalIdx}.</span>
+                          {user.pictureUrl ? (
+                            <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                              <User className="w-5 h-5" />
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>

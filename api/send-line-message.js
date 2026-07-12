@@ -106,8 +106,8 @@ export default async function handler(req, res) {
         layout: "baseline",
         spacing: "sm",
         contents: [
-          { type: "text", text: "日期", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
-          { type: "text", text: date, wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+          { type: "text", text: "日期", color: "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: date, wrap: true, color: "#111111", weight: "bold", size: "sm", flex: 3 }
         ]
       },
       {
@@ -115,8 +115,8 @@ export default async function handler(req, res) {
         layout: "baseline",
         spacing: "sm",
         contents: [
-          { type: "text", text: "時間", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
-          { type: "text", text: time, wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+          { type: "text", text: "時間", color: "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: time, wrap: true, color: "#111111", weight: "bold", size: "sm", flex: 3 }
         ]
       },
       {
@@ -124,8 +124,8 @@ export default async function handler(req, res) {
         layout: "baseline",
         spacing: "sm",
         contents: [
-          { type: "text", text: "項目", color: finalImageUrl ? "#ffffff99" : "#aaaaaa", size: "sm", flex: 1 },
-          { type: "text", text: req.body.purpose || "一般預約", wrap: true, color: finalImageUrl ? "#ffffff" : "#666666", size: "sm", flex: 3 }
+          { type: "text", text: "項目", color: "#aaaaaa", size: "sm", flex: 1 },
+          { type: "text", text: req.body.purpose || "一般預約", wrap: true, color: "#111111", weight: "bold", size: "sm", flex: 3 }
         ]
       }
     ];
@@ -133,39 +133,32 @@ export default async function handler(req, res) {
     let flexContents = {};
 
     if (finalImageUrl && finalImageUrl.startsWith('http')) {
-      // Background Image Overlay Design
+      // Hero Image Design
       flexContents = {
         type: "bubble",
+        hero: {
+          type: "image",
+          url: finalImageUrl,
+          size: "full",
+          aspectRatio: "20:13",
+          aspectMode: "cover"
+        },
         body: {
           type: "box",
           layout: "vertical",
-          paddingAll: "0px",
+          spacing: "md",
           contents: [
-            {
-              type: "image",
-              url: finalImageUrl,
-              size: "full",
-              aspectMode: "cover",
-              aspectRatio: "4:5",
-              gravity: "center"
-            },
-            {
-              type: "box",
-              layout: "vertical",
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              backgroundColor: "#000000B3",
-              paddingAll: "xl",
-              justifyContent: "center",
-              contents: [
-                { type: "text", text: titleText, weight: "bold", size: "xl", color: "#ffffff", wrap: true },
-                { type: "separator", margin: "md", color: "#ffffff44" },
-                { type: "text", text: messageText, wrap: true, size: "sm", color: "#e0e0e0", margin: "md" },
-                { type: "separator", margin: "lg", color: "#ffffff44" },
-                { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
-              ]
-            }
+            { type: "text", text: titleText, weight: "bold", size: "xl", color: "#111111" },
+            { type: "text", text: messageText, wrap: true, size: "sm", weight: "bold", color: "#111111" },
+            { type: "separator", margin: "lg" },
+            { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
+          ]
+        },
+        footer: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            { type: "text", text: "期待您的光臨！", align: "center", color: "#00B900", weight: "bold" }
           ]
         }
       };

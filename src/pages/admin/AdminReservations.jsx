@@ -37,6 +37,22 @@ export default function AdminReservations() {
     fetchData();
   }, [currentMonth]);
 
+  useEffect(() => {
+    if (calendarPurpose !== 'ALL' && reservations.length > 0) {
+      const filtered = reservations.filter(r => r.purpose === calendarPurpose);
+      if (filtered.length > 0) {
+        const earliest = filtered.sort((a, b) => a.date.localeCompare(b.date))[0];
+        // Only parseISO if date string is valid
+        if (earliest.date) {
+          try {
+            const { parseISO } = require('date-fns');
+            setCurrentMonth(parseISO(earliest.date));
+          } catch(e) { console.error(e); }
+        }
+      }
+    }
+  }, [calendarPurpose, reservations]);
+
   const fetchData = async () => {
     setLoading(true);
     
@@ -449,29 +465,29 @@ export default function AdminReservations() {
         </div>
       </div>
 
-      <div className="flex border-b border-slate-200 mb-8 mt-12 bg-white rounded-t-2xl px-4 pt-2 shadow-sm">
+      <div className="flex gap-4 mb-8 mt-12 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all border-b-[3px] flex items-center justify-center gap-2",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-xl border-2",
             activeTab === 'pending' 
-              ? "border-amber-500 text-amber-600 bg-amber-50/50 rounded-t-lg" 
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t-lg"
+              ? "border-amber-400 text-amber-700 bg-amber-50 shadow-sm" 
+              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
           onClick={() => setActiveTab('pending')}
         >
-          <Clock className="w-5 h-5" />
+          <Clock className={cn("w-6 h-6", activeTab === 'pending' ? "text-amber-500" : "text-slate-400")} />
           待審核預約
         </button>
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all border-b-[3px] flex items-center justify-center gap-2",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-xl border-2",
             activeTab === 'confirmed' 
-              ? "border-green-500 text-green-600 bg-green-50/50 rounded-t-lg" 
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-t-lg"
+              ? "border-green-400 text-green-700 bg-green-50 shadow-sm" 
+              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           )}
           onClick={() => setActiveTab('confirmed')}
         >
-          <Check className="w-5 h-5" />
+          <Check strokeWidth={3} className={cn("w-6 h-6", activeTab === 'confirmed' ? "text-green-500" : "text-slate-400")} />
           已核准預約
         </button>
       </div>
@@ -538,6 +554,11 @@ export default function AdminReservations() {
                           sum + Object.values(dates).reduce((count, userRes) => count + userRes.length, 0), 0
                         )
                       } 筆
+                    </span>
+                    <span className="ml-2 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
+                      總人數 {
+                        new Set(Object.values(pendingTree[purpose]).flatMap(dates => Object.keys(dates))).size
+                      } 人
                     </span>
                   </h3>
                   
@@ -755,6 +776,11 @@ export default function AdminReservations() {
                           sum + Object.values(dates).reduce((count, userRes) => count + userRes.length, 0), 0
                         )
                       } 筆
+                    </span>
+                    <span className="ml-2 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
+                      總人數 {
+                        new Set(Object.values(confirmedTree[purpose]).flatMap(dates => Object.keys(dates))).size
+                      } 人
                     </span>
                   </h3>
                   

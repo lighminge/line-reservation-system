@@ -45,6 +45,56 @@ export default function AdminAvailability() {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, message: '', onConfirm: null });
 
   const monthStr = format(currentMonth, 'yyyy-MM');
+  
+  const [purposeStats, setPurposeStats] = useState(null);
+
+  useEffect(() => {
+    if (filterPurpose !== 'ALL') {
+      const computeStats = async () => {
+        try {
+          const { getAllAvailability } = await import('../../services/db');
+          const allData = await getAllAvailability();
+          
+          const dates = Object.keys(allData).sort();
+          let firstDate = null;
+          let daysCount = 0;
+          let slotsCount = 0;
+
+          for (let d of dates) {
+            const slots = allData[d].slots || [];
+            const hasPurpose = slots.some(s => s.purposes.includes(filterPurpose));
+            if (hasPurpose) {
+              if (!firstDate) firstDate = d;
+              daysCount++;
+              slotsCount += slots.filter(s => s.purposes.includes(filterPurpose)).length;
+            }
+          }
+
+          if (firstDate) {
+            setCurrentMonth(parseISO(firstDate));
+          }
+
+          const uniqueUsers = new Set();
+          reservations.forEach(r => {
+            if (r.purpose === filterPurpose && r.status !== 'cancelled') {
+              uniqueUsers.add(r.userId);
+            }
+          });
+
+          setPurposeStats({
+            days: daysCount,
+            slots: slotsCount,
+            users: uniqueUsers.size
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      computeStats();
+    } else {
+      setPurposeStats(null);
+    }
+  }, [filterPurpose, reservations]);
 
   useEffect(() => {
     fetchData();
@@ -369,21 +419,57 @@ export default function AdminAvailability() {
               </select>
             </div>
           </div>
-
-          <div className="flex items-center space-x-4 shrink-0">
-            <h2 className="text-xl font-bold text-slate-800">{format(currentMonth, 'yyyy 年 MM 月')}</h2>
-            <div className="flex space-x-2">
-              <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-                <ChevronLeft className="w-5 h-5 text-slate-600" />
-              </button>
-              <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">
-                <ChevronRight className="w-5 h-5 text-slate-600" />
-              </button>
-            </div>
-          </div>
         </div>
 
         <div className="p-6 relative min-h-[500px] bg-slate-50/30">
+          
+          {/* Calendar Header & Stats */}
+          <div className="flex flex-col mb-6 gap-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+                {format(currentMonth, 'yyyy年 MM月')}
+              </h2>
+              <div className="flex space-x-2">
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                </button>
+                <button onClick={() => setCurrentMonth(new Date())} className="px-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors text-slate-600">
+                  今天
+                </button>
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors">
+                  <ChevronRight className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
+            </div>
+
+            {/* Stats Bar */}
+            {purposeStats && filterPurpose !== 'ALL' && (
+              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex flex-wrap gap-4 md:gap-8 justify-center mt-2 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm"><Clock className="w-5 h-5" /></div>
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium">總天數</div>
+                    <div className="font-bold text-slate-800 text-lg">{purposeStats.days} <span className="text-sm font-normal text-slate-500">天</span></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm"><List className="w-5 h-5" /></div>
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium">總時段</div>
+                    <div className="font-bold text-slate-800 text-lg">{purposeStats.slots} <span className="text-sm font-normal text-slate-500">個</span></div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm"><Users className="w-5 h-5" /></div>
+                  <div>
+                    <div className="text-xs text-slate-500 font-medium">預約人數</div>
+                    <div className="font-bold text-slate-800 text-lg">{purposeStats.users} <span className="text-sm font-normal text-slate-500">人</span></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {loading && (
             <div className="absolute inset-0 bg-white/50 backdrop-blur-sm flex items-center justify-center z-10">
               <Loader2 className="w-8 h-8 animate-spin text-green-500" />
