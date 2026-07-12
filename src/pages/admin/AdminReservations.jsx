@@ -32,6 +32,7 @@ export default function AdminReservations() {
   
   // Export state
   const [exportModal, setExportModal] = useState({ isOpen: false, purpose: 'ALL', status: 'ALL', sort: 'DATE' });
+  const [actionConfirmModal, setActionConfirmModal] = useState({ isOpen: false, type: '', res: null });
 
   useEffect(() => {
     fetchData();
@@ -113,24 +114,19 @@ export default function AdminReservations() {
     }
   };
 
-  const handleCancel = async (resId) => {
-    if (window.confirm("確定要取消此待審核的預約嗎？")) {
-      setConfirmingId(resId);
-      try {
-        await updateReservationStatus(resId, 'cancelled');
+  const executeConfirmAction = async () => {
+    const { type, res } = actionConfirmModal;
+    setActionConfirmModal({ isOpen: false, type: '', res: null });
+    
+    setConfirmingId(res.id);
+    try {
+      if (type === 'cancel') {
+        await updateReservationStatus(res.id, 'cancelled');
         await fetchData();
-      } catch (error) {
-        alert("取消失敗：" + error.message);
-      } finally {
-        setConfirmingId(null);
-      }
-    }
-  };
-
-  const handleResendLineMessage = async (res) => {
-    if (window.confirm(`確定要重新傳送「預約成功」訊息給 ${users[res.userId]} 嗎？`)) {
-      setConfirmingId(res.id); // reuse for loading state
-      try {
+      } else if (type === 'return_pending') {
+        await updateReservationStatus(res.id, 'pending');
+        await fetchData();
+      } else if (type === 'resend_line') {
         await fetch('/api/send-line-message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -143,12 +139,24 @@ export default function AdminReservations() {
           }),
         });
         alert("預約確認推播已重新送出！");
-      } catch (error) {
-        alert("送出失敗：" + error.message);
-      } finally {
-        setConfirmingId(null);
       }
+    } catch (error) {
+      alert("操作失敗：" + error.message);
+    } finally {
+      setConfirmingId(null);
     }
+  };
+
+  const handleCancel = (res) => {
+    setActionConfirmModal({ isOpen: true, type: 'cancel', res });
+  };
+
+  const handleReturnPending = (res) => {
+    setActionConfirmModal({ isOpen: true, type: 'return_pending', res });
+  };
+
+  const handleResendLineMessage = (res) => {
+    setActionConfirmModal({ isOpen: true, type: 'resend_line', res });
   };
 
   const days = eachDayOfInterval({
@@ -916,21 +924,31 @@ export default function AdminReservations() {
                                     </div>
                                     
                                     {/* Action buttons inside card */}
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                       <button 
                                         onClick={() => handleResendLineMessage(res)}
                                         disabled={confirmingId === res.id}
-                                        className="flex-1 bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 px-2 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
+                                        className="flex-1 min-w-[120px] bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 px-2 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
                                       >
                                         {confirmingId === res.id ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                                           <>
-                                            <Send className="w-4 h-4 mr-1 md:mr-1.5" />
+                                            <Send className="w-4 h-4 mr-1" />
                                             重新傳送確認
                                           </>
                                         )}
                                       </button>
+                                      
                                       <button 
-                                        onClick={() => handleCancel(res.id)}
+                                        onClick={() => handleReturnPending(res)}
+                                        disabled={confirmingId === res.id}
+                                        className="flex-1 min-w-[100px] bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-2 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
+                                      >
+                                        <Clock className="w-4 h-4 mr-1" />
+                                        退回待審核
+                                      </button>
+
+                                      <button 
+                                        onClick={() => handleCancel(res)}
                                         disabled={confirmingId === res.id}
                                         className="flex-none bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
                                       >
@@ -1038,6 +1056,54 @@ export default function AdminReservations() {
                 className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-colors flex justify-center items-center"
               >
                 確定匯出
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Confirmation Modal */}
+      {actionConfirmModal.isOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+              actionConfirmModal.type === 'cancel' ? 'bg-red-100 text-red-500' :
+              actionConfirmModal.type === 'return_pending' ? 'bg-amber-100 text-amber-500' :
+              'bg-green-100 text-green-500'
+            }`}>
+              {actionConfirmModal.type === 'cancel' ? <XCircle className="w-8 h-8" /> :
+               actionConfirmModal.type === 'return_pending' ? <Clock className="w-8 h-8" /> :
+               <Send className="w-8 h-8" />}
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-2">
+              {actionConfirmModal.type === 'cancel' ? '確認取消預約' :
+               actionConfirmModal.type === 'return_pending' ? '確認退回待審核' :
+               '確認重新傳送推播'}
+            </h3>
+            
+            <p className="text-slate-500 mb-6 font-medium">
+              {actionConfirmModal.type === 'cancel' ? '確定要取消此預約嗎？取消後將從行事曆中移除。' :
+               actionConfirmModal.type === 'return_pending' ? '確定要將此預約退回「待審核」狀態嗎？' :
+               `確定要重新傳送「預約成功」訊息給 ${users[actionConfirmModal.res.userId]} 嗎？`}
+            </p>
+            
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => setActionConfirmModal({ isOpen: false, type: '', res: null })}
+                className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors"
+              >
+                取消返回
+              </button>
+              <button 
+                onClick={executeConfirmAction}
+                className={`flex-1 py-3 text-white font-bold rounded-xl shadow-lg transition-colors flex justify-center items-center ${
+                  actionConfirmModal.type === 'cancel' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' :
+                  actionConfirmModal.type === 'return_pending' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' :
+                  'bg-green-500 hover:bg-green-600 shadow-green-500/20'
+                }`}
+              >
+                確定執行
               </button>
             </div>
           </div>
