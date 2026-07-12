@@ -3,6 +3,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations } from '../../services/db';
+import { Solar } from 'lunar-javascript';
 
 export default function AdminAvailability() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -503,6 +504,29 @@ export default function AdminAvailability() {
               const dateStr = format(date, 'yyyy-MM-dd');
               const filteredSlots = getFilteredSlotsForDay(dateStr);
               const isOpen = filteredSlots !== null;
+              
+              const dayOfWeek = date.getDay();
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+              // Lunar & Holidays
+              const solar = Solar.fromDate(date);
+              const lunar = solar.getLunar();
+              const holidays = solar.getFestivals();
+              const lunarHolidays = lunar.getFestivals();
+              const jieQi = lunar.getJieQi();
+
+              // Prioritize: lunar holidays -> solar holidays -> jieQi
+              let holidayText = '';
+              let isSpecialDay = false;
+              if (lunarHolidays.length > 0) {
+                holidayText = lunarHolidays[0];
+                isSpecialDay = true;
+              } else if (holidays.length > 0) {
+                holidayText = holidays[0];
+                isSpecialDay = true;
+              } else if (jieQi) {
+                holidayText = jieQi;
+              }
 
               return (
                 <div
@@ -511,12 +535,19 @@ export default function AdminAvailability() {
                   className={cn(
                     "min-h-[140px] p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-start relative hover:shadow-md cursor-pointer",
                     isToday(date) ? "border-green-400 ring-1 ring-green-400" : "border-slate-200 hover:border-green-300",
-                    isOpen ? "bg-white" : "bg-slate-50/80"
+                    isOpen ? (isWeekend ? "bg-red-50/50" : "bg-white") : (isWeekend ? "bg-red-50/30" : "bg-slate-50/80")
                   )}
                 >
-                  <span className={cn("text-sm font-bold mb-2", isToday(date) ? "text-green-600" : "text-slate-700")}>
-                    {format(date, 'd')}
-                  </span>
+                  <div className="flex justify-between items-start w-full mb-2">
+                    <span className={cn("text-sm font-bold", isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-slate-700")}>
+                      {format(date, 'd')}
+                    </span>
+                    {holidayText && (
+                      <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", isSpecialDay ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600")}>
+                        {holidayText}
+                      </span>
+                    )}
+                  </div>
                   
                   {isOpen ? (
                     <div className="flex flex-col gap-1 w-full mt-1">

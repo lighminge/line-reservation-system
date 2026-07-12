@@ -3,6 +3,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
+import { Solar } from 'lunar-javascript';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
 
@@ -437,20 +438,51 @@ export default function AdminReservations() {
                 });
               }
 
+              const dayOfWeek = date.getDay();
+              const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+              // Lunar & Holidays
+              const solar = Solar.fromDate(date);
+              const lunar = solar.getLunar();
+              const holidays = solar.getFestivals();
+              const lunarHolidays = lunar.getFestivals();
+              const jieQi = lunar.getJieQi();
+
+              // Prioritize: lunar holidays -> solar holidays -> jieQi
+              let holidayText = '';
+              let isSpecialDay = false;
+              if (lunarHolidays.length > 0) {
+                holidayText = lunarHolidays[0];
+                isSpecialDay = true;
+              } else if (holidays.length > 0) {
+                holidayText = holidays[0];
+                isSpecialDay = true;
+              } else if (jieQi) {
+                holidayText = jieQi;
+              }
+
               return (
                 <div
                   key={date.toString()}
                   className={cn(
                     "min-h-[140px] p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-start relative",
-                    isToday(date) ? "border-green-400 ring-1 ring-green-400 bg-green-50/10" : "border-slate-200 bg-white"
+                    isToday(date) ? "border-green-400 ring-1 ring-green-400 bg-green-50/10" : "border-slate-200",
+                    isWeekend && !isToday(date) ? "bg-red-50/50" : (!isToday(date) ? "bg-white" : "")
                   )}
                 >
-                  <span className={cn(
-                    "text-sm font-semibold mb-2",
-                    isToday(date) ? "text-green-600" : "text-slate-700"
-                  )}>
-                    {format(date, 'd')}
-                  </span>
+                  <div className="flex justify-between items-start w-full mb-2">
+                    <span className={cn(
+                      "text-sm font-semibold",
+                      isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-slate-700"
+                    )}>
+                      {format(date, 'd')}
+                    </span>
+                    {holidayText && (
+                      <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", isSpecialDay ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600")}>
+                        {holidayText}
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="flex flex-col gap-1 w-full mt-1">
                     {blocks.length > 0 ? (
