@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, CheckCircle2, Loader2, AlertCircle, Plus, Trash2, KeyRound } from 'lucide-react';
+import { Settings, CheckCircle2, Loader2, AlertCircle, Plus, Trash2, KeyRound, X, AlertTriangle } from 'lucide-react';
 import { getLineSettings, saveLineSettings, getAdminPassword, saveAdminPassword } from '../../services/db';
 
 export default function AdminSettings() {
@@ -12,6 +12,9 @@ export default function AdminSettings() {
   const [password, setPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [pwdMessage, setPwdMessage] = useState({ text: '', type: '' });
+
+  // Modal state
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: '', id: null, title: '', message: '' });
 
   useEffect(() => {
     fetchSettings();
@@ -40,14 +43,25 @@ export default function AdminSettings() {
   };
 
   const handleRemoveConfig = (id) => {
-    if (window.confirm("確定要刪除這組設定嗎？")) {
-      const newConfigs = configs.filter(c => c.id !== id);
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete_config',
+      id: id,
+      title: '刪除設定',
+      message: '確定要刪除這組 Line 設定檔嗎？刪除後如果您儲存設定，將無法復原。'
+    });
+  };
+
+  const executeAction = () => {
+    if (confirmModal.type === 'delete_config') {
+      const newConfigs = configs.filter(c => c.id !== confirmModal.id);
       // If we removed the active one, make the first one active
       if (newConfigs.length > 0 && !newConfigs.some(c => c.isActive)) {
         newConfigs[0].isActive = true;
       }
       setConfigs(newConfigs);
     }
+    setConfirmModal({ isOpen: false, type: '', id: null, title: '', message: '' });
   };
 
   const handleConfigChange = (id, field, value) => {
@@ -269,6 +283,36 @@ export default function AdminSettings() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Confirm Action Modal */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">{confirmModal.title}</h3>
+              <p className="text-slate-500 mb-8">{confirmModal.message}</p>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal({ isOpen: false, type: '', id: null, title: '', message: '' })}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={executeAction}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
+                >
+                  確定刪除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
