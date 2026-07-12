@@ -365,14 +365,25 @@ export default function ReservationForm() {
                         <span className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full", r.status === 'confirmed' ? "bg-green-100 text-green-700 border border-green-200" : "bg-amber-100 text-amber-700 border border-amber-200")}>
                           {r.status === 'confirmed' ? '已確認' : '待審核'}
                         </span>
-                        <button 
-                          type="button"
-                          disabled={isCancelling}
-                          onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
-                          className="p-2 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {r.status === 'pending' ? (
+                          <button 
+                            type="button"
+                            disabled={isCancelling}
+                            onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
+                            className="p-2 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button 
+                            type="button"
+                            disabled
+                            className="p-2 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 cursor-not-allowed"
+                            title="預約已核准，無法刪除"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
