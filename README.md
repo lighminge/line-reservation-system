@@ -1,16 +1,70 @@
-# React + Vite
+# LINE 官方帳號預約管理系統 (LINE Reservation System)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+這是一個專為 LINE 官方帳號量身打造的強大預約管理系統。透過結合 LIFF (LINE Front-end Framework) 與現代化的 React 前端技術，提供客戶無縫的預約體驗，同時賦予管理者全方位的後台控制權限與精美的資料視覺化介面。
 
-Currently, two official plugins are available:
+## 🌟 系統特色
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### 1. 📱 客戶端功能 (LIFF)
+- **無縫整合 LINE**：客戶無需另外下載 App 或註冊帳號，直接從 LINE 官方帳號點擊連結即可自動登入並開始預約。
+- **直覺的預約流程**：
+  - **步驟一**：選擇預約項目 (如：一對一諮詢、課程體驗等)。
+  - **步驟二**：選擇日期 (提供直覺的月曆介面，自動鎖定不開放或已額滿的日期)。
+  - **步驟三**：選擇時段 (即時顯示剩餘名額與預約狀態)。
+- **歷史預約查詢**：客戶可以隨時查看過去的預約紀錄，並在尚未核准前自行取消預約。
+- **防呆機制**：一旦預約被管理員「已確認」，系統會自動鎖定防呆按鈕，防止客戶誤刪已成立的資料。
 
-## React Compiler
+### 2. 🛡️ 管理者後台功能
+本系統配備了強大且美觀的管理員儀表板 (Admin Dashboard)，涵蓋四大核心模組：
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+#### 📅 預約管理 (Reservations)
+- **待審核與已核准分流**：清楚區分「待審核」與「已核准」的預約清單，並支援依據不同預約項目進行快速過濾。
+- **月曆總覽**：上方月曆可即時顯示每天的預約狀況。支援「台灣繁體節氣與國定假日」顯示，並以紅底標示週末，讓排程更直覺。
+- **彈性狀態操作**：
+  - 核准或拒絕預約。
+  - 將已核准的預約「退回待審核」。
+  - 「重新傳送確認」推播訊息給客戶。
+  - 統一且具備防呆確認機制的系統級彈出視窗 (Modal)，避免誤觸。
+- **資料匯出**：支援將預約資料匯出為 Excel 格式，可依據日期或姓名排序，方便線下建檔或分析。
 
-## Expanding the Oxlint configuration
+#### ⚙️ 預約設定 (Availability)
+- **項目字典管理**：可自訂多個預約項目 (例如：美容、美髮、諮詢)，每個項目可獨立設定名稱與開放期限。
+- **彈性的排班系統**：
+  - 選定特定日期與時段，指派開放的預約項目與人數上限。
+  - 支援「快速複製」功能，可將某一天的排班設定一鍵複製到同月份的其他日期 (如：複製到所有的星期一與星期二)，大幅節省排班時間。
+- **月曆統計**：在設定時即可預覽整個月的總營業天數、總開放時段與預約人數統計。
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+#### 💬 訊息設定 (Messages)
+- **客製化推播訊息 (Flex Message)**：
+  - 自訂客戶「預約成功」與「官方確認」時收到的 LINE Flex Message 圖文訊息。
+  - 支援上傳自訂的背景底圖 (支援 JPG/PNG，建議比例 20:13)，讓官方帳號的推播更具備品牌特色與專業感。
+
+#### 👥 用戶管理 (Users)
+- **客戶資料庫**：自動記錄所有曾經使用過系統的 LINE 用戶資料，並自動為每位用戶產生獨立序號。
+- **標籤與興趣系統**：
+  - 管理者可以為每位客戶貼上「自訂標籤」(例如：VIP、黑名單) 與設定「興趣」。
+  - 系統會自動記錄曾經輸入過的標籤與興趣，並在下次輸入時提供「推薦清單」，也支援一鍵刪除不再使用的舊選項。
+- **備註功能**：可為客戶留下專屬的內部備註，方便後續服務與追蹤。
+
+## 🛠️ 技術架構
+- **前端框架**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **樣式設計**: [Tailwind CSS](https://tailwindcss.com/) (現代化 UI/UX 響應式設計)
+- **圖示庫**: [Lucide React](https://lucide.dev/)
+- **日期與農曆運算**: [date-fns](https://date-fns.org/) + [lunar-javascript](https://github.com/6tail/lunar-javascript) (處理台灣節氣與農曆轉換)
+- **資料匯出**: [SheetJS (xlsx)](https://sheetjs.com/)
+
+## 🚀 本地開發與運行
+
+1. **安裝依賴套件**
+   ```bash
+   npm install
+   ```
+
+2. **啟動開發伺服器**
+   ```bash
+   npm run dev
+   ```
+
+3. **編譯打包**
+   ```bash
+   npm run build
+   ```
