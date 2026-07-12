@@ -33,6 +33,7 @@ export default function AdminReservations() {
   // Export state
   const [exportModal, setExportModal] = useState({ isOpen: false, purpose: 'ALL', status: 'ALL', sort: 'DATE' });
   const [actionConfirmModal, setActionConfirmModal] = useState({ isOpen: false, type: '', res: null });
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: '' });
 
   useEffect(() => {
     fetchData();
@@ -138,7 +139,7 @@ export default function AdminReservations() {
             purpose: res.purpose
           }),
         });
-        alert("預約確認推播已重新送出！");
+        setSuccessModal({ isOpen: true, message: '預約確認推播已重新送出！' });
       }
     } catch (error) {
       alert("操作失敗：" + error.message);
@@ -1106,6 +1107,30 @@ export default function AdminReservations() {
                 確定執行
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.isOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100 text-green-500">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-2">執行成功</h3>
+            
+            <p className="text-slate-500 mb-6 font-medium">
+              {successModal.message}
+            </p>
+            
+            <button 
+              onClick={() => setSuccessModal({ isOpen: false, message: '' })}
+              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors"
+            >
+              確定
+            </button>
           </div>
         </div>
       )}

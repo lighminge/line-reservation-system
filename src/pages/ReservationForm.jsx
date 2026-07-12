@@ -512,14 +512,25 @@ export default function ReservationForm() {
                             <span className="flex items-center"><Clock className="w-4 h-4 mr-2" /> {r.time} ({r.purpose})</span>
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold bg-blue-100 px-2 py-0.5 rounded-full text-blue-600 border border-blue-200">{r.status === 'confirmed' ? '已確認' : '待審核'}</span>
-                              <button 
-                                type="button"
-                                disabled={isCancelling}
-                                onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
-                                className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {r.status === 'pending' ? (
+                                <button 
+                                  type="button"
+                                  disabled={isCancelling}
+                                  onClick={() => setCancelModal({ isOpen: true, resId: r.id })}
+                                  className="p-1.5 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg transition-colors border border-slate-100"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="p-1.5 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 cursor-not-allowed"
+                                  title="預約已核准，無法刪除"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </div>
                         ))}
