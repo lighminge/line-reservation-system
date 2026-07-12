@@ -1,0 +1,83 @@
+# LINE API 金鑰取得完整教學
+
+為了讓預約系統能夠正常運作，您需要前往 LINE Developers 控制台取得兩個重要的金鑰：**LIFF ID** 與 **Channel Access Token**。
+
+請依照以下詳細步驟進行設定：
+
+---
+
+## 準備工作：登入 LINE Developers 控制台
+1. 打開瀏覽器，前往 [LINE Developers Console](https://developers.line.biz/console/)。
+2. 點擊右上角的「Log in」按鈕。
+3. 選擇「Log in with LINE account」，使用您自己的 LINE 帳號（或公司的 LINE 帳號）登入。
+4. 登入後，如果您是第一次使用，系統會要求您建立開發者帳號（填寫名稱與 Email 即可）。
+5. 進入控制台後，在左側邊欄點擊「Create a new provider」（建立提供者），輸入您的公司或專案名稱（例如：`我的預約系統`），然後點擊 Create。
+
+---
+
+## 第一部分：取得 Channel Access Token (用於後台推播訊息)
+
+此金鑰讓您的系統能夠以「官方帳號」的身分主動發送確認訊息給客戶。
+
+1. 在您剛剛建立的 Provider 頁面中，點擊 **「Create a new channel」**。
+2. 選擇 **「Messaging API」**。
+3. 填寫頻道基本資料：
+   - **Company or owner's country or region**: 選擇 Taiwan。
+   - **Channel icon**: 上傳您官方帳號的大頭貼。
+   - **Channel name**: 填寫您的官方帳號名稱（這會是客戶看到的名稱）。
+   - **Channel description**: 填寫簡短描述（例如：線上預約專用）。
+   - **Category / Subcategory**: 選擇適合您的產業分類。
+   - **Email address**: 填寫您的聯絡信箱。
+   - 勾選最下方的同意條款，點擊「Create」建立頻道。
+4. 建立完成後，點擊進入這個 Messaging API 頻道。
+5. 點擊上方的 **「Messaging API」** 頁籤。
+6. 一直往下滑，找到 **「Channel access token (long-lived)」** 區塊。
+7. 點擊右側的 **「Issue」** 按鈕。
+8. 系統會產生一串非常長的大小寫英數字串，這就是您的 **Channel Access Token**。
+   > 💡 **請將這串 Token 複製下來，稍後要貼到系統後台。**
+
+---
+
+## 第二部分：取得 LIFF ID (用於客戶端預約網頁)
+
+此金鑰讓您的預約網頁能夠在 LINE 裡面順利打開，並自動讀取客戶的 LINE 檔案（姓名、頭像）。
+
+1. 回到左側邊欄您的 Provider 頁面。
+2. 再次點擊 **「Create a new channel」**。
+3. 這次請選擇 **「LINE Login」**。
+4. 填寫頻道基本資料（與剛剛類似，填寫名稱、描述等），然後點擊「Create」。
+5. 建立完成後，點擊進入這個 LINE Login 頻道。
+6. 點擊上方的 **「LIFF」** 頁籤。
+7. 點擊 **「Add」** 按鈕來新增一個 LIFF 應用程式。
+8. 填寫 LIFF 設定：
+   - **LIFF app name**: 填寫預約網頁名稱（例如：預約系統）。
+   - **Size**: 選擇 **Full**（全螢幕）。
+   - **Endpoint URL**: 填寫您的預約系統「正式上線的網址」（例如：`https://您的網址.com`）。⚠️ 必須是 https 開頭。
+   - **Scopes**: 勾選 **`profile`**（這是必填，用來取得客戶姓名與頭像）。
+   - **Bot link feature**: 選擇 `On (Normal)`（建議開啟，可在網頁中提示加入官方帳號好友）。
+9. 點擊最下方的「Add」完成建立。
+10. 建立成功後，您會在列表中看到一組類似 `165xxxxxxx-xxxxxxx` 的代碼，這就是您的 **LIFF ID**。
+   > 💡 **請將這串 LIFF ID 複製下來，稍後要貼到系統後台。**
+
+---
+
+## 第三部分：發布 LINE Login 頻道 (非常重要！)
+如果沒有執行這一步，只有您自己可以打開預約網頁，其他客人都會看到錯誤畫面。
+
+1. 在您的 LINE Login 頻道頁面，注意看頁面標題旁邊（Channel name 右側）。
+2. 目前的狀態應該顯示為橘色的 **「Developing」**。
+3. 點擊「Developing」，系統會彈出視窗詢問是否要發布（Publish）。
+4. 點擊 **「Publish」**，狀態會變成綠色的 **「Published」**。
+5. 完成！現在所有的客戶都可以正常使用您的預約系統了。
+
+---
+
+## 最後步驟：貼入系統後台
+取得上述兩組金鑰後，請前往您的預約系統「管理員後台」：
+1. 點擊左側選單的「系統設定」。
+2. 新增一組設定檔。
+3. 將 **LIFF ID** 貼入第一個欄位。
+4. 將 **Channel Access Token** 貼入第二個欄位。
+5. 點擊「儲存 Line 設定」。
+
+大功告成！您的系統現在已經與 LINE 完全連線了。
