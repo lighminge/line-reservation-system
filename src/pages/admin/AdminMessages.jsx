@@ -169,10 +169,18 @@ export default function AdminMessages() {
                   </>
                 )}
               </div>
-              <input type="file" ref={clientFileRef} onChange={e => handleImageChange(e, 'client')} accept="image/*" className="hidden" />
+              <input type="file" ref={clientFileRef} onChange={e => handleImageChange(e, 'client')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
               {clientPreview && (
                 <button type="button" onClick={() => { setClientPreview(''); setClientFile(null); setTemplates({...templates, clientSuccess: {...templates.clientSuccess, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline">移除圖片</button>
               )}
+              <div className="mt-3 bg-slate-100 p-3 rounded-lg border border-slate-200">
+                <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                  <li><span className="font-semibold text-slate-600">支援檔案類型</span>：JPG, JPEG, PNG。</li>
+                  <li><span className="font-semibold text-slate-600">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
+                  <li><span className="font-semibold text-slate-600">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
+                  <li><span className="font-semibold text-slate-600">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -234,10 +242,18 @@ export default function AdminMessages() {
                   </>
                 )}
               </div>
-              <input type="file" ref={lineFileRef} onChange={e => handleImageChange(e, 'line')} accept="image/*" className="hidden" />
+              <input type="file" ref={lineFileRef} onChange={e => handleImageChange(e, 'line')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
               {linePreview && (
                 <button type="button" onClick={() => { setLinePreview(''); setLineFile(null); setTemplates({...templates, lineConfirm: {...templates.lineConfirm, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline">移除圖片</button>
               )}
+              <div className="mt-3 bg-slate-100 p-3 rounded-lg border border-slate-200">
+                <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                  <li><span className="font-semibold text-slate-600">支援檔案類型</span>：JPG, JPEG, PNG。</li>
+                  <li><span className="font-semibold text-slate-600">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
+                  <li><span className="font-semibold text-slate-600">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
+                  <li><span className="font-semibold text-slate-600">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

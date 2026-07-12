@@ -35,7 +35,7 @@ export default function AdminReservations() {
 
   useEffect(() => {
     fetchData();
-  }, [currentMonth]);
+  }, []);
 
   useEffect(() => {
     if (calendarPurpose !== 'ALL' && reservations.length > 0) {
@@ -51,7 +51,7 @@ export default function AdminReservations() {
         }
       }
     }
-  }, [calendarPurpose, reservations]);
+  }, [calendarPurpose]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -465,13 +465,13 @@ export default function AdminReservations() {
         </div>
       </div>
 
-      <div className="flex gap-4 mb-8 mt-12 bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div className="flex flex-col md:flex-row gap-4 mb-8 mt-12">
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-xl border-2",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
             activeTab === 'pending' 
-              ? "border-amber-400 text-amber-700 bg-amber-50 shadow-sm" 
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              ? "border-amber-400 text-amber-700 bg-amber-50" 
+              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
           )}
           onClick={() => setActiveTab('pending')}
         >
@@ -480,10 +480,10 @@ export default function AdminReservations() {
         </button>
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-xl border-2",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
             activeTab === 'confirmed' 
-              ? "border-green-400 text-green-700 bg-green-50 shadow-sm" 
-              : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              ? "border-green-400 text-green-700 bg-green-50" 
+              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
           )}
           onClick={() => setActiveTab('confirmed')}
         >

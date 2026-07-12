@@ -137,6 +137,32 @@ export default function ReservationForm() {
     }
   };
 
+  // Add useEffect to handle auto switch when purpose changes
+  useEffect(() => {
+    if (formData.purpose) {
+      const autoSwitch = async () => {
+        try {
+          const { getAllAvailability } = await import('../services/db');
+          const allData = await getAllAvailability();
+          const dates = Object.keys(allData).sort();
+          for (let d of dates) {
+            const slots = allData[d].slots || [];
+            if (slots.some(s => s.purposes.includes(formData.purpose))) {
+              const newMonth = parseISO(d);
+              if (format(newMonth, 'yyyy-MM') !== format(currentMonth, 'yyyy-MM')) {
+                handleMonthChange(newMonth);
+              }
+              break;
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+      autoSwitch();
+    }
+  }, [formData.purpose]);
+
   const confirmCancel = async () => {
     if (!cancelModal.resId) return;
     setIsCancelling(true);

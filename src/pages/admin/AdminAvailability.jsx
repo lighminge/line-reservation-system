@@ -50,13 +50,32 @@ export default function AdminAvailability() {
 
   useEffect(() => {
     if (filterPurpose !== 'ALL') {
+      const autoSwitch = async () => {
+        try {
+          const { getAllAvailability } = await import('../../services/db');
+          const allData = await getAllAvailability();
+          const dates = Object.keys(allData).sort();
+          for (let d of dates) {
+            const slots = allData[d].slots || [];
+            if (slots.some(s => s.purposes.includes(filterPurpose))) {
+              setCurrentMonth(parseISO(d));
+              break;
+            }
+          }
+        } catch (e) { console.error(e); }
+      };
+      autoSwitch();
+    }
+  }, [filterPurpose]);
+
+  useEffect(() => {
+    if (filterPurpose !== 'ALL') {
       const computeStats = async () => {
         try {
           const { getAllAvailability } = await import('../../services/db');
           const allData = await getAllAvailability();
           
           const dates = Object.keys(allData).sort();
-          let firstDate = null;
           let daysCount = 0;
           let slotsCount = 0;
 
@@ -64,14 +83,9 @@ export default function AdminAvailability() {
             const slots = allData[d].slots || [];
             const hasPurpose = slots.some(s => s.purposes.includes(filterPurpose));
             if (hasPurpose) {
-              if (!firstDate) firstDate = d;
               daysCount++;
               slotsCount += slots.filter(s => s.purposes.includes(filterPurpose)).length;
             }
-          }
-
-          if (firstDate) {
-            setCurrentMonth(parseISO(firstDate));
           }
 
           const uniqueUsers = new Set();

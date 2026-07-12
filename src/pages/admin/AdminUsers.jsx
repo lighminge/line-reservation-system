@@ -136,12 +136,28 @@ export default function AdminUsers() {
     safeCurrentPage * pageSize
   );
 
-  // Message Handlers
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
     setMessageText('');
     setSendResult({ text: '', type: '' });
     setIsMessageModalOpen(true);
+  };
+
+  // Delete Global Dict Items
+  const deleteGlobalTag = async (tagToDelete) => {
+    if (window.confirm(`確定要從推薦清單中永久刪除標籤「${tagToDelete}」嗎？`)) {
+      const newTags = globalTags.filter(t => t !== tagToDelete);
+      await saveDictTags(newTags);
+      setGlobalTags(newTags);
+    }
+  };
+
+  const deleteGlobalInterest = async (interestToDelete) => {
+    if (window.confirm(`確定要從推薦清單中永久刪除興趣「${interestToDelete}」嗎？`)) {
+      const newInterests = globalInterests.filter(i => i !== interestToDelete);
+      await saveDictInterests(newInterests);
+      setGlobalInterests(newInterests);
+    }
   };
 
   const loadTemplate = async () => {
@@ -488,6 +504,7 @@ export default function AdminUsers() {
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+                <th className="p-4 font-semibold w-16 text-center">序號</th>
                 <th className="p-4 font-semibold w-16">頭像</th>
                 <th className="p-4 font-semibold">名稱 & 群組</th>
                 <th className="p-4 font-semibold">性別 / 生日</th>
@@ -499,13 +516,13 @@ export default function AdminUsers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-400">
+                  <td colSpan="7" className="p-8 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
+                  <td colSpan="7" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
                 displayedUsers.map((user, idx) => {
@@ -514,17 +531,17 @@ export default function AdminUsers() {
                   const globalIdx = (safeCurrentPage - 1) * pageSize + idx + 1;
                   return (
                     <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="p-4 text-center text-slate-500 font-bold">
+                        {globalIdx}
+                      </td>
                       <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-slate-400 font-medium w-6 text-right shrink-0">{globalIdx}.</span>
-                          {user.pictureUrl ? (
-                            <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                              <User className="w-5 h-5" />
-                            </div>
-                          )}
-                        </div>
+                        {user.pictureUrl ? (
+                          <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                            <User className="w-5 h-5" />
+                          </div>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
@@ -771,12 +788,21 @@ export default function AdminUsers() {
                   {globalTags.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-1">
                       {globalTags.filter(t => !formData.tags.includes(t)).map(t => (
-                        <button 
-                          key={t} type="button" onClick={() => addTag(t)}
-                          className="text-[10px] bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 px-2 py-1 rounded transition-colors border border-slate-200"
-                        >
-                          + {t}
-                        </button>
+                        <div key={t} className="flex items-stretch border border-slate-200 rounded overflow-hidden shadow-sm group">
+                          <button 
+                            type="button" onClick={() => addTag(t)}
+                            className="text-[10px] bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 px-2 py-1 transition-colors flex-1"
+                          >
+                            + {t}
+                          </button>
+                          <button
+                            type="button" onClick={() => deleteGlobalTag(t)}
+                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-slate-200"
+                            title="從推薦清單永久刪除"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -810,12 +836,21 @@ export default function AdminUsers() {
                   {globalInterests.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-1">
                       {globalInterests.filter(i => !formData.interests.includes(i)).map(i => (
-                        <button 
-                          key={i} type="button" onClick={() => addInterest(i)}
-                          className="text-[10px] bg-slate-100 hover:bg-pink-100 text-slate-500 hover:text-pink-600 px-2 py-1 rounded transition-colors border border-slate-200"
-                        >
-                          + {i}
-                        </button>
+                        <div key={i} className="flex items-stretch border border-slate-200 rounded overflow-hidden shadow-sm group">
+                          <button 
+                            type="button" onClick={() => addInterest(i)}
+                            className="text-[10px] bg-slate-100 hover:bg-pink-100 text-slate-500 hover:text-pink-600 px-2 py-1 transition-colors flex-1"
+                          >
+                            + {i}
+                          </button>
+                          <button
+                            type="button" onClick={() => deleteGlobalInterest(i)}
+                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-slate-200"
+                            title="從推薦清單永久刪除"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
