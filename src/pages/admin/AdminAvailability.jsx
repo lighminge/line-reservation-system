@@ -408,7 +408,7 @@ export default function AdminAvailability() {
       </div>
 
       {/* Calendar View */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white comic-box overflow-hidden">
         
         {/* Top bar with filter */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-white gap-4">
@@ -420,7 +420,7 @@ export default function AdminAvailability() {
               <select 
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm font-medium flex-1 md:flex-none"
+                className="p-2 comic-input bg-white text-sm font-medium flex-1 md:flex-none"
               >
                 <option value="ALL">全部狀態</option>
                 <option value="ACTIVE">⚡ 開放中</option>
@@ -430,7 +430,7 @@ export default function AdminAvailability() {
               <select 
                 value={filterPurpose}
                 onChange={(e) => setFilterPurpose(e.target.value)}
-                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-slate-50 text-sm font-medium flex-1 md:flex-none min-w-[120px]"
+                className="p-2 comic-input bg-white text-sm font-medium flex-1 md:flex-none min-w-[120px]"
               >
                 <option value="ALL">指定項目 (全部)</option>
                 {purposesDict.map(p => (
@@ -776,7 +776,7 @@ export default function AdminAvailability() {
 
       {/* Access Manager Section */}
       {activeSection === 'access' && (
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col max-h-[90vh] mb-8">
+        <div className="bg-white comic-box overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col max-h-[90vh] mb-8">
           <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
             <h2 className="text-xl font-bold text-slate-800 flex items-center">
               <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
@@ -797,7 +797,7 @@ export default function AdminAvailability() {
                   setSelectedAllowedIds([]);
                   setSelectedRestrictedIds([]);
                 }}
-                className="p-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-500 bg-white min-w-[200px] font-bold text-slate-800 shadow-sm"
+                className="p-2.5 comic-input bg-white focus:bg-yellow-50 min-w-[200px] font-bold text-slate-800 shadow-sm"
               >
                 {purposesDict.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -813,11 +813,11 @@ export default function AdminAvailability() {
               <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden h-[600px] mb-4">
                 
                 {/* Left: Allowed Users */}
-                <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden bg-slate-50">
                   <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <span>可以使用的人員</span>
-                      <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
+                      <span className="comic-tag bg-yellow-200 text-black px-2 py-0.5 text-xs">
                         {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
                       </span>
                     </div>
@@ -963,7 +963,7 @@ export default function AdminAvailability() {
                       }
                     }}
                     disabled={!accessPurposeId}
-                    className="px-3 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 transition-colors disabled:opacity-50 flex flex-col items-center whitespace-nowrap"
+                    className="px-3 py-3 comic-button bg-green-400 text-black font-black py-3 px-8 disabled:opacity-50 flex flex-col items-center whitespace-nowrap"
                   >
                     <CheckCircle2 className="w-6 h-6 mb-1" />
                     <span className="text-sm">儲存設定</span>
@@ -971,11 +971,11 @@ export default function AdminAvailability() {
                 </div>
 
                 {/* Right: Restricted Users */}
-                <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden bg-slate-50">
                   <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <span>限制存取人員</span>
-                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
+                      <span className="comic-tag bg-red-300 text-black px-2 py-0.5 text-xs">
                         {localRestricted.length} 人
                       </span>
                     </div>
@@ -1048,7 +1048,7 @@ export default function AdminAvailability() {
 
       {/* Purpose Manager Section */}
       {activeSection === 'purpose' && (
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 mb-8">
+        <div className="bg-white comic-box overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 mb-8">
           <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
             <h2 className="text-xl font-bold text-slate-800 flex items-center">
               <List className="w-5 h-5 mr-2 text-slate-500" />
@@ -1070,7 +1070,7 @@ export default function AdminAvailability() {
                       onChange={e => setPurposeForm({...purposeForm, name: e.target.value})}
                       disabled={editingPurposeId && reservations.some(r => r.purpose === purposesDict.find(x => x.id === editingPurposeId)?.name)}
                       placeholder="例如：剪髮、燙髮"
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                      className="w-full p-2 comic-input focus:bg-yellow-50 disabled:bg-slate-100 disabled:text-slate-400"
                     />
                   </div>
                   <div className="flex-1 min-w-[100px]">
@@ -1078,7 +1078,7 @@ export default function AdminAvailability() {
                     <select
                       value={purposeForm.userLimit}
                       onChange={e => setPurposeForm({...purposeForm, userLimit: parseInt(e.target.value)})}
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none bg-white"
+                      className="w-full p-2 comic-input focus:bg-yellow-50 bg-white"
                     >
                       <option value={-1}>無限制</option>
                       {Array.from({length: 10}, (_, i) => i + 1).map(num => (
@@ -1091,7 +1091,7 @@ export default function AdminAvailability() {
                     <select
                       value={purposeForm.slotApprovedLimit}
                       onChange={e => setPurposeForm({...purposeForm, slotApprovedLimit: parseInt(e.target.value)})}
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none bg-white"
+                      className="w-full p-2 comic-input focus:bg-yellow-50 bg-white"
                     >
                       <option value={-1}>無限制</option>
                       {Array.from({length: 20}, (_, i) => i + 1).map(num => (
@@ -1105,7 +1105,7 @@ export default function AdminAvailability() {
                       type="date" 
                       value={purposeForm.startDate}
                       onChange={e => setPurposeForm({...purposeForm, startDate: e.target.value})}
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                      className="w-full p-2 comic-input focus:bg-yellow-50"
                     />
                   </div>
                   <div className="flex-1 min-w-[120px]">
@@ -1114,14 +1114,14 @@ export default function AdminAvailability() {
                       type="date" 
                       value={purposeForm.endDate}
                       onChange={e => setPurposeForm({...purposeForm, endDate: e.target.value})}
-                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                      className="w-full p-2 comic-input focus:bg-yellow-50"
                     />
                   </div>
                   <div className="flex items-end">
                     <button 
                       onClick={savePurpose}
                       disabled={!purposeForm.name.trim()}
-                      className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-2 rounded-lg font-bold disabled:opacity-50 transition-colors h-[42px]"
+                      className="comic-button bg-black text-white px-6 py-2 disabled:opacity-50 h-[42px]"
                     >
                       {editingPurposeId ? '儲存' : '新增'}
                     </button>
@@ -1206,10 +1206,10 @@ export default function AdminAvailability() {
                             )}
                           </td>
                           <td className="px-4 py-3 text-right flex justify-end space-x-1">
-                            <button onClick={() => startEditPurpose(p)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors">
+                            <button onClick={() => startEditPurpose(p)} className="p-1.5 text-black hover:bg-blue-200 comic-box-sm bg-white">
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            <button onClick={() => deletePurpose(p)} className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors">
+                            <button onClick={() => deletePurpose(p)} className="p-1.5 text-black hover:bg-red-300 comic-box-sm bg-white">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </td>

@@ -45,15 +45,15 @@ export default function AdminLayout() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6">
-        <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 max-w-sm w-full">
+      <div className="comic-theme flex flex-col items-center justify-center min-h-screen bg-pink-100 p-6">
+        <div className="bg-white p-8 max-w-sm w-full comic-box">
           <div className="flex justify-center mb-6">
-            <div className="bg-green-50 p-4 rounded-full">
-              <Lock className="w-8 h-8 text-green-600" />
+            <div className="bg-yellow-300 p-4 comic-box-sm">
+              <Lock className="w-8 h-8 text-black" strokeWidth={3} />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">管理員控制台</h1>
-          <p className="text-center text-slate-500 mb-6 text-sm">請輸入密碼以繼續</p>
+          <h1 className="text-3xl font-black text-center text-black mb-2">管理員控制台</h1>
+          <p className="text-center text-black font-bold mb-6 text-sm">請輸入密碼以繼續</p>
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -61,13 +61,13 @@ export default function AdminLayout() {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-4 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all"
+                className="w-full p-4 comic-input bg-cyan-100 focus:bg-white placeholder-slate-500 font-bold"
                 placeholder="管理員密碼"
                 required
               />
             </div>
-            {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
-            <button type="submit" className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-xl transition-colors shadow-lg shadow-green-500/30">
+            {error && <p className="bg-red-400 text-white p-2 rounded text-sm text-center font-bold border-2 border-black shadow-[2px_2px_0_0_#000]">{error}</p>}
+            <button type="submit" className="w-full bg-green-400 text-black font-black py-4 comic-button text-lg">
               登入
             </button>
           </form>
@@ -77,26 +77,26 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="comic-theme min-h-screen bg-pink-100 flex flex-col md:flex-row font-bold selection:bg-yellow-300 selection:text-black">
       {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="font-bold text-lg text-slate-800">Admin Dashboard</div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-slate-600 bg-slate-100 rounded-lg">
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      <div className="md:hidden bg-yellow-300 border-b-[3px] border-black p-4 flex justify-between items-center sticky top-0 z-50">
+        <div className="font-black text-xl text-black">Admin Dashboard</div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 text-black bg-white comic-box-sm">
+          {isMobileMenuOpen ? <X className="w-6 h-6" strokeWidth={3} /> : <Menu className="w-6 h-6" strokeWidth={3} />}
         </button>
       </div>
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed md:static inset-0 z-40 bg-white border-r border-slate-200 w-64 flex-col transition-transform transform md:translate-x-0 md:flex",
+        "fixed md:static inset-0 z-40 bg-cyan-200 border-r-[3px] border-black md:w-64 flex-col transition-transform transform md:translate-x-0 md:flex",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="p-6 border-b border-slate-100 hidden md:block">
-          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-400 tracking-tight">
+        <div className="p-6 border-b-[3px] border-black hidden md:block bg-yellow-300">
+          <h1 className="text-3xl font-black text-black tracking-tighter transform -rotate-2 inline-block">
             AdminPanel
           </h1>
         </div>
-        <nav className="flex-1 p-4 space-y-2 mt-16 md:mt-0">
+        <nav className="flex-1 p-4 space-y-3 mt-16 md:mt-0 bg-cyan-200">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || (item.path === '/admin/reservations' && location.pathname === '/admin');
@@ -106,25 +106,23 @@ export default function AdminLayout() {
                 to={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-200",
-                  isActive 
-                    ? "bg-green-50 text-green-700 shadow-sm border border-green-100" 
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  "flex items-center space-x-3 px-4 py-3 comic-nav-item bg-white",
+                  isActive ? "active" : "text-black"
                 )}
               >
-                <Icon className={cn("w-5 h-5", isActive ? "text-green-600" : "text-slate-400")} />
-                <span>{item.name}</span>
+                <Icon className="w-6 h-6" strokeWidth={isActive ? 3 : 2} />
+                <span className="text-lg">{item.name}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t-[3px] border-black bg-white">
           <button 
             onClick={() => {
               sessionStorage.removeItem('adminAuth');
               setIsAuthenticated(false);
             }}
-            className="w-full text-left px-4 py-3 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+            className="w-full text-center px-4 py-3 text-base font-black text-black comic-button bg-red-400 hover:bg-red-500"
           >
             登出系統
           </button>
@@ -132,8 +130,10 @@ export default function AdminLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto bg-slate-50 relative z-0">
-        <div className="max-w-6xl mx-auto p-4 md:p-8">
+      <div className="flex-1 overflow-auto relative z-0">
+        {/* Comic dots background pattern via tailwind arbitrary values */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 2px, transparent 2px)', backgroundSize: '24px 24px' }}></div>
+        <div className="max-w-6xl mx-auto p-4 md:p-8 relative z-10">
           <Outlet />
         </div>
       </div>

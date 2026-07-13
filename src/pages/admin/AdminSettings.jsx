@@ -134,7 +134,7 @@ export default function AdminSettings() {
       ) : (
         <>
           {/* Password Settings */}
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white comic-box overflow-hidden">
             <div className="bg-slate-800 p-5 text-white flex items-center space-x-3">
               <KeyRound className="w-5 h-5" />
               <h2 className="text-lg font-bold">後台管理員密碼</h2>
@@ -174,7 +174,7 @@ export default function AdminSettings() {
           </div>
 
           {/* Line Settings */}
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white comic-box overflow-hidden">
             <div className="bg-green-600 p-5 text-white flex justify-between items-center">
               <div className="flex items-center space-x-3">
                 <Settings className="w-5 h-5" />

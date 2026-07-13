@@ -510,7 +510,7 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white comic-box overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>

@@ -289,7 +289,7 @@ export default function AdminReservations() {
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white comic-box overflow-hidden">
         {/* Calendar Header with Filters and Toggles */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50 gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
@@ -538,7 +538,7 @@ export default function AdminReservations() {
         </div>
         
         {Object.keys(pendingTree).filter(p => pendingPurposeFilter === 'ALL' || p === pendingPurposeFilter).length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+          <div className="bg-white comic-box p-12 text-center text-slate-500">
             目前沒有任何待審核的預約
           </div>
         ) : (
@@ -567,7 +567,7 @@ export default function AdminReservations() {
             const selectedUserId = pendingUserFilters[purpose] || '';
 
             return (
-              <div key={purpose} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+              <div key={purpose} className="bg-white comic-box overflow-hidden mb-8">
                 <div className="bg-slate-800 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <h3 className="text-xl font-bold text-white flex items-center">
                     項目：{purpose} 
@@ -769,7 +769,7 @@ export default function AdminReservations() {
         </div>
         
         {Object.keys(confirmedTree).filter(p => confirmedPurposeFilter === 'ALL' || p === confirmedPurposeFilter).length === 0 ? (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+          <div className="bg-white comic-box p-12 text-center text-slate-500">
             目前沒有任何已核准的預約
           </div>
         ) : (
@@ -796,7 +796,7 @@ export default function AdminReservations() {
             const selectedUserId = confirmedUserFilters[purpose] || '';
 
             return (
-              <div key={purpose} className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+              <div key={purpose} className="bg-white comic-box overflow-hidden mb-8">
                 <div className="bg-green-600 p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <h3 className="text-xl font-bold text-white flex items-center">
                     項目：{purpose} 

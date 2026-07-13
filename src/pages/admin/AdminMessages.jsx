@@ -113,7 +113,7 @@ export default function AdminMessages() {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Client Web Success Screen */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-blue-600 p-5 text-white flex justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
@@ -184,7 +184,7 @@ export default function AdminMessages() {
         </div>
 
         {/* Line Flex Message Confirm */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-green-600 p-5 text-white flex justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
