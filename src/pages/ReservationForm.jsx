@@ -280,10 +280,36 @@ export default function ReservationForm() {
   const availableSlots = getAvailableSlots();
 
   const getSlotCapacityInfo = (timeStr, maxCap) => {
-    if (maxCap === -1) return { isFull: false, text: '可預約' };
-    const resCount = reservations.filter(r => r.date === formData.date && r.time === timeStr && r.status !== 'cancelled').length;
-    if (resCount >= maxCap) return { isFull: true, text: '已額滿' };
-    return { isFull: false, text: `剩 ${maxCap - resCount} 位` };
+    let isFull = false;
+    let text = '可預約';
+    let remain = Infinity;
+
+    const selectedPurposeObj = purposesDict.find(p => p.name === formData.purpose);
+    const purposeLimit = selectedPurposeObj?.slotApprovedLimit || -1;
+
+    // 1. Check purpose level limit (only CONFIRMED reservations count towards this limit)
+    if (purposeLimit !== -1) {
+      const purposeConfirmedCount = reservations.filter(r => r.date === formData.date && r.time === timeStr && r.purpose === formData.purpose && r.status === 'confirmed').length;
+      if (purposeConfirmedCount >= purposeLimit) {
+        return { isFull: true, text: '已額滿' };
+      }
+      remain = Math.min(remain, purposeLimit - purposeConfirmedCount);
+    }
+
+    // 2. Check slot level limit (ALL non-cancelled reservations count towards slot limit)
+    if (maxCap !== -1) {
+      const resCount = reservations.filter(r => r.date === formData.date && r.time === timeStr && r.status !== 'cancelled').length;
+      if (resCount >= maxCap) {
+        return { isFull: true, text: '已額滿' };
+      }
+      remain = Math.min(remain, maxCap - resCount);
+    }
+
+    if (remain !== Infinity) {
+      text = `剩 ${remain} 位`;
+    }
+
+    return { isFull: false, text };
   };
 
   const days = eachDayOfInterval({ start: startOfMonth(currentMonth), end: endOfMonth(currentMonth) });
@@ -402,16 +428,31 @@ export default function ReservationForm() {
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                {purposesDict.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => handleSelectPurpose(p)}
-                    className="bg-white border-2 border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50 py-4 px-3 rounded-2xl text-base font-bold transition-all"
-                  >
-                    {p.name}
-                  </button>
-                ))}
+                {purposesDict.map(p => {
+                  const isRestricted = p.restrictedUsers?.includes(profile?.userId);
+                  const isNotStarted = p.startDate && format(today, 'yyyy-MM-dd') < p.startDate;
+                  const isDisabled = isRestricted || isNotStarted;
+                  
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => handleSelectPurpose(p)}
+                      className={cn(
+                        "py-4 px-3 rounded-2xl text-base font-bold transition-all border-2 flex flex-col justify-center items-center gap-1",
+                        isDisabled ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" : "bg-white border-slate-200 text-slate-600 hover:border-purple-300 hover:bg-purple-50"
+                      )}
+                    >
+                      <span>{p.name}</span>
+                      {isRestricted ? (
+                        <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-medium mt-1">您無權預約此項目</span>
+                      ) : isNotStarted ? (
+                        <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-medium mt-1">預約未開始 (開始日: {p.startDate.slice(5)})</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
                 {purposesDict.length === 0 && (
                   <div className="col-span-2 text-center text-slate-400 py-4 bg-slate-50 rounded-xl">
                     目前沒有開放預約的項目

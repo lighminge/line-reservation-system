@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, startOfDay, parseISO } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations } from '../../services/db';
+import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations, getAllUsers } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
+import { ShieldAlert, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function AdminAvailability() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availability, setAvailability] = useState({});
   const [reservations, setReservations] = useState([]);
   const [purposesDict, setPurposesDict] = useState([]); 
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   
   // Calendar Filter (split into two)
@@ -39,7 +41,14 @@ export default function AdminAvailability() {
   const [purposePage, setPurposePage] = useState(1);
   const [purposeFilter, setPurposeFilter] = useState('ALL'); 
   const [editingPurposeId, setEditingPurposeId] = useState(null);
-  const [purposeForm, setPurposeForm] = useState({ name: '', endDate: '', userLimit: -1 });
+  const [purposeForm, setPurposeForm] = useState({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
+
+  // Access Management Modal
+  const [showAccessManager, setShowAccessManager] = useState(false);
+  const [accessPurposeId, setAccessPurposeId] = useState('');
+  const [localRestricted, setLocalRestricted] = useState([]);
+  const [selectedAllowedIds, setSelectedAllowedIds] = useState([]);
+  const [selectedRestrictedIds, setSelectedRestrictedIds] = useState([]);
 
   // Custom Alert/Confirm Modals
   const [alertModal, setAlertModal] = useState({ isOpen: false, message: '' });
@@ -131,7 +140,11 @@ export default function AdminAvailability() {
         return {
           id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
           name: item,
+          startDate: '',
           endDate: '',
+          userLimit: -1,
+          slotApprovedLimit: -1,
+          restrictedUsers: [],
           createdAt: new Date().toISOString()
         };
       }
@@ -142,9 +155,12 @@ export default function AdminAvailability() {
       await saveDictionary('purposes', migratedDict);
     }
 
+    const fetchedUsers = await getAllUsers();
+
     setAvailability(availData);
     setPurposesDict(migratedDict);
     setReservations(resData);
+    setAllUsers(fetchedUsers);
     setLoading(false);
   };
 
@@ -330,34 +346,26 @@ export default function AdminAvailability() {
 
   const savePurpose = async () => {
     if (!purposeForm.name.trim()) return;
-    
-    let newDict = [...purposesDict];
-    if (editingPurposeId) {
-      const p = newDict.find(x => x.id === editingPurposeId);
-      const hasRes = reservations.some(r => r.purpose === p.name);
-      
-      // If it has reservations, we don't allow modifying name, only end date
-      if (hasRes && purposeForm.name !== p.name) {
-        setAlertModal({ isOpen: true, message: "此項目已有客戶預約，名稱無法修改！(但可修改結束日期)" });
-        return;
-      }
-      
-      newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, name: purposeForm.name, endDate: purposeForm.endDate, userLimit: parseInt(purposeForm.userLimit) || -1 } : p);
-    } else {
-      newDict.push({
-        id: Date.now().toString(),
-        name: purposeForm.name.trim(),
-        endDate: purposeForm.endDate,
-        userLimit: parseInt(purposeForm.userLimit) || -1,
-        createdAt: new Date().toISOString()
-      });
-    }
 
     try {
+      let newDict = [...purposesDict];
+      if (editingPurposeId) {
+        newDict = newDict.map(p => p.id === editingPurposeId ? { ...p, ...purposeForm } : p);
+      } else {
+        if (newDict.some(p => p.name === purposeForm.name)) {
+          setAlertModal({ isOpen: true, message: "已經有相同名稱的項目了！" });
+          return;
+        }
+        newDict.push({
+          id: Date.now().toString(),
+          ...purposeForm,
+          createdAt: new Date().toISOString()
+        });
+      }
       await saveDictionary('purposes', newDict);
       setPurposesDict(newDict);
       setEditingPurposeId(null);
-      setPurposeForm({ name: '', endDate: '', userLimit: -1 });
+      setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
     } catch (e) {
       setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
     }
@@ -389,17 +397,6 @@ export default function AdminAvailability() {
           <h1 className="text-3xl font-bold text-slate-800">預約設定</h1>
           <p className="text-slate-500 mt-1">設定每日可預約的時段、項目與人數上限</p>
         </div>
-        <button 
-          onClick={() => {
-            setShowPurposeManager(true);
-            setEditingPurposeId(null);
-            setPurposeForm({ name: '', endDate: '', userLimit: -1 });
-          }}
-          className="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm"
-        >
-          <List className="w-5 h-5" />
-          <span>管理預約項目</span>
-        </button>
       </div>
 
       {/* Calendar View */}
@@ -558,6 +555,46 @@ export default function AdminAvailability() {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Action Buttons Below Calendar */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button 
+          onClick={() => {
+            setShowPurposeManager(true);
+            setEditingPurposeId(null);
+            setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
+          }}
+          className="bg-white border-2 border-slate-200 hover:border-slate-800 text-slate-700 hover:text-slate-900 px-6 py-8 rounded-3xl flex flex-col items-center justify-center space-y-3 transition-all shadow-sm hover:shadow-md group"
+        >
+          <div className="w-16 h-16 bg-slate-100 group-hover:bg-slate-800 text-slate-600 group-hover:text-white rounded-full flex items-center justify-center transition-colors">
+            <List className="w-8 h-8" />
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-bold">管理預約項目</h3>
+            <p className="text-sm font-medium opacity-70 mt-1">設定可預約的服務、時段人數上限</p>
+          </div>
+        </button>
+
+        <button 
+          onClick={() => {
+            setShowAccessManager(true);
+            const initialPurpose = purposesDict[0]?.id || '';
+            setAccessPurposeId(initialPurpose);
+            setLocalRestricted(purposesDict[0]?.restrictedUsers || []);
+            setSelectedAllowedIds([]);
+            setSelectedRestrictedIds([]);
+          }}
+          className="bg-white border-2 border-slate-200 hover:border-purple-600 text-slate-700 hover:text-purple-700 px-6 py-8 rounded-3xl flex flex-col items-center justify-center space-y-3 transition-all shadow-sm hover:shadow-md group"
+        >
+          <div className="w-16 h-16 bg-slate-100 group-hover:bg-purple-600 text-slate-600 group-hover:text-white rounded-full flex items-center justify-center transition-colors">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-bold">管理登錄人員</h3>
+            <p className="text-sm font-medium opacity-70 mt-1">設定各項目無法使用的人員黑名單</p>
+          </div>
+        </button>
       </div>
 
       {/* Date Settings Modal */}
@@ -768,6 +805,28 @@ export default function AdminAvailability() {
                     </select>
                   </div>
                   <div className="flex-1 min-w-[120px]">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">時段核准人數</label>
+                    <select
+                      value={purposeForm.slotApprovedLimit}
+                      onChange={e => setPurposeForm({...purposeForm, slotApprovedLimit: parseInt(e.target.value)})}
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none bg-white"
+                    >
+                      <option value={-1}>無限制</option>
+                      {Array.from({length: 20}, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num}>最多 {num} 人</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-xs font-bold text-slate-500 mb-1 block">開始日期 (選填)</label>
+                    <input 
+                      type="date" 
+                      value={purposeForm.startDate}
+                      onChange={e => setPurposeForm({...purposeForm, startDate: e.target.value})}
+                      className="w-full p-2 rounded-lg border border-slate-200 focus:border-green-500 outline-none"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-[120px]">
                     <label className="text-xs font-bold text-slate-500 mb-1 block">結束日期 (選填)</label>
                     <input 
                       type="date" 
@@ -788,7 +847,7 @@ export default function AdminAvailability() {
                       <button 
                         onClick={() => {
                           setEditingPurposeId(null);
-                          setPurposeForm({ name: '', endDate: '', userLimit: -1 });
+                          setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
                         }}
                         className="bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-2 rounded-lg font-bold transition-colors h-[42px] ml-2"
                       >
@@ -841,12 +900,19 @@ export default function AdminAvailability() {
                           <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
                           <td className="px-4 py-3 text-slate-600 font-medium">
                             {p.userLimit && p.userLimit !== -1 ? (
-                              <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">限 {p.userLimit} 次</span>
-                            ) : (
+                              <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs mr-2 border border-blue-100">個人限 {p.userLimit} 次</span>
+                            ) : null}
+                            {p.slotApprovedLimit && p.slotApprovedLimit !== -1 ? (
+                              <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-100">時段限 {p.slotApprovedLimit} 人</span>
+                            ) : null}
+                            {(!p.userLimit || p.userLimit === -1) && (!p.slotApprovedLimit || p.slotApprovedLimit === -1) && (
                               <span className="text-slate-400 text-xs">無限制</span>
                             )}
                           </td>
-                          <td className="px-4 py-3 text-slate-600">{p.endDate || '無期限'}</td>
+                          <td className="px-4 py-3 text-slate-600 text-xs">
+                            {p.startDate ? <div className="text-green-600">起: {p.startDate}</div> : <div className="text-slate-400">起: 不限</div>}
+                            {p.endDate ? <div className="text-red-600">迄: {p.endDate}</div> : <div className="text-slate-400">迄: 不限</div>}
+                          </td>
                           <td className="px-4 py-3">
                             {isExp ? (
                               <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-xs font-bold border border-red-100">已結束</span>
@@ -897,6 +963,188 @@ export default function AdminAvailability() {
                 </div>
               )}
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Access Manager Modal */}
+      {showAccessManager && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
+              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+                <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
+                管理登錄人員
+              </h2>
+              <button onClick={() => setShowAccessManager(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 flex-1 flex flex-col overflow-hidden">
+              <div className="mb-6 flex items-center">
+                <label className="font-bold text-slate-700 mr-4">請選擇預約項目：</label>
+                <select 
+                  value={accessPurposeId}
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    setAccessPurposeId(newId);
+                    const p = purposesDict.find(x => x.id === newId);
+                    setLocalRestricted(p?.restrictedUsers || []);
+                    setSelectedAllowedIds([]);
+                    setSelectedRestrictedIds([]);
+                  }}
+                  className="p-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-500 bg-white min-w-[200px] font-bold text-slate-800 shadow-sm"
+                >
+                  {purposesDict.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {purposesDict.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  請先新增預約項目，才能設定存取權限。
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-[400px]">
+                  
+                  {/* Left: Allowed Users */}
+                  <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                    <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 text-center flex justify-between items-center">
+                      <span>可以使用的人員</span>
+                      <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
+                        {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
+                      </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                      {allUsers.filter(u => !localRestricted.includes(u.id)).map(u => {
+                        const isSelected = selectedAllowedIds.includes(u.id);
+                        return (
+                          <div 
+                            key={u.id}
+                            onClick={() => {
+                              setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
+                            }}
+                            className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          >
+                            <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
+                              <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
+                                {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
+                                {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Middle Buttons */}
+                  <div className="flex md:flex-col justify-center items-center gap-3 py-4 md:py-0 shrink-0">
+                    <button
+                      onClick={() => {
+                        if(selectedAllowedIds.length > 0) {
+                          setLocalRestricted([...localRestricted, ...selectedAllowedIds]);
+                          setSelectedAllowedIds([]);
+                        }
+                      }}
+                      disabled={selectedAllowedIds.length === 0}
+                      className="p-3 bg-purple-100 hover:bg-purple-200 text-purple-700 disabled:opacity-50 disabled:hover:bg-purple-100 rounded-full transition-colors"
+                      title="移至限制名單"
+                    >
+                      <ArrowRight className="w-5 h-5 hidden md:block" />
+                      <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↓</div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if(selectedRestrictedIds.length > 0) {
+                          setLocalRestricted(localRestricted.filter(id => !selectedRestrictedIds.includes(id)));
+                          setSelectedRestrictedIds([]);
+                        }
+                      }}
+                      disabled={selectedRestrictedIds.length === 0}
+                      className="p-3 bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-50 disabled:hover:bg-slate-200 rounded-full transition-colors"
+                      title="移至可用名單"
+                    >
+                      <ArrowLeft className="w-5 h-5 hidden md:block" />
+                      <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↑</div>
+                    </button>
+                  </div>
+
+                  {/* Right: Restricted Users */}
+                  <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                    <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 text-center flex justify-between items-center">
+                      <span>限制存取人員</span>
+                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
+                        {localRestricted.length} 人
+                      </span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                      {allUsers.filter(u => localRestricted.includes(u.id)).map(u => {
+                        const isSelected = selectedRestrictedIds.includes(u.id);
+                        return (
+                          <div 
+                            key={u.id}
+                            onClick={() => {
+                              setSelectedRestrictedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
+                            }}
+                            className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          >
+                            <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
+                              <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
+                                {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
+                                {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {localRestricted.length === 0 && (
+                        <div className="text-center text-slate-400 py-8 text-sm font-medium">目前沒有限制人員</div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-end">
+              <button 
+                onClick={() => setShowAccessManager(false)}
+                className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-colors mr-3"
+              >
+                取消
+              </button>
+              <button 
+                onClick={async () => {
+                  if (!accessPurposeId) return;
+                  try {
+                    let newDict = purposesDict.map(p => {
+                      if (p.id === accessPurposeId) {
+                        return { ...p, restrictedUsers: localRestricted };
+                      }
+                      return p;
+                    });
+                    await saveDictionary('purposes', newDict);
+                    setPurposesDict(newDict);
+                    setAlertModal({ isOpen: true, message: "存取權限儲存成功！" });
+                    setShowAccessManager(false);
+                  } catch (e) {
+                    setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
+                  }
+                }}
+                disabled={!accessPurposeId}
+                className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-colors disabled:opacity-50"
+              >
+                儲存設定
+              </button>
             </div>
           </div>
         </div>
