@@ -810,10 +810,10 @@ export default function AdminAvailability() {
                 請先新增預約項目，才能設定存取權限。
               </div>
             ) : (
-              <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden h-[600px] mb-4">
+              <div className="flex-1 flex flex-col md:flex-row gap-4 md:overflow-hidden h-auto md:h-[600px] mb-4">
                 
                 {/* Left: Allowed Users */}
-                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden bg-slate-50">
+                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden min-h-[400px] md:min-h-0 bg-slate-50">
                   <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <span>可以使用的人員</span>
@@ -976,7 +976,7 @@ export default function AdminAvailability() {
                 </div>
 
                 {/* Right: Restricted Users */}
-                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden bg-slate-50">
+                <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden min-h-[400px] md:min-h-0 bg-slate-50">
                   <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <span>限制存取人員</span>
@@ -1170,7 +1170,7 @@ export default function AdminAvailability() {
               </div>
 
               {/* List */}
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
+              <div className="comic-box bg-white overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                     <tr>
