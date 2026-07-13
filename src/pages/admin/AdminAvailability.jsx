@@ -776,7 +776,7 @@ export default function AdminAvailability() {
 
       {/* Access Manager Section */}
       {activeSection === 'access' && (
-        <div className="bg-white comic-box overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col max-h-[90vh] mb-8">
+        <div className="bg-white comic-box md:overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col md:max-h-[90vh] mb-8">
           <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
             <h2 className="text-xl font-bold text-slate-800 flex items-center">
               <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
@@ -784,7 +784,7 @@ export default function AdminAvailability() {
             </h2>
           </div>
           
-          <div className="p-6 flex-1 flex flex-col overflow-hidden">
+          <div className="p-6 flex-1 flex flex-col md:overflow-hidden">
             <div className="mb-6 flex items-center">
               <label className="font-bold text-slate-700 mr-4">請選擇預約項目：</label>
               <select 
