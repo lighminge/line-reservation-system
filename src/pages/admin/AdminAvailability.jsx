@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, startOfDay, parseISO } from 'date-fns';
-import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, X, Plus, Clock, Users, BookOpen, Trash2, AlertCircle, Edit2, CheckCircle2, List, Heart, Tag } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAvailability, saveAvailability, getDictionary, saveDictionary, getAdminReservations, getAllUsers } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
@@ -803,35 +803,69 @@ export default function AdminAvailability() {
                 請先新增預約項目，才能設定存取權限。
               </div>
             ) : (
-              <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-[400px]">
+              <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden h-[600px] mb-4">
                 
                 {/* Left: Allowed Users */}
                 <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
-                  <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 text-center flex justify-between items-center">
-                    <span>可以使用的人員</span>
-                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
-                      {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
-                    </span>
+                  <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <span>可以使用的人員</span>
+                      <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
+                        {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
+                      </span>
+                    </div>
+                    <div className="flex space-x-1">
+                      <button onClick={() => setSelectedAllowedIds(allUsers.filter(u => !localRestricted.includes(u.id)).map(u => u.id))} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm">全選</button>
+                      <button onClick={() => setSelectedAllowedIds([])} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm">全取消</button>
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                    {allUsers.filter(u => !localRestricted.includes(u.id)).map(u => {
+                    {allUsers.filter(u => !localRestricted.includes(u.id)).map((u, idx) => {
                       const isSelected = selectedAllowedIds.includes(u.id);
+                      const uInterests = Array.isArray(u.interests) ? u.interests : (u.interests ? u.interests.split(',').map(i=>i.trim()).filter(Boolean) : []);
                       return (
                         <div 
                           key={u.id}
                           onClick={() => {
                             setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                           }}
-                          className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          className={`relative flex items-start p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
                         >
-                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
-                            <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
-                              {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
-                              {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                          <div className="text-slate-400 font-bold text-sm w-6 shrink-0 mt-2">{idx + 1}.</div>
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0 pr-8">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="font-bold text-slate-800">{u.displayName}</div>
+                              {u.lineGroup && <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200">Line 官方：{u.lineGroup}</div>}
                             </div>
+                            
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {u.gender && <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{u.gender}</div>}
+                              {(u.tags || []).map(t => (
+                                <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                                  <Tag className="w-3 h-3 mr-1" />{t}
+                                </div>
+                              ))}
+                              {uInterests.map(i => (
+                                <div key={i} className="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded flex items-center border border-pink-100">
+                                  <Heart className="w-3 h-3 mr-1" />{i}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {u.notes && <div className="text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5">備註：{u.notes}</div>}
                           </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocalRestricted([...localRestricted, u.id]);
+                              setSelectedAllowedIds(prev => prev.filter(id => id !== u.id));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-purple-100 text-slate-400 hover:text-purple-600 rounded-full transition-colors z-10"
+                            title="移至限制名單"
+                          >
+                            <ChevronRight className="w-5 h-5" />
+                          </button>
                         </div>
                       )
                     })}
@@ -839,100 +873,140 @@ export default function AdminAvailability() {
                 </div>
 
                 {/* Middle Buttons */}
-                <div className="flex md:flex-col justify-center items-center gap-3 py-4 md:py-0 shrink-0">
-                  <button
-                    onClick={() => {
-                      if(selectedAllowedIds.length > 0) {
-                        setLocalRestricted([...localRestricted, ...selectedAllowedIds]);
-                        setSelectedAllowedIds([]);
+                <div className="flex md:flex-col justify-center items-center gap-4 py-4 md:py-0 shrink-0 px-2">
+                  <div className="text-center w-20">
+                    <button
+                      onClick={() => {
+                        if(selectedAllowedIds.length > 0) {
+                          setLocalRestricted([...localRestricted, ...selectedAllowedIds]);
+                          setSelectedAllowedIds([]);
+                        }
+                      }}
+                      disabled={selectedAllowedIds.length === 0}
+                      className="p-4 mx-auto bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 text-purple-700 shadow-md shadow-purple-500/20 disabled:opacity-50 disabled:shadow-none rounded-2xl transition-all w-14 h-14 flex items-center justify-center group"
+                      title="移至限制名單"
+                    >
+                      <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                    {selectedAllowedIds.length > 0 && <div className="text-xs text-purple-600 font-bold mt-2">已選 {selectedAllowedIds.length} 人</div>}
+                  </div>
+
+                  <div className="text-center w-20">
+                    <button
+                      onClick={() => {
+                        if(selectedRestrictedIds.length > 0) {
+                          setLocalRestricted(localRestricted.filter(id => !selectedRestrictedIds.includes(id)));
+                          setSelectedRestrictedIds([]);
+                        }
+                      }}
+                      disabled={selectedRestrictedIds.length === 0}
+                      className="p-4 mx-auto bg-gradient-to-br from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 text-slate-700 shadow-md shadow-slate-500/20 disabled:opacity-50 disabled:shadow-none rounded-2xl transition-all w-14 h-14 flex items-center justify-center group"
+                      title="移至可用名單"
+                    >
+                      <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
+                    </button>
+                    {selectedRestrictedIds.length > 0 && <div className="text-xs text-slate-600 font-bold mt-2">已選 {selectedRestrictedIds.length} 人</div>}
+                  </div>
+
+                  <div className="h-px w-full bg-slate-200 my-4 hidden md:block" />
+                  
+                  <button 
+                    onClick={async () => {
+                      if (!accessPurposeId) return;
+                      try {
+                        let newDict = purposesDict.map(p => {
+                          if (p.id === accessPurposeId) {
+                            return { ...p, restrictedUsers: localRestricted };
+                          }
+                          return p;
+                        });
+                        await saveDictionary('purposes', newDict);
+                        setPurposesDict(newDict);
+                        setAlertModal({ isOpen: true, message: "存取權限儲存成功！" });
+                      } catch (e) {
+                        setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
                       }
                     }}
-                    disabled={selectedAllowedIds.length === 0}
-                    className="p-3 bg-purple-100 hover:bg-purple-200 text-purple-700 disabled:opacity-50 disabled:hover:bg-purple-100 rounded-full transition-colors"
-                    title="移至限制名單"
+                    disabled={!accessPurposeId}
+                    className="px-3 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 transition-colors disabled:opacity-50 flex flex-col items-center whitespace-nowrap"
                   >
-                    <ArrowRight className="w-5 h-5 hidden md:block" />
-                    <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↓</div>
-                  </button>
-                  <button
-                    onClick={() => {
-                      if(selectedRestrictedIds.length > 0) {
-                        setLocalRestricted(localRestricted.filter(id => !selectedRestrictedIds.includes(id)));
-                        setSelectedRestrictedIds([]);
-                      }
-                    }}
-                    disabled={selectedRestrictedIds.length === 0}
-                    className="p-3 bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-50 disabled:hover:bg-slate-200 rounded-full transition-colors"
-                    title="移至可用名單"
-                  >
-                    <ArrowLeft className="w-5 h-5 hidden md:block" />
-                    <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↑</div>
+                    <CheckCircle2 className="w-6 h-6 mb-1" />
+                    <span className="text-sm">儲存設定</span>
                   </button>
                 </div>
 
                 {/* Right: Restricted Users */}
                 <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
-                  <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 text-center flex justify-between items-center">
-                    <span>限制存取人員</span>
-                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
-                      {localRestricted.length} 人
-                    </span>
+                  <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <span>限制存取人員</span>
+                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
+                        {localRestricted.length} 人
+                      </span>
+                    </div>
+                    <div className="flex space-x-1">
+                      <button onClick={() => setSelectedRestrictedIds(allUsers.filter(u => localRestricted.includes(u.id)).map(u => u.id))} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-sm">全選</button>
+                      <button onClick={() => setSelectedRestrictedIds([])} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-sm">全取消</button>
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                    {allUsers.filter(u => localRestricted.includes(u.id)).map(u => {
+                    {allUsers.filter(u => localRestricted.includes(u.id)).map((u, idx) => {
                       const isSelected = selectedRestrictedIds.includes(u.id);
+                      const uInterests = Array.isArray(u.interests) ? u.interests : (u.interests ? u.interests.split(',').map(i=>i.trim()).filter(Boolean) : []);
                       return (
                         <div 
                           key={u.id}
                           onClick={() => {
                             setSelectedRestrictedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                           }}
-                          className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          className={`relative flex items-start p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
                         >
-                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
-                            <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
-                              {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
-                              {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                          <div className="text-slate-400 font-bold text-sm w-6 shrink-0 mt-2">{idx + 1}.</div>
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1" />
+                          <div className="flex-1 min-w-0 pl-1 pr-8">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="font-bold text-slate-800">{u.displayName}</div>
+                              {u.lineGroup && <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200">Line 官方：{u.lineGroup}</div>}
                             </div>
+                            
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {u.gender && <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{u.gender}</div>}
+                              {(u.tags || []).map(t => (
+                                <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                                  <Tag className="w-3 h-3 mr-1" />{t}
+                                </div>
+                              ))}
+                              {uInterests.map(i => (
+                                <div key={i} className="text-[10px] bg-pink-50 text-pink-600 px-2 py-0.5 rounded flex items-center border border-pink-100">
+                                  <Heart className="w-3 h-3 mr-1" />{i}
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {u.notes && <div className="text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5">備註：{u.notes}</div>}
                           </div>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLocalRestricted(localRestricted.filter(id => id !== u.id));
+                              setSelectedRestrictedIds(prev => prev.filter(id => id !== u.id));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 rounded-full transition-colors z-10"
+                            title="移至可用名單"
+                          >
+                            <ChevronLeft className="w-5 h-5" />
+                          </button>
                         </div>
                       )
                     })}
                     {localRestricted.length === 0 && (
-                      <div className="text-center text-slate-400 py-8 text-sm font-medium">目前沒有限制人員</div>
+                      <div className="text-center text-slate-400 py-12 text-sm font-medium">目前沒有限制人員</div>
                     )}
                   </div>
                 </div>
 
               </div>
             )}
-          </div>
-
-          <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-end">
-            <button 
-              onClick={async () => {
-                if (!accessPurposeId) return;
-                try {
-                  let newDict = purposesDict.map(p => {
-                    if (p.id === accessPurposeId) {
-                      return { ...p, restrictedUsers: localRestricted };
-                    }
-                    return p;
-                  });
-                  await saveDictionary('purposes', newDict);
-                  setPurposesDict(newDict);
-                  setAlertModal({ isOpen: true, message: "存取權限儲存成功！" });
-                } catch (e) {
-                  setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
-                }
-              }}
-              disabled={!accessPurposeId}
-              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-colors disabled:opacity-50"
-            >
-              儲存設定
-            </button>
           </div>
         </div>
       )}
@@ -1057,10 +1131,12 @@ export default function AdminAvailability() {
                     <tr>
                       <th className="px-4 py-3 w-16">序號</th>
                       <th className="px-4 py-3">項目名稱</th>
-                      <th className="px-4 py-3 w-28">次數上限</th>
-                      <th className="px-4 py-3 w-32">結束日期</th>
-                      <th className="px-4 py-3 w-24">狀態</th>
-                      <th className="px-4 py-3 w-24 text-right">操作</th>
+                      <th className="px-4 py-3 w-28">預約次數</th>
+                      <th className="px-4 py-3 w-28">核准人數</th>
+                      <th className="px-4 py-3 w-28">開始日期</th>
+                      <th className="px-4 py-3 w-28">結束日期</th>
+                      <th className="px-4 py-3 w-20">狀態</th>
+                      <th className="px-4 py-3 w-20 text-right">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1073,18 +1149,19 @@ export default function AdminAvailability() {
                           <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
                           <td className="px-4 py-3 text-slate-600 font-medium">
                             {p.userLimit && p.userLimit !== -1 ? (
-                              <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs mr-2 border border-blue-100">個人限 {p.userLimit} 次</span>
-                            ) : null}
+                              <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs border border-blue-100">限 {p.userLimit} 次</span>
+                            ) : <span className="text-slate-400 text-xs">無限制</span>}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 font-medium">
                             {p.slotApprovedLimit && p.slotApprovedLimit !== -1 ? (
-                              <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-100">時段限 {p.slotApprovedLimit} 人</span>
-                            ) : null}
-                            {(!p.userLimit || p.userLimit === -1) && (!p.slotApprovedLimit || p.slotApprovedLimit === -1) && (
-                              <span className="text-slate-400 text-xs">無限制</span>
-                            )}
+                              <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-100">限 {p.slotApprovedLimit} 人</span>
+                            ) : <span className="text-slate-400 text-xs">無限制</span>}
                           </td>
                           <td className="px-4 py-3 text-slate-600 text-xs">
-                            {p.startDate ? <div className="text-green-600">起: {p.startDate}</div> : <div className="text-slate-400">起: 不限</div>}
-                            {p.endDate ? <div className="text-red-600">迄: {p.endDate}</div> : <div className="text-slate-400">迄: 不限</div>}
+                            {p.startDate ? <div className="text-green-600 font-bold">{p.startDate}</div> : <div className="text-slate-400">不限</div>}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600 text-xs">
+                            {p.endDate ? <div className="text-red-600 font-bold">{p.endDate}</div> : <div className="text-slate-400">不限</div>}
                           </td>
                           <td className="px-4 py-3">
                             {isExp ? (
@@ -1106,7 +1183,7 @@ export default function AdminAvailability() {
                     })}
                     {currentPurposeList.length === 0 && (
                       <tr>
-                        <td colSpan="6" className="text-center py-8 text-slate-400">目前沒有符合的項目資料</td>
+                        <td colSpan="8" className="text-center py-8 text-slate-400">目前沒有符合的項目資料</td>
                       </tr>
                     )}
                   </tbody>
