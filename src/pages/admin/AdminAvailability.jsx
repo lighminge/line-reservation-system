@@ -859,7 +859,12 @@ export default function AdminAvailability() {
                           }}
                           className={`relative flex items-start p-3 rounded-xl transition-all border-2 ${hasActiveRes ? 'bg-slate-100 border-slate-200 cursor-not-allowed opacity-90' : isSelected ? 'border-purple-500 bg-purple-50 cursor-pointer' : 'border-transparent bg-white hover:border-slate-300 cursor-pointer'} shadow-sm`}
                         >
-                          <div className="text-slate-400 font-bold text-sm w-6 shrink-0 mt-2">{idx + 1}.</div>
+                          <div className={`flex items-center space-x-2 shrink-0 mt-2 mr-2 ${hasActiveRes ? 'opacity-50' : ''}`}>
+                            <div className={`w-5 h-5 flex items-center justify-center border-2 comic-box-sm ${isSelected ? 'bg-purple-500 border-black' : 'bg-white border-slate-400'}`}>
+                              {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                            </div>
+                            <div className="text-slate-400 font-bold text-sm w-5">{idx + 1}.</div>
+                          </div>
                           <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className={`w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1 ${hasActiveRes ? 'opacity-50 grayscale' : ''}`} />
                           <div className="flex-1 min-w-0 pr-8">
                             <div className="flex flex-wrap items-center gap-2">
@@ -996,7 +1001,12 @@ export default function AdminAvailability() {
                           }}
                           className={`relative flex items-start p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
                         >
-                          <div className="text-slate-400 font-bold text-sm w-6 shrink-0 mt-2">{idx + 1}.</div>
+                          <div className="flex items-center space-x-2 shrink-0 mt-2 mr-2">
+                            <div className={`w-5 h-5 flex items-center justify-center border-2 comic-box-sm ${isSelected ? 'bg-red-500 border-black' : 'bg-white border-slate-400'}`}>
+                              {isSelected && <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                            </div>
+                            <div className="text-slate-400 font-bold text-sm w-5">{idx + 1}.</div>
+                          </div>
                           <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1" />
                           <div className="flex-1 min-w-0 pl-1 pr-8">
                             <div className="flex flex-wrap items-center gap-2">
