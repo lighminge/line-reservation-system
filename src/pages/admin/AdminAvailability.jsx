@@ -342,7 +342,14 @@ export default function AdminAvailability() {
 
   const startEditPurpose = (p) => {
     setEditingPurposeId(p.id);
-    setPurposeForm({ name: p.name, endDate: p.endDate || '', userLimit: p.userLimit !== undefined ? p.userLimit : -1 });
+    setPurposeForm({ 
+      name: p.name, 
+      startDate: p.startDate || '',
+      endDate: p.endDate || '', 
+      userLimit: p.userLimit !== undefined ? p.userLimit : -1,
+      slotApprovedLimit: p.slotApprovedLimit !== undefined ? p.slotApprovedLimit : -1,
+      restrictedUsers: p.restrictedUsers || []
+    });
   };
 
   const savePurpose = async () => {
@@ -1135,8 +1142,8 @@ export default function AdminAvailability() {
                       <th className="px-4 py-3 w-28">核准人數</th>
                       <th className="px-4 py-3 w-28">開始日期</th>
                       <th className="px-4 py-3 w-28">結束日期</th>
-                      <th className="px-4 py-3 w-20">狀態</th>
-                      <th className="px-4 py-3 w-20 text-right">操作</th>
+                      <th className="px-4 py-3 w-24 whitespace-nowrap">狀態</th>
+                      <th className="px-4 py-3 w-24 text-right">操作</th>
                     </tr>
                   </thead>
                   <tbody>
