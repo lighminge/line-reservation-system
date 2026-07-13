@@ -305,9 +305,7 @@ export default function ReservationForm() {
       remain = Math.min(remain, maxCap - resCount);
     }
 
-    if (remain !== Infinity) {
-      text = `剩 ${remain} 位`;
-    }
+    // Do not show remaining spots count based on user request
 
     return { isFull: false, text };
   };
