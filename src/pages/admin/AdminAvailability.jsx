@@ -36,15 +36,16 @@ export default function AdminAvailability() {
     maxCapacity: -1
   });
 
-  // Purpose management Modal
-  const [showPurposeManager, setShowPurposeManager] = useState(false);
+  // Section Toggle ('none', 'purpose', 'access')
+  const [activeSection, setActiveSection] = useState('none');
+
+  // Purpose management State
   const [purposePage, setPurposePage] = useState(1);
   const [purposeFilter, setPurposeFilter] = useState('ALL'); 
   const [editingPurposeId, setEditingPurposeId] = useState(null);
   const [purposeForm, setPurposeForm] = useState({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
 
-  // Access Management Modal
-  const [showAccessManager, setShowAccessManager] = useState(false);
+  // Access Management State
   const [accessPurposeId, setAccessPurposeId] = useState('');
   const [localRestricted, setLocalRestricted] = useState([]);
   const [selectedAllowedIds, setSelectedAllowedIds] = useState([]);
@@ -558,42 +559,48 @@ export default function AdminAvailability() {
       </div>
 
       {/* Action Buttons Below Calendar */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex space-x-2 md:space-x-4 mb-6">
         <button 
           onClick={() => {
-            setShowPurposeManager(true);
-            setEditingPurposeId(null);
-            setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
+            if (activeSection === 'purpose') setActiveSection('none');
+            else {
+              setActiveSection('purpose');
+              setEditingPurposeId(null);
+              setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
+            }
           }}
-          className="bg-white border-2 border-slate-200 hover:border-slate-800 text-slate-700 hover:text-slate-900 px-6 py-8 rounded-3xl flex flex-col items-center justify-center space-y-3 transition-all shadow-sm hover:shadow-md group"
+          className={cn(
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            activeSection === 'purpose' 
+              ? "border-slate-800 text-slate-900 bg-slate-100" 
+              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+          )}
         >
-          <div className="w-16 h-16 bg-slate-100 group-hover:bg-slate-800 text-slate-600 group-hover:text-white rounded-full flex items-center justify-center transition-colors">
-            <List className="w-8 h-8" />
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-bold">管理預約項目</h3>
-            <p className="text-sm font-medium opacity-70 mt-1">設定可預約的服務、時段人數上限</p>
-          </div>
+          <List className={cn("w-6 h-6", activeSection === 'purpose' ? "text-slate-800" : "text-slate-400")} />
+          管理預約項目
         </button>
 
         <button 
           onClick={() => {
-            setShowAccessManager(true);
-            const initialPurpose = purposesDict[0]?.id || '';
-            setAccessPurposeId(initialPurpose);
-            setLocalRestricted(purposesDict[0]?.restrictedUsers || []);
-            setSelectedAllowedIds([]);
-            setSelectedRestrictedIds([]);
+            if (activeSection === 'access') setActiveSection('none');
+            else {
+              setActiveSection('access');
+              const initialPurpose = purposesDict[0]?.id || '';
+              setAccessPurposeId(initialPurpose);
+              setLocalRestricted(purposesDict[0]?.restrictedUsers || []);
+              setSelectedAllowedIds([]);
+              setSelectedRestrictedIds([]);
+            }
           }}
-          className="bg-white border-2 border-slate-200 hover:border-purple-600 text-slate-700 hover:text-purple-700 px-6 py-8 rounded-3xl flex flex-col items-center justify-center space-y-3 transition-all shadow-sm hover:shadow-md group"
+          className={cn(
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            activeSection === 'access' 
+              ? "border-purple-500 text-purple-700 bg-purple-50" 
+              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+          )}
         >
-          <div className="w-16 h-16 bg-slate-100 group-hover:bg-purple-600 text-slate-600 group-hover:text-white rounded-full flex items-center justify-center transition-colors">
-            <ShieldAlert className="w-8 h-8" />
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-bold">管理登錄人員</h3>
-            <p className="text-sm font-medium opacity-70 mt-1">設定各項目無法使用的人員黑名單</p>
-          </div>
+          <ShieldAlert className={cn("w-6 h-6", activeSection === 'access' ? "text-purple-600" : "text-slate-400")} />
+          管理登錄人員
         </button>
       </div>
 
@@ -760,21 +767,187 @@ export default function AdminAvailability() {
         </div>
       )}
 
-      {/* Purpose Manager Modal */}
-      {showPurposeManager && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                <List className="w-5 h-5 mr-2 text-slate-500" />
-                管理預約項目
-              </h2>
-              <button onClick={() => setShowPurposeManager(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-6 h-6" />
-              </button>
+      {/* Access Manager Section */}
+      {activeSection === 'access' && (
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col max-h-[90vh] mb-8">
+          <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center">
+              <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
+              管理登錄人員
+            </h2>
+          </div>
+          
+          <div className="p-6 flex-1 flex flex-col overflow-hidden">
+            <div className="mb-6 flex items-center">
+              <label className="font-bold text-slate-700 mr-4">請選擇預約項目：</label>
+              <select 
+                value={accessPurposeId}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  setAccessPurposeId(newId);
+                  const p = purposesDict.find(x => x.id === newId);
+                  setLocalRestricted(p?.restrictedUsers || []);
+                  setSelectedAllowedIds([]);
+                  setSelectedRestrictedIds([]);
+                }}
+                className="p-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-500 bg-white min-w-[200px] font-bold text-slate-800 shadow-sm"
+              >
+                {purposesDict.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
             </div>
-            
-            <div className="p-6">
+
+            {purposesDict.length === 0 ? (
+              <div className="text-center py-12 text-slate-500">
+                請先新增預約項目，才能設定存取權限。
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-[400px]">
+                
+                {/* Left: Allowed Users */}
+                <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                  <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 text-center flex justify-between items-center">
+                    <span>可以使用的人員</span>
+                    <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
+                      {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                    {allUsers.filter(u => !localRestricted.includes(u.id)).map(u => {
+                      const isSelected = selectedAllowedIds.includes(u.id);
+                      return (
+                        <div 
+                          key={u.id}
+                          onClick={() => {
+                            setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
+                          }}
+                          className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                        >
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
+                            <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
+                              {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
+                              {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Middle Buttons */}
+                <div className="flex md:flex-col justify-center items-center gap-3 py-4 md:py-0 shrink-0">
+                  <button
+                    onClick={() => {
+                      if(selectedAllowedIds.length > 0) {
+                        setLocalRestricted([...localRestricted, ...selectedAllowedIds]);
+                        setSelectedAllowedIds([]);
+                      }
+                    }}
+                    disabled={selectedAllowedIds.length === 0}
+                    className="p-3 bg-purple-100 hover:bg-purple-200 text-purple-700 disabled:opacity-50 disabled:hover:bg-purple-100 rounded-full transition-colors"
+                    title="移至限制名單"
+                  >
+                    <ArrowRight className="w-5 h-5 hidden md:block" />
+                    <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↓</div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if(selectedRestrictedIds.length > 0) {
+                        setLocalRestricted(localRestricted.filter(id => !selectedRestrictedIds.includes(id)));
+                        setSelectedRestrictedIds([]);
+                      }
+                    }}
+                    disabled={selectedRestrictedIds.length === 0}
+                    className="p-3 bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-50 disabled:hover:bg-slate-200 rounded-full transition-colors"
+                    title="移至可用名單"
+                  >
+                    <ArrowLeft className="w-5 h-5 hidden md:block" />
+                    <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↑</div>
+                  </button>
+                </div>
+
+                {/* Right: Restricted Users */}
+                <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
+                  <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 text-center flex justify-between items-center">
+                    <span>限制存取人員</span>
+                    <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
+                      {localRestricted.length} 人
+                    </span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                    {allUsers.filter(u => localRestricted.includes(u.id)).map(u => {
+                      const isSelected = selectedRestrictedIds.includes(u.id);
+                      return (
+                        <div 
+                          key={u.id}
+                          onClick={() => {
+                            setSelectedRestrictedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
+                          }}
+                          className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                        >
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
+                            <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
+                              {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
+                              {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {localRestricted.length === 0 && (
+                      <div className="text-center text-slate-400 py-8 text-sm font-medium">目前沒有限制人員</div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-end">
+            <button 
+              onClick={async () => {
+                if (!accessPurposeId) return;
+                try {
+                  let newDict = purposesDict.map(p => {
+                    if (p.id === accessPurposeId) {
+                      return { ...p, restrictedUsers: localRestricted };
+                    }
+                    return p;
+                  });
+                  await saveDictionary('purposes', newDict);
+                  setPurposesDict(newDict);
+                  setAlertModal({ isOpen: true, message: "存取權限儲存成功！" });
+                } catch (e) {
+                  setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
+                }
+              }}
+              disabled={!accessPurposeId}
+              className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-colors disabled:opacity-50"
+            >
+              儲存設定
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Purpose Manager Section */}
+      {activeSection === 'purpose' && (
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 mb-8">
+          <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center">
+              <List className="w-5 h-5 mr-2 text-slate-500" />
+              管理預約項目
+            </h2>
+          </div>
+          
+          <div className="p-6">
               
               {/* Add/Edit Form */}
               <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
@@ -965,189 +1138,6 @@ export default function AdminAvailability() {
 
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Access Manager Modal */}
-      {showAccessManager && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
-                管理登錄人員
-              </h2>
-              <button onClick={() => setShowAccessManager(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="p-6 flex-1 flex flex-col overflow-hidden">
-              <div className="mb-6 flex items-center">
-                <label className="font-bold text-slate-700 mr-4">請選擇預約項目：</label>
-                <select 
-                  value={accessPurposeId}
-                  onChange={(e) => {
-                    const newId = e.target.value;
-                    setAccessPurposeId(newId);
-                    const p = purposesDict.find(x => x.id === newId);
-                    setLocalRestricted(p?.restrictedUsers || []);
-                    setSelectedAllowedIds([]);
-                    setSelectedRestrictedIds([]);
-                  }}
-                  className="p-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-purple-500 bg-white min-w-[200px] font-bold text-slate-800 shadow-sm"
-                >
-                  {purposesDict.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              {purposesDict.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  請先新增預約項目，才能設定存取權限。
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden min-h-[400px]">
-                  
-                  {/* Left: Allowed Users */}
-                  <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
-                    <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 text-center flex justify-between items-center">
-                      <span>可以使用的人員</span>
-                      <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded text-xs">
-                        {allUsers.filter(u => !localRestricted.includes(u.id)).length} 人
-                      </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                      {allUsers.filter(u => !localRestricted.includes(u.id)).map(u => {
-                        const isSelected = selectedAllowedIds.includes(u.id);
-                        return (
-                          <div 
-                            key={u.id}
-                            onClick={() => {
-                              setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
-                            }}
-                            className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
-                          >
-                            <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
-                              <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
-                                {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
-                                {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Middle Buttons */}
-                  <div className="flex md:flex-col justify-center items-center gap-3 py-4 md:py-0 shrink-0">
-                    <button
-                      onClick={() => {
-                        if(selectedAllowedIds.length > 0) {
-                          setLocalRestricted([...localRestricted, ...selectedAllowedIds]);
-                          setSelectedAllowedIds([]);
-                        }
-                      }}
-                      disabled={selectedAllowedIds.length === 0}
-                      className="p-3 bg-purple-100 hover:bg-purple-200 text-purple-700 disabled:opacity-50 disabled:hover:bg-purple-100 rounded-full transition-colors"
-                      title="移至限制名單"
-                    >
-                      <ArrowRight className="w-5 h-5 hidden md:block" />
-                      <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↓</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if(selectedRestrictedIds.length > 0) {
-                          setLocalRestricted(localRestricted.filter(id => !selectedRestrictedIds.includes(id)));
-                          setSelectedRestrictedIds([]);
-                        }
-                      }}
-                      disabled={selectedRestrictedIds.length === 0}
-                      className="p-3 bg-slate-200 hover:bg-slate-300 text-slate-700 disabled:opacity-50 disabled:hover:bg-slate-200 rounded-full transition-colors"
-                      title="移至可用名單"
-                    >
-                      <ArrowLeft className="w-5 h-5 hidden md:block" />
-                      <div className="w-5 h-5 md:hidden text-center leading-5 font-bold">↑</div>
-                    </button>
-                  </div>
-
-                  {/* Right: Restricted Users */}
-                  <div className="flex-1 border-2 border-slate-200 rounded-2xl flex flex-col overflow-hidden bg-slate-50">
-                    <div className="bg-red-50 p-3 border-b border-red-100 font-bold text-red-700 text-center flex justify-between items-center">
-                      <span>限制存取人員</span>
-                      <span className="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">
-                        {localRestricted.length} 人
-                      </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-2 space-y-2">
-                      {allUsers.filter(u => localRestricted.includes(u.id)).map(u => {
-                        const isSelected = selectedRestrictedIds.includes(u.id);
-                        return (
-                          <div 
-                            key={u.id}
-                            onClick={() => {
-                              setSelectedRestrictedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
-                            }}
-                            className={`flex items-center p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
-                          >
-                            <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200" />
-                            <div className="flex-1 min-w-0">
-                              <div className="font-bold text-slate-800 truncate">{u.displayName}</div>
-                              <div className="text-xs text-slate-500 truncate flex gap-1 mt-0.5">
-                                {u.gender && <span className="bg-slate-100 px-1 rounded">{u.gender}</span>}
-                                {u.tags && u.tags.slice(0,2).map(t => <span key={t} className="bg-slate-100 px-1 rounded truncate">{t}</span>)}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {localRestricted.length === 0 && (
-                        <div className="text-center text-slate-400 py-8 text-sm font-medium">目前沒有限制人員</div>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t border-slate-100 bg-slate-50 shrink-0 flex justify-end">
-              <button 
-                onClick={() => setShowAccessManager(false)}
-                className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl transition-colors mr-3"
-              >
-                取消
-              </button>
-              <button 
-                onClick={async () => {
-                  if (!accessPurposeId) return;
-                  try {
-                    let newDict = purposesDict.map(p => {
-                      if (p.id === accessPurposeId) {
-                        return { ...p, restrictedUsers: localRestricted };
-                      }
-                      return p;
-                    });
-                    await saveDictionary('purposes', newDict);
-                    setPurposesDict(newDict);
-                    setAlertModal({ isOpen: true, message: "存取權限儲存成功！" });
-                    setShowAccessManager(false);
-                  } catch (e) {
-                    setAlertModal({ isOpen: true, message: "儲存失敗：" + e.message });
-                  }
-                }}
-                disabled={!accessPurposeId}
-                className="px-8 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition-colors disabled:opacity-50"
-              >
-                儲存設定
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Alert Modal */}
