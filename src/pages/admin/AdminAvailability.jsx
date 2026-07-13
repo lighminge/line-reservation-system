@@ -822,31 +822,57 @@ export default function AdminAvailability() {
                       </span>
                     </div>
                     <div className="flex space-x-1">
-                      <button onClick={() => setSelectedAllowedIds(allUsers.filter(u => !localRestricted.includes(u.id)).map(u => u.id))} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm">全選</button>
+                      <button 
+                        onClick={() => {
+                          const activePurposeName = purposesDict.find(p => p.id === accessPurposeId)?.name;
+                          const selectableIds = allUsers
+                            .filter(u => !localRestricted.includes(u.id))
+                            .filter(u => {
+                              const userRes = reservations.filter(r => r.userId === u.id && r.purpose === activePurposeName && r.status !== 'cancelled');
+                              return userRes.length === 0;
+                            })
+                            .map(u => u.id);
+                          setSelectedAllowedIds(selectableIds);
+                        }} 
+                        className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm"
+                      >
+                        全選
+                      </button>
                       <button onClick={() => setSelectedAllowedIds([])} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm">全取消</button>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
                     {allUsers.filter(u => !localRestricted.includes(u.id)).map((u, idx) => {
+                      const activePurposeName = purposesDict.find(p => p.id === accessPurposeId)?.name;
+                      const userRes = reservations.filter(r => r.userId === u.id && r.purpose === activePurposeName && r.status !== 'cancelled');
+                      const hasActiveRes = userRes.length > 0;
+                      const isConfirmed = userRes.some(r => r.status === 'confirmed');
+                      
                       const isSelected = selectedAllowedIds.includes(u.id);
                       const uInterests = Array.isArray(u.interests) ? u.interests : (u.interests ? u.interests.split(',').map(i=>i.trim()).filter(Boolean) : []);
                       return (
                         <div 
                           key={u.id}
                           onClick={() => {
+                            if (hasActiveRes) return;
                             setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                           }}
-                          className={`relative flex items-start p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-purple-500 bg-purple-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          className={`relative flex items-start p-3 rounded-xl transition-all border-2 ${hasActiveRes ? 'bg-slate-100 border-slate-200 cursor-not-allowed opacity-90' : isSelected ? 'border-purple-500 bg-purple-50 cursor-pointer' : 'border-transparent bg-white hover:border-slate-300 cursor-pointer'} shadow-sm`}
                         >
                           <div className="text-slate-400 font-bold text-sm w-6 shrink-0 mt-2">{idx + 1}.</div>
-                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1" />
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className={`w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1 ${hasActiveRes ? 'opacity-50 grayscale' : ''}`} />
                           <div className="flex-1 min-w-0 pr-8">
                             <div className="flex flex-wrap items-center gap-2">
                               <div className="font-bold text-slate-800">{u.displayName}</div>
+                              {hasActiveRes && (
+                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isConfirmed ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm'}`}>
+                                  {isConfirmed ? '✅ 已有核准預約' : '⏳ 已有待審核預約'}
+                                </div>
+                              )}
                               {u.lineGroup && <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200">Line 官方：{u.lineGroup}</div>}
                             </div>
                             
-                            <div className="flex flex-wrap gap-1 mt-1.5">
+                            <div className={`flex flex-wrap gap-1 mt-1.5 ${hasActiveRes ? 'opacity-60' : ''}`}>
                               {u.gender && <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{u.gender}</div>}
                               {(u.tags || []).map(t => (
                                 <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
@@ -860,19 +886,21 @@ export default function AdminAvailability() {
                               ))}
                             </div>
                             
-                            {u.notes && <div className="text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5">備註：{u.notes}</div>}
+                            {u.notes && <div className={`text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5 ${hasActiveRes ? 'opacity-60' : ''}`}>備註：{u.notes}</div>}
                           </div>
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLocalRestricted([...localRestricted, u.id]);
-                              setSelectedAllowedIds(prev => prev.filter(id => id !== u.id));
-                            }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-purple-100 text-slate-400 hover:text-purple-600 rounded-full transition-colors z-10"
-                            title="移至限制名單"
-                          >
-                            <ChevronRight className="w-5 h-5" />
-                          </button>
+                          {!hasActiveRes && (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLocalRestricted([...localRestricted, u.id]);
+                                setSelectedAllowedIds(prev => prev.filter(id => id !== u.id));
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-purple-100 text-slate-400 hover:text-purple-600 rounded-full transition-colors z-10"
+                              title="移至限制名單"
+                            >
+                              <ChevronRight className="w-5 h-5" />
+                            </button>
+                          )}
                         </div>
                       )
                     })}
