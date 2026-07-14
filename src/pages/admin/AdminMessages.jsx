@@ -104,10 +104,10 @@ export default function AdminMessages() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8 comic-theme">
       <div>
-        <h1 className="text-3xl font-bold text-slate-800">預約訊息畫面管理</h1>
-        <p className="text-slate-500 mt-2">自訂客戶端送出預約後的成功畫面，以及 Line 官方帳號的推播確認訊息。</p>
+        <h1 className="text-3xl font-bold text-black font-black">預約訊息畫面管理</h1>
+        <p className="text-black font-bold mt-2">自訂客戶端送出預約後的成功畫面，以及 Line 官方帳號的推播確認訊息。</p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -124,34 +124,34 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">主標題</label>
+              <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
               <input 
                 type="text" 
                 value={templates.clientSuccess.title}
                 onChange={e => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, title: e.target.value}})}
-                className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 bg-white outline-none"
+                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 bg-white outline-none"
                 placeholder="例如：預約已送出！"
               />
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-black font-black block mb-2">
                 內文說明
                 <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
               </label>
               <textarea 
                 value={templates.clientSuccess.text}
                 onChange={e => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text: e.target.value}})}
-                className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 bg-white outline-none h-32 resize-none"
+                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 bg-white outline-none h-32 resize-none"
                 placeholder="請輸入成功提示文字"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">上方圖案 (選項)</label>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
               <div 
                 onClick={() => clientFileRef.current?.click()}
-                className="w-full h-40 rounded-xl border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors overflow-hidden relative group"
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors overflow-hidden relative group"
               >
                 {clientPreview ? (
                   <>
@@ -163,7 +163,7 @@ export default function AdminMessages() {
                 ) : (
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-500" />
-                    <span className="text-sm text-slate-500 group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
+                    <span className="text-sm text-black font-bold group-hover:text-blue-600 font-medium">點擊上傳圖片</span>
                   </>
                 )}
               </div>
@@ -171,12 +171,12 @@ export default function AdminMessages() {
               {clientPreview && (
                 <button type="button" onClick={() => { setClientPreview(''); setClientFile(null); setTemplates({...templates, clientSuccess: {...templates.clientSuccess, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline">移除圖片</button>
               )}
-              <div className="mt-3 bg-slate-100 p-3 rounded-lg border border-slate-200">
-                <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
-                  <li><span className="font-semibold text-slate-600">支援檔案類型</span>：JPG, JPEG, PNG。</li>
-                  <li><span className="font-semibold text-slate-600">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
-                  <li><span className="font-semibold text-slate-600">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
-                  <li><span className="font-semibold text-slate-600">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
+              <div className="mt-3 bg-slate-100 p-3 border-2 border-black border border-black">
+                <ul className="text-xs text-black font-bold space-y-1 list-disc list-inside">
+                  <li><span className="font-semibold text-black font-black">支援檔案類型</span>：JPG, JPEG, PNG。</li>
+                  <li><span className="font-semibold text-black font-black">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
+                  <li><span className="font-semibold text-black font-black">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
+                  <li><span className="font-semibold text-black font-black">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
                 </ul>
               </div>
             </div>
@@ -195,34 +195,34 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">主標題</label>
+              <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
               <input 
                 type="text" 
                 value={templates.lineConfirm.title}
                 onChange={e => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, title: e.target.value}})}
-                className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 bg-white outline-none"
+                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none"
                 placeholder="例如：預約成功確認"
               />
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-black font-black block mb-2">
                 內文說明 (下方會自動附上時間等資訊)
                 <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
               </label>
               <textarea 
                 value={templates.lineConfirm.text}
                 onChange={e => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text: e.target.value}})}
-                className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 bg-white outline-none h-32 resize-none"
+                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none h-32 resize-none"
                 placeholder="例如：期待您的到來！"
               />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">卡片橫幅圖案 (選項)</label>
+              <label className="text-sm font-semibold text-black font-black block mb-2">卡片橫幅圖案 (選項)</label>
               <div 
                 onClick={() => lineFileRef.current?.click()}
-                className="w-full h-40 rounded-xl border-2 border-dashed border-slate-300 bg-white flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors overflow-hidden relative group"
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors overflow-hidden relative group"
               >
                 {linePreview ? (
                   <>
@@ -234,7 +234,7 @@ export default function AdminMessages() {
                 ) : (
                   <>
                     <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
-                    <span className="text-sm text-slate-500 group-hover:text-green-600 font-medium">點擊上傳圖片</span>
+                    <span className="text-sm text-black font-bold group-hover:text-green-600 font-medium">點擊上傳圖片</span>
                   </>
                 )}
               </div>
@@ -242,12 +242,12 @@ export default function AdminMessages() {
               {linePreview && (
                 <button type="button" onClick={() => { setLinePreview(''); setLineFile(null); setTemplates({...templates, lineConfirm: {...templates.lineConfirm, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline">移除圖片</button>
               )}
-              <div className="mt-3 bg-slate-100 p-3 rounded-lg border border-slate-200">
-                <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
-                  <li><span className="font-semibold text-slate-600">支援檔案類型</span>：JPG, JPEG, PNG。</li>
-                  <li><span className="font-semibold text-slate-600">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
-                  <li><span className="font-semibold text-slate-600">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
-                  <li><span className="font-semibold text-slate-600">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
+              <div className="mt-3 bg-slate-100 p-3 border-2 border-black border border-black">
+                <ul className="text-xs text-black font-bold space-y-1 list-disc list-inside">
+                  <li><span className="font-semibold text-black font-black">支援檔案類型</span>：JPG, JPEG, PNG。</li>
+                  <li><span className="font-semibold text-black font-black">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
+                  <li><span className="font-semibold text-black font-black">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
+                  <li><span className="font-semibold text-black font-black">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
                 </ul>
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function AdminMessages() {
         {/* Form Actions */}
         <div className="lg:col-span-2">
           {message.text && (
-            <div className={`p-4 rounded-xl flex items-center mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            <div className={`p-4 border-2 border-black comic-box-sm flex items-center mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
               {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 mr-2 shrink-0" /> : <AlertCircle className="w-5 h-5 mr-2 shrink-0" />}
               <span className="text-sm font-medium">{message.text}</span>
             </div>
@@ -266,7 +266,7 @@ export default function AdminMessages() {
           <button 
             type="submit" 
             disabled={saving}
-            className="w-full md:w-auto md:min-w-[200px] mx-auto block bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white font-bold py-4 px-8 rounded-xl transition-colors shadow-lg shadow-slate-800/20"
+            className="w-full md:w-auto md:min-w-[200px] mx-auto block bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white font-bold py-4 px-8 border-2 border-black comic-box-sm transition-colors shadow-lg shadow-slate-800/20"
           >
             <div className="flex items-center justify-center">
               {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}

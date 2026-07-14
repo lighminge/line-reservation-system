@@ -399,11 +399,11 @@ export default function AdminAvailability() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 comic-theme">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">預約設定</h1>
-          <p className="text-slate-500 mt-1">設定每日可預約的時段、項目與人數上限</p>
+          <h1 className="text-3xl font-bold text-black font-black">預約設定</h1>
+          <p className="text-black font-bold mt-1">設定每日可預約的時段、項目與人數上限</p>
         </div>
       </div>
 
@@ -413,7 +413,7 @@ export default function AdminAvailability() {
         {/* Top bar with filter */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-white gap-4">
           <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 w-full md:w-auto">
-            <span className="text-sm font-bold text-slate-600 whitespace-nowrap">顯示項目：</span>
+            <span className="text-sm font-bold text-black font-black whitespace-nowrap">顯示項目：</span>
             
             {/* Split filters: Status and Purpose */}
             <div className="flex items-center space-x-2 w-full md:w-auto">
@@ -446,44 +446,44 @@ export default function AdminAvailability() {
           {/* Calendar Header & Stats */}
           <div className="flex flex-col mb-6 gap-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+              <h2 className="text-xl font-bold text-black font-black flex items-center">
                 {format(currentMonth, 'yyyy年 MM月')}
               </h2>
               <div className="flex space-x-2">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors">
-                  <ChevronLeft className="w-5 h-5 text-slate-600" />
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 border border-black bg-white border-2 border-black hover:bg-slate-50 transition-colors">
+                  <ChevronLeft className="w-5 h-5 text-black font-black" />
                 </button>
-                <button onClick={() => setCurrentMonth(new Date())} className="px-4 py-2 text-sm font-semibold border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors text-slate-600">
+                <button onClick={() => setCurrentMonth(new Date())} className="px-4 py-2 text-sm font-semibold border border-black bg-white border-2 border-black hover:bg-slate-50 transition-colors text-black font-black">
                   今天
                 </button>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 transition-colors">
-                  <ChevronRight className="w-5 h-5 text-slate-600" />
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 border border-black bg-white border-2 border-black hover:bg-slate-50 transition-colors">
+                  <ChevronRight className="w-5 h-5 text-black font-black" />
                 </button>
               </div>
             </div>
 
             {/* Stats Bar */}
             {purposeStats && filterPurpose !== 'ALL' && (
-              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex flex-wrap gap-4 md:gap-8 justify-center mt-2 shadow-sm">
+              <div className="bg-blue-50/50 border border-blue-100 border-2 border-black comic-box-sm p-4 flex flex-wrap gap-4 md:gap-8 justify-center mt-2 shadow-[2px_2px_0_0_#000]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-sm"><Clock className="w-5 h-5" /></div>
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shadow-[2px_2px_0_0_#000]"><Clock className="w-5 h-5" /></div>
                   <div>
-                    <div className="text-xs text-slate-500 font-medium">總天數</div>
-                    <div className="font-bold text-slate-800 text-lg">{purposeStats.days} <span className="text-sm font-normal text-slate-500">天</span></div>
+                    <div className="text-xs text-black font-bold font-medium">總天數</div>
+                    <div className="font-bold text-black font-black text-lg">{purposeStats.days} <span className="text-sm font-normal text-black font-bold">天</span></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm"><List className="w-5 h-5" /></div>
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-[2px_2px_0_0_#000]"><List className="w-5 h-5" /></div>
                   <div>
-                    <div className="text-xs text-slate-500 font-medium">總時段</div>
-                    <div className="font-bold text-slate-800 text-lg">{purposeStats.slots} <span className="text-sm font-normal text-slate-500">個</span></div>
+                    <div className="text-xs text-black font-bold font-medium">總時段</div>
+                    <div className="font-bold text-black font-black text-lg">{purposeStats.slots} <span className="text-sm font-normal text-black font-bold">個</span></div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm"><Users className="w-5 h-5" /></div>
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shadow-[2px_2px_0_0_#000]"><Users className="w-5 h-5" /></div>
                   <div>
-                    <div className="text-xs text-slate-500 font-medium">預約人數</div>
-                    <div className="font-bold text-slate-800 text-lg">{purposeStats.users} <span className="text-sm font-normal text-slate-500">人</span></div>
+                    <div className="text-xs text-black font-bold font-medium">預約人數</div>
+                    <div className="font-bold text-black font-black text-lg">{purposeStats.users} <span className="text-sm font-normal text-black font-bold">人</span></div>
                   </div>
                 </div>
               </div>
@@ -503,7 +503,7 @@ export default function AdminAvailability() {
           </div>
 
           <div className="grid grid-cols-7 gap-2 md:gap-4">
-            {paddingDays.map(i => <div key={`padding-${i}`} className="min-h-[140px] rounded-xl bg-slate-50/50" />)}
+            {paddingDays.map(i => <div key={`padding-${i}`} className="min-h-[140px] border-2 border-black comic-box-sm bg-slate-50/50" />)}
             
             {days.map(date => {
               const dateStr = format(date, 'yyyy-MM-dd');
@@ -520,13 +520,13 @@ export default function AdminAvailability() {
                   key={date.toString()}
                   onClick={() => openModal(date)}
                   className={cn(
-                    "min-h-[140px] p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-start relative hover:shadow-md cursor-pointer",
-                    isToday(date) ? "border-green-400 ring-1 ring-green-400" : "border-slate-200 hover:border-green-300",
+                    "min-h-[140px] p-2 md:p-3 border-2 border-black comic-box-sm border transition-all duration-200 flex flex-col items-start relative hover:shadow-[4px_4px_0_0_#000] cursor-pointer",
+                    isToday(date) ? "border-green-400 ring-1 ring-green-400" : "border-black hover:border-green-300",
                     isOpen ? (isWeekend ? "bg-red-50/50" : "bg-white") : (isWeekend ? "bg-red-50/30" : "bg-slate-50/80")
                   )}
                 >
                   <div className="flex justify-between items-start w-full mb-2">
-                    <span className={cn("text-sm font-bold", isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-slate-700")}>
+                    <span className={cn("text-sm font-bold", isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-black font-black")}>
                       {format(date, 'd')}
                     </span>
                     {holidayText && (
@@ -546,7 +546,7 @@ export default function AdminAvailability() {
                         const slotResCount = reservations.filter(r => r.date === dateStr && r.time === s.time && r.status !== 'cancelled').length;
                         
                         return (
-                          <div key={s.time} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm text-center font-medium truncate flex justify-center items-center gap-1 ${colorClass}`}>
+                          <div key={s.time} className={`text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-[2px_2px_0_0_#000] text-center font-medium truncate flex justify-center items-center gap-1 ${colorClass}`}>
                             <span>{s.time}</span>
                             {slotResCount > 0 && <span className="bg-white/20 px-1 rounded-sm">({slotResCount}人)</span>}
                           </div>
@@ -577,13 +577,13 @@ export default function AdminAvailability() {
             }
           }}
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 border-[3px] border-black comic-box border-2 shadow-[2px_2px_0_0_#000] bg-white",
             activeSection === 'purpose' 
               ? "border-slate-800 text-slate-900 bg-slate-100" 
-              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              : "border-black text-black font-bold hover:text-black font-black hover:border-black"
           )}
         >
-          <List className={cn("w-6 h-6", activeSection === 'purpose' ? "text-slate-800" : "text-slate-400")} />
+          <List className={cn("w-6 h-6", activeSection === 'purpose' ? "text-black font-black" : "text-slate-400")} />
           管理預約項目
         </button>
 
@@ -600,10 +600,10 @@ export default function AdminAvailability() {
             }
           }}
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 border-[3px] border-black comic-box border-2 shadow-[2px_2px_0_0_#000] bg-white",
             activeSection === 'access' 
               ? "border-purple-500 text-purple-700 bg-purple-50" 
-              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              : "border-black text-black font-bold hover:text-black font-black hover:border-black"
           )}
         >
           <ShieldAlert className={cn("w-6 h-6", activeSection === 'access' ? "text-purple-600" : "text-slate-400")} />
@@ -614,12 +614,12 @@ export default function AdminAvailability() {
       {/* Date Settings Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-              <h2 className="text-xl font-bold text-slate-800">
+              <h2 className="text-xl font-bold text-black font-black">
                 設定預約：{selectedDate}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-black font-black">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -628,31 +628,31 @@ export default function AdminAvailability() {
               
               {/* Left Column: Form */}
               <div className="flex-1 space-y-5">
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <h3 className="font-bold text-slate-700 mb-3 flex items-center">
+                <div className="bg-slate-50 p-4 border-[3px] border-black comic-box border border-black">
+                  <h3 className="font-bold text-black font-black mb-3 flex items-center">
                     <Clock className="w-4 h-4 mr-2 text-green-500" />
                     {editingSlotIndex >= 0 ? '編輯時段' : '新增時段'}
                   </h3>
                   
                   <div className="flex items-center space-x-2 mb-4">
-                    <select value={slotForm.ampm} onChange={e => setSlotForm({...slotForm, ampm: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white">
+                    <select value={slotForm.ampm} onChange={e => setSlotForm({...slotForm, ampm: e.target.value})} className="p-2 border border-black border-2 border-black outline-none focus:border-green-500 bg-white">
                       <option value="AM">上午</option>
                       <option value="PM">下午</option>
                     </select>
-                    <select value={slotForm.hour} onChange={e => setSlotForm({...slotForm, hour: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white min-w-[60px]">
+                    <select value={slotForm.hour} onChange={e => setSlotForm({...slotForm, hour: e.target.value})} className="p-2 border border-black border-2 border-black outline-none focus:border-green-500 bg-white min-w-[60px]">
                       {Array.from({length: 12}, (_, i) => i === 0 ? 12 : i).map(h => (
                         <option key={h} value={h}>{h}</option>
                       ))}
                     </select>
                     <span>:</span>
-                    <select value={slotForm.minute} onChange={e => setSlotForm({...slotForm, minute: e.target.value})} className="p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white min-w-[60px]">
+                    <select value={slotForm.minute} onChange={e => setSlotForm({...slotForm, minute: e.target.value})} className="p-2 border border-black border-2 border-black outline-none focus:border-green-500 bg-white min-w-[60px]">
                       <option value="00">00</option>
                       <option value="30">30</option>
                     </select>
                   </div>
 
                   <div className="mb-4">
-                    <label className="text-sm font-bold text-slate-700 block mb-2">提供預約項目 (可複選)</label>
+                    <label className="text-sm font-bold text-black font-black block mb-2">提供預約項目 (可複選)</label>
                     <div className="flex flex-wrap gap-2">
                       {purposesDict.map(p => {
                         const isExp = p.endDate && isBefore(parseISO(p.endDate), today);
@@ -661,8 +661,8 @@ export default function AdminAvailability() {
                             key={p.id} type="button"
                             onClick={() => togglePurpose(p.name)}
                             className={cn(
-                              "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
-                              slotForm.purposes.includes(p.name) ? "bg-green-100 text-green-700 border-green-200" : "bg-white text-slate-600 border-slate-200 hover:border-green-300",
+                              "px-3 py-1.5 border-2 border-black text-sm font-medium transition-colors border",
+                              slotForm.purposes.includes(p.name) ? "bg-green-100 text-green-700 border-green-200" : "bg-white text-black font-black border-black hover:border-green-300",
                               isExp && "opacity-50 line-through"
                             )}
                           >
@@ -675,11 +675,11 @@ export default function AdminAvailability() {
                   </div>
 
                   <div className="mb-4">
-                    <label className="text-sm font-bold text-slate-700 block mb-2">可預約人數上限</label>
+                    <label className="text-sm font-bold text-black font-black block mb-2">可預約人數上限</label>
                     <select 
                       value={slotForm.maxCapacity} 
                       onChange={e => setSlotForm({...slotForm, maxCapacity: parseInt(e.target.value)})}
-                      className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-green-500 bg-white"
+                      className="w-full p-2 border border-black border-2 border-black outline-none focus:border-green-500 bg-white"
                     >
                       <option value={-1}>不限定 (無上限)</option>
                       {Array.from({length: 20}, (_, i) => i + 1).map(num => (
@@ -691,7 +691,7 @@ export default function AdminAvailability() {
                   <div className="flex space-x-2">
                     <button 
                       onClick={addOrUpdateSlot}
-                      className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-xl transition-colors font-medium text-sm flex items-center justify-center shadow-sm"
+                      className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 border-2 border-black comic-box-sm transition-colors font-medium text-sm flex items-center justify-center shadow-[2px_2px_0_0_#000]"
                     >
                       <Plus className="w-4 h-4 mr-1" />
                       {editingSlotIndex >= 0 ? '更新此時段' : '加入時段'}
@@ -699,7 +699,7 @@ export default function AdminAvailability() {
                     {editingSlotIndex >= 0 && (
                       <button 
                         onClick={resetSlotForm}
-                        className="px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 rounded-xl transition-colors font-medium text-sm"
+                        className="px-4 bg-yellow-300 hover:bg-yellow-400 text-black font-black border-2 border-black text-black font-black py-2 border-2 border-black comic-box-sm transition-colors font-medium text-sm"
                       >
                         取消
                       </button>
@@ -710,13 +710,13 @@ export default function AdminAvailability() {
 
               {/* Right Column: Existing Slots */}
               <div className="flex-1">
-                <h3 className="font-bold text-slate-700 mb-3 flex items-center">
+                <h3 className="font-bold text-black font-black mb-3 flex items-center">
                   <CheckCircle2 className="w-4 h-4 mr-2 text-blue-500" />
                   已建立的時段
                 </h3>
                 <div className="space-y-3">
                   {daySettings.slots.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+                    <div className="text-center py-8 text-slate-400 bg-slate-50 border-[3px] border-black comic-box border border-slate-100 border-dashed">
                       <p className="text-sm">尚無時段，請在左側新增</p>
                     </div>
                   ) : (
@@ -733,7 +733,7 @@ export default function AdminAvailability() {
                         <div 
                           key={s.time}
                           onClick={() => editSlot(idx)}
-                          className={`relative flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 text-white cursor-pointer transition-transform hover:-translate-y-0.5 shadow-sm ${colorClass}`}
+                          className={`relative flex items-center justify-between p-3 border-2 border-black comic-box-sm border border-transparent hover:border-black text-white cursor-pointer transition-transform hover:-translate-y-0.5 shadow-[2px_2px_0_0_#000] ${colorClass}`}
                         >
                           <div>
                             <div className="font-bold text-lg flex items-center">
@@ -749,7 +749,7 @@ export default function AdminAvailability() {
                           </div>
                           <button 
                             onClick={(e) => deleteSlot(idx, e)}
-                            className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors absolute right-3 top-3"
+                            className="p-2 bg-white/10 hover:bg-white/20 border-2 border-black transition-colors absolute right-3 top-3"
                           >
                             <Trash2 className="w-4 h-4 text-white" />
                           </button>
@@ -763,10 +763,10 @@ export default function AdminAvailability() {
             </div>
             
             <div className="p-4 border-t border-slate-100 bg-slate-50 flex space-x-3 shrink-0">
-              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3 text-black font-black font-bold hover:bg-slate-200 bg-slate-100 border-2 border-black comic-box-sm transition-colors">
                 取消
               </button>
-              <button onClick={handleSaveDay} disabled={saving} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
+              <button onClick={handleSaveDay} disabled={saving} className="flex-1 py-3 bg-green-400 hover:bg-green-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
                 {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '儲存當日設定'}
               </button>
             </div>
@@ -778,7 +778,7 @@ export default function AdminAvailability() {
       {activeSection === 'access' && (
         <div className="bg-white comic-box md:overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 flex flex-col md:max-h-[90vh] mb-8">
           <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center">
+            <h2 className="text-xl font-bold text-black font-black flex items-center">
               <ShieldAlert className="w-6 h-6 mr-2 text-purple-600" />
               管理登錄人員
             </h2>
@@ -786,7 +786,7 @@ export default function AdminAvailability() {
           
           <div className="p-6 flex-1 flex flex-col md:overflow-hidden">
             <div className="mb-6 flex items-center">
-              <label className="font-bold text-slate-700 mr-4">請選擇預約項目：</label>
+              <label className="font-bold text-black font-black mr-4">請選擇預約項目：</label>
               <select 
                 value={accessPurposeId}
                 onChange={(e) => {
@@ -797,7 +797,7 @@ export default function AdminAvailability() {
                   setSelectedAllowedIds([]);
                   setSelectedRestrictedIds([]);
                 }}
-                className="p-2.5 comic-input bg-white focus:bg-yellow-50 min-w-[200px] font-bold text-slate-800 shadow-sm"
+                className="p-2.5 comic-input bg-white focus:bg-yellow-50 min-w-[200px] font-bold text-black font-black shadow-[2px_2px_0_0_#000]"
               >
                 {purposesDict.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -806,7 +806,7 @@ export default function AdminAvailability() {
             </div>
 
             {purposesDict.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
+              <div className="text-center py-12 text-black font-bold">
                 請先新增預約項目，才能設定存取權限。
               </div>
             ) : (
@@ -814,7 +814,7 @@ export default function AdminAvailability() {
                 
                 {/* Left: Allowed Users */}
                 <div className="flex-1 comic-box bg-white flex flex-col overflow-hidden min-h-[400px] md:min-h-0 bg-slate-50">
-                  <div className="bg-slate-100 p-3 border-b border-slate-200 font-bold text-slate-700 flex justify-between items-center">
+                  <div className="bg-slate-100 p-3 border-b border-black font-bold text-black font-black flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       <span>可以使用的人員</span>
                       <span className="comic-tag bg-yellow-200 text-black px-2 py-0.5 text-xs">
@@ -834,11 +834,11 @@ export default function AdminAvailability() {
                             .map(u => u.id);
                           setSelectedAllowedIds(selectableIds);
                         }} 
-                        className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm"
+                        className="text-xs bg-white border border-black px-2 py-1 rounded hover:bg-slate-50 text-black font-black shadow-[2px_2px_0_0_#000]"
                       >
                         全選
                       </button>
-                      <button onClick={() => setSelectedAllowedIds([])} className="text-xs bg-white border border-slate-300 px-2 py-1 rounded hover:bg-slate-50 text-slate-600 shadow-sm">全取消</button>
+                      <button onClick={() => setSelectedAllowedIds([])} className="text-xs bg-white border border-black px-2 py-1 rounded hover:bg-slate-50 text-black font-black shadow-[2px_2px_0_0_#000]">全取消</button>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -857,7 +857,7 @@ export default function AdminAvailability() {
                             if (hasActiveRes) return;
                             setSelectedAllowedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                           }}
-                          className={`relative flex items-start p-3 rounded-xl transition-all border-2 ${hasActiveRes ? 'bg-slate-100 border-slate-200 cursor-not-allowed opacity-90' : isSelected ? 'border-purple-500 bg-purple-50 cursor-pointer' : 'border-transparent bg-white hover:border-slate-300 cursor-pointer'} shadow-sm`}
+                          className={`relative flex items-start p-3 border-2 border-black comic-box-sm transition-all border-2 ${hasActiveRes ? 'bg-slate-100 border-black cursor-not-allowed opacity-90' : isSelected ? 'border-purple-500 bg-purple-50 cursor-pointer' : 'border-transparent bg-white hover:border-black cursor-pointer'} shadow-[2px_2px_0_0_#000]`}
                         >
                           <div className={`flex items-center space-x-2 shrink-0 mt-2 mr-2 ${hasActiveRes ? 'opacity-50' : ''}`}>
                             <div className={`w-5 h-5 flex items-center justify-center border-2 comic-box-sm ${isSelected ? 'bg-purple-500 border-black' : 'bg-white border-slate-400'}`}>
@@ -865,12 +865,12 @@ export default function AdminAvailability() {
                             </div>
                             <div className="text-slate-400 font-bold text-sm w-5">{idx + 1}.</div>
                           </div>
-                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className={`w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1 ${hasActiveRes ? 'opacity-50 grayscale' : ''}`} />
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className={`w-10 h-10 rounded-full mr-3 border border-black shrink-0 mt-1 ${hasActiveRes ? 'opacity-50 grayscale' : ''}`} />
                           <div className="flex-1 min-w-0 pr-8">
                             <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-bold text-slate-800">{u.displayName}</div>
+                              <div className="font-bold text-black font-black">{u.displayName}</div>
                               {hasActiveRes && (
-                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isConfirmed ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'bg-blue-50 text-blue-700 border-blue-200 shadow-sm'}`}>
+                                <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${isConfirmed ? 'bg-green-50 text-green-700 border-green-200 shadow-[2px_2px_0_0_#000]' : 'bg-blue-50 text-blue-700 border-blue-200 shadow-[2px_2px_0_0_#000]'}`}>
                                   {isConfirmed ? '✅ 已有核准預約' : '⏳ 已有待審核預約'}
                                 </div>
                               )}
@@ -878,9 +878,9 @@ export default function AdminAvailability() {
                             </div>
                             
                             <div className={`flex flex-wrap gap-1 mt-1.5 ${hasActiveRes ? 'opacity-60' : ''}`}>
-                              {u.gender && <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{u.gender}</div>}
+                              {u.gender && <div className="text-[10px] bg-slate-100 text-black font-black px-2 py-0.5 rounded border border-black">{u.gender}</div>}
                               {(u.tags || []).map(t => (
-                                <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                                <div key={t} className="text-[10px] bg-cyan-200 text-black font-black border-2 border-black px-2 py-0.5 rounded flex items-center border border-blue-100">
                                   <Tag className="w-3 h-3 mr-1" />{t}
                                 </div>
                               ))}
@@ -891,7 +891,7 @@ export default function AdminAvailability() {
                               ))}
                             </div>
                             
-                            {u.notes && <div className={`text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5 ${hasActiveRes ? 'opacity-60' : ''}`}>備註：{u.notes}</div>}
+                            {u.notes && <div className={`text-xs text-black font-bold mt-1.5 truncate border-t border-slate-100/50 pt-1.5 ${hasActiveRes ? 'opacity-60' : ''}`}>備註：{u.notes}</div>}
                           </div>
                           {!hasActiveRes && (
                             <button 
@@ -923,7 +923,7 @@ export default function AdminAvailability() {
                         }
                       }}
                       disabled={selectedAllowedIds.length === 0}
-                      className="p-4 mx-auto bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 text-purple-700 shadow-md shadow-purple-500/20 disabled:opacity-50 disabled:shadow-none rounded-2xl transition-all w-14 h-14 flex items-center justify-center group"
+                      className="p-4 mx-auto bg-gradient-to-br from-purple-100 to-purple-200 hover:from-purple-200 hover:to-purple-300 text-purple-700 shadow-[4px_4px_0_0_#000] shadow-purple-500/20 disabled:opacity-50 disabled:shadow-none border-[3px] border-black comic-box transition-all w-14 h-14 flex items-center justify-center group"
                       title="移至限制名單"
                     >
                       <ChevronRight className="w-8 h-8 group-hover:translate-x-1 transition-transform" />
@@ -940,12 +940,12 @@ export default function AdminAvailability() {
                         }
                       }}
                       disabled={selectedRestrictedIds.length === 0}
-                      className="p-4 mx-auto bg-gradient-to-br from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 text-slate-700 shadow-md shadow-slate-500/20 disabled:opacity-50 disabled:shadow-none rounded-2xl transition-all w-14 h-14 flex items-center justify-center group"
+                      className="p-4 mx-auto bg-gradient-to-br from-slate-200 to-slate-300 hover:from-slate-300 hover:to-slate-400 text-black font-black shadow-[4px_4px_0_0_#000] shadow-slate-500/20 disabled:opacity-50 disabled:shadow-none border-[3px] border-black comic-box transition-all w-14 h-14 flex items-center justify-center group"
                       title="移至可用名單"
                     >
                       <ChevronLeft className="w-8 h-8 group-hover:-translate-x-1 transition-transform" />
                     </button>
-                    {selectedRestrictedIds.length > 0 && <div className="text-xs text-slate-600 font-bold mt-2">已選 {selectedRestrictedIds.length} 人</div>}
+                    {selectedRestrictedIds.length > 0 && <div className="text-xs text-black font-black font-bold mt-2">已選 {selectedRestrictedIds.length} 人</div>}
                   </div>
 
                   <div className="h-px w-full bg-slate-200 my-4 hidden md:block" />
@@ -985,8 +985,8 @@ export default function AdminAvailability() {
                       </span>
                     </div>
                     <div className="flex space-x-1">
-                      <button onClick={() => setSelectedRestrictedIds(allUsers.filter(u => localRestricted.includes(u.id)).map(u => u.id))} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-sm">全選</button>
-                      <button onClick={() => setSelectedRestrictedIds([])} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-sm">全取消</button>
+                      <button onClick={() => setSelectedRestrictedIds(allUsers.filter(u => localRestricted.includes(u.id)).map(u => u.id))} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-[2px_2px_0_0_#000]">全選</button>
+                      <button onClick={() => setSelectedRestrictedIds([])} className="text-xs bg-white border border-red-200 px-2 py-1 rounded hover:bg-red-50 text-red-600 shadow-[2px_2px_0_0_#000]">全取消</button>
                     </div>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2">
@@ -999,7 +999,7 @@ export default function AdminAvailability() {
                           onClick={() => {
                             setSelectedRestrictedIds(prev => isSelected ? prev.filter(id => id !== u.id) : [...prev, u.id]);
                           }}
-                          className={`relative flex items-start p-3 rounded-xl cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-slate-300'} shadow-sm`}
+                          className={`relative flex items-start p-3 border-2 border-black comic-box-sm cursor-pointer transition-all border-2 ${isSelected ? 'border-red-500 bg-red-50' : 'border-transparent bg-white hover:border-black'} shadow-[2px_2px_0_0_#000]`}
                         >
                           <div className="flex items-center space-x-2 shrink-0 mt-2 mr-2">
                             <div className={`w-5 h-5 flex items-center justify-center border-2 comic-box-sm ${isSelected ? 'bg-red-500 border-black' : 'bg-white border-slate-400'}`}>
@@ -1007,17 +1007,17 @@ export default function AdminAvailability() {
                             </div>
                             <div className="text-slate-400 font-bold text-sm w-5">{idx + 1}.</div>
                           </div>
-                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-slate-200 shrink-0 mt-1" />
+                          <img src={u.pictureUrl || 'https://via.placeholder.com/150'} alt="avatar" className="w-10 h-10 rounded-full mr-3 border border-black shrink-0 mt-1" />
                           <div className="flex-1 min-w-0 pl-1 pr-8">
                             <div className="flex flex-wrap items-center gap-2">
-                              <div className="font-bold text-slate-800">{u.displayName}</div>
+                              <div className="font-bold text-black font-black">{u.displayName}</div>
                               {u.lineGroup && <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium border border-green-200">Line 官方：{u.lineGroup}</div>}
                             </div>
                             
                             <div className="flex flex-wrap gap-1 mt-1.5">
-                              {u.gender && <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">{u.gender}</div>}
+                              {u.gender && <div className="text-[10px] bg-slate-100 text-black font-black px-2 py-0.5 rounded border border-black">{u.gender}</div>}
                               {(u.tags || []).map(t => (
-                                <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                                <div key={t} className="text-[10px] bg-cyan-200 text-black font-black border-2 border-black px-2 py-0.5 rounded flex items-center border border-blue-100">
                                   <Tag className="w-3 h-3 mr-1" />{t}
                                 </div>
                               ))}
@@ -1028,7 +1028,7 @@ export default function AdminAvailability() {
                               ))}
                             </div>
                             
-                            {u.notes && <div className="text-xs text-slate-500 mt-1.5 truncate border-t border-slate-100/50 pt-1.5">備註：{u.notes}</div>}
+                            {u.notes && <div className="text-xs text-black font-bold mt-1.5 truncate border-t border-slate-100/50 pt-1.5">備註：{u.notes}</div>}
                           </div>
                           <button 
                             onClick={(e) => {
@@ -1036,7 +1036,7 @@ export default function AdminAvailability() {
                               setLocalRestricted(localRestricted.filter(id => id !== u.id));
                               setSelectedRestrictedIds(prev => prev.filter(id => id !== u.id));
                             }}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-600 rounded-full transition-colors z-10"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-black font-black rounded-full transition-colors z-10"
                             title="移至可用名單"
                           >
                             <ChevronLeft className="w-5 h-5" />
@@ -1060,8 +1060,8 @@ export default function AdminAvailability() {
       {activeSection === 'purpose' && (
         <div className="bg-white comic-box overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300 mb-8">
           <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center">
-              <List className="w-5 h-5 mr-2 text-slate-500" />
+            <h2 className="text-xl font-bold text-black font-black flex items-center">
+              <List className="w-5 h-5 mr-2 text-black font-bold" />
               管理預約項目
             </h2>
           </div>
@@ -1069,11 +1069,11 @@ export default function AdminAvailability() {
           <div className="p-6">
               
               {/* Add/Edit Form */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
-                <h3 className="font-bold text-slate-700 mb-3 text-sm">{editingPurposeId ? '編輯項目' : '新增預約項目'}</h3>
+              <div className="bg-slate-50 p-4 border-2 border-black comic-box-sm border border-black mb-6">
+                <h3 className="font-bold text-black font-black mb-3 text-sm">{editingPurposeId ? '編輯項目' : '新增預約項目'}</h3>
                 <div className="flex flex-col md:flex-row gap-3">
                   <div className="flex-1 min-w-[120px]">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">項目名稱</label>
+                    <label className="text-xs font-bold text-black font-bold mb-1 block">項目名稱</label>
                     <input 
                       type="text" 
                       value={purposeForm.name}
@@ -1084,7 +1084,7 @@ export default function AdminAvailability() {
                     />
                   </div>
                   <div className="flex-1 min-w-[100px]">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">限制預約次數</label>
+                    <label className="text-xs font-bold text-black font-bold mb-1 block">限制預約次數</label>
                     <select
                       value={purposeForm.userLimit}
                       onChange={e => setPurposeForm({...purposeForm, userLimit: parseInt(e.target.value)})}
@@ -1097,7 +1097,7 @@ export default function AdminAvailability() {
                     </select>
                   </div>
                   <div className="flex-1 min-w-[120px]">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">時段核准人數</label>
+                    <label className="text-xs font-bold text-black font-bold mb-1 block">時段核准人數</label>
                     <select
                       value={purposeForm.slotApprovedLimit}
                       onChange={e => setPurposeForm({...purposeForm, slotApprovedLimit: parseInt(e.target.value)})}
@@ -1110,7 +1110,7 @@ export default function AdminAvailability() {
                     </select>
                   </div>
                   <div className="flex-1 min-w-[120px]">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">開始日期 (選填)</label>
+                    <label className="text-xs font-bold text-black font-bold mb-1 block">開始日期 (選填)</label>
                     <input 
                       type="date" 
                       value={purposeForm.startDate}
@@ -1119,7 +1119,7 @@ export default function AdminAvailability() {
                     />
                   </div>
                   <div className="flex-1 min-w-[120px]">
-                    <label className="text-xs font-bold text-slate-500 mb-1 block">結束日期 (選填)</label>
+                    <label className="text-xs font-bold text-black font-bold mb-1 block">結束日期 (選填)</label>
                     <input 
                       type="date" 
                       value={purposeForm.endDate}
@@ -1141,7 +1141,7 @@ export default function AdminAvailability() {
                           setEditingPurposeId(null);
                           setPurposeForm({ name: '', startDate: '', endDate: '', userLimit: -1, slotApprovedLimit: -1, restrictedUsers: [] });
                         }}
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-600 px-4 py-2 rounded-lg font-bold transition-colors h-[42px] ml-2"
+                        className="bg-yellow-300 hover:bg-yellow-400 text-black font-black border-2 border-black text-black font-black px-4 py-2 border-2 border-black font-bold transition-colors h-[42px] ml-2"
                       >
                         取消
                       </button>
@@ -1152,7 +1152,7 @@ export default function AdminAvailability() {
 
               {/* Filter */}
               <div className="flex justify-between items-center mb-4">
-                <div className="text-sm font-bold text-slate-600">
+                <div className="text-sm font-bold text-black font-black">
                   總計：{filteredPurposes.length} 筆
                 </div>
                 <select 
@@ -1161,7 +1161,7 @@ export default function AdminAvailability() {
                     setPurposeFilter(e.target.value);
                     setPurposePage(1);
                   }}
-                  className="p-2 border border-slate-200 rounded-lg bg-white text-sm outline-none font-medium"
+                  className="p-2 border border-black border-2 border-black bg-white text-sm outline-none font-medium"
                 >
                   <option value="ALL">顯示全部</option>
                   <option value="ACTIVE">還可以預約項目</option>
@@ -1172,7 +1172,7 @@ export default function AdminAvailability() {
               {/* List */}
               <div className="comic-box bg-white overflow-x-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                  <thead className="bg-slate-50 text-black font-black font-bold border-b border-black">
                     <tr>
                       <th className="px-4 py-3 w-16">序號</th>
                       <th className="px-4 py-3">項目名稱</th>
@@ -1190,22 +1190,22 @@ export default function AdminAvailability() {
                       const isExp = p.endDate && isBefore(parseISO(p.endDate), today);
                       return (
                         <tr key={p.id} className="border-b border-slate-100 bg-white hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium text-slate-500">{absoluteIdx}</td>
-                          <td className="px-4 py-3 font-bold text-slate-800">{p.name}</td>
-                          <td className="px-4 py-3 text-slate-600 font-medium">
+                          <td className="px-4 py-3 font-medium text-black font-bold">{absoluteIdx}</td>
+                          <td className="px-4 py-3 font-bold text-black font-black">{p.name}</td>
+                          <td className="px-4 py-3 text-black font-black font-medium">
                             {p.userLimit && p.userLimit !== -1 ? (
                               <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs border border-blue-100">限 {p.userLimit} 次</span>
                             ) : <span className="text-slate-400 text-xs">無限制</span>}
                           </td>
-                          <td className="px-4 py-3 text-slate-600 font-medium">
+                          <td className="px-4 py-3 text-black font-black font-medium">
                             {p.slotApprovedLimit && p.slotApprovedLimit !== -1 ? (
                               <span className="text-purple-600 bg-purple-50 px-2 py-0.5 rounded text-xs border border-purple-100">限 {p.slotApprovedLimit} 人</span>
                             ) : <span className="text-slate-400 text-xs">無限制</span>}
                           </td>
-                          <td className="px-4 py-3 text-slate-600 text-xs">
+                          <td className="px-4 py-3 text-black font-black text-xs">
                             {p.startDate ? <div className="text-green-600 font-bold">{p.startDate}</div> : <div className="text-slate-400">不限</div>}
                           </td>
-                          <td className="px-4 py-3 text-slate-600 text-xs">
+                          <td className="px-4 py-3 text-black font-black text-xs">
                             {p.endDate ? <div className="text-red-600 font-bold">{p.endDate}</div> : <div className="text-slate-400">不限</div>}
                           </td>
                           <td className="px-4 py-3">
@@ -1241,17 +1241,17 @@ export default function AdminAvailability() {
                   <button 
                     disabled={purposePage === 1}
                     onClick={() => setPurposePage(p => p - 1)}
-                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                    className="p-2 border border-black border-2 border-black hover:bg-slate-50 disabled:opacity-50 transition-colors"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
-                  <span className="text-sm font-bold text-slate-600">
+                  <span className="text-sm font-bold text-black font-black">
                     {purposePage} / {purposeTotalPages}
                   </span>
                   <button 
                     disabled={purposePage === purposeTotalPages}
                     onClick={() => setPurposePage(p => p + 1)}
-                    className="p-2 border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                    className="p-2 border border-black border-2 border-black hover:bg-slate-50 disabled:opacity-50 transition-colors"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -1265,13 +1265,13 @@ export default function AdminAvailability() {
       {/* Alert Modal */}
       {alertModal.isOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">提示</h3>
-            <p className="text-slate-500 mb-6 font-medium">{alertModal.message}</p>
-            <button onClick={() => setAlertModal({ isOpen: false, message: '' })} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg shadow-amber-500/20 transition-colors">
+            <h3 className="text-xl font-bold text-black font-black mb-2">提示</h3>
+            <p className="text-black font-bold mb-6 font-medium">{alertModal.message}</p>
+            <button onClick={() => setAlertModal({ isOpen: false, message: '' })} className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-amber-500/20 transition-colors">
               確定
             </button>
           </div>
@@ -1281,17 +1281,17 @@ export default function AdminAvailability() {
       {/* Confirm Modal */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">確認執行</h3>
-            <p className="text-slate-500 mb-6 font-medium">{confirmModal.message}</p>
+            <h3 className="text-xl font-bold text-black font-black mb-2">確認執行</h3>
+            <p className="text-black font-bold mb-6 font-medium">{confirmModal.message}</p>
             <div className="flex space-x-3">
-              <button onClick={() => setConfirmModal({ isOpen: false, message: '', onConfirm: null })} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+              <button onClick={() => setConfirmModal({ isOpen: false, message: '', onConfirm: null })} className="flex-1 py-3 bg-slate-100 text-black font-black hover:bg-slate-200 font-bold border-2 border-black comic-box-sm transition-colors">
                 取消
               </button>
-              <button onClick={confirmModal.onConfirm} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors">
+              <button onClick={confirmModal.onConfirm} className="flex-1 py-3 bg-red-400 hover:bg-red-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-red-500/20 transition-colors">
                 確定執行
               </button>
             </div>

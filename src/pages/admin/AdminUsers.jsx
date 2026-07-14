@@ -388,15 +388,15 @@ export default function AdminUsers() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 comic-theme">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">用戶管理</h1>
-          <p className="text-slate-500 mt-1">管理所有使用者的基本資料與照片</p>
+          <h1 className="text-3xl font-bold text-black font-black">用戶管理</h1>
+          <p className="text-black font-bold mt-1">管理所有使用者的基本資料與照片</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm whitespace-nowrap"
+          className="bg-green-400 hover:bg-green-300 text-black border-2 border-black text-white px-4 py-2 border-2 border-black comic-box-sm flex items-center space-x-2 transition-colors shadow-[2px_2px_0_0_#000] whitespace-nowrap"
         >
           <Plus className="w-5 h-5" />
           <span>新增用戶</span>
@@ -404,7 +404,7 @@ export default function AdminUsers() {
       </div>
 
       {/* Search and Filter Controls */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4">
+      <div className="bg-white p-4 border-[3px] border-black comic-box shadow-[2px_2px_0_0_#000] border border-black flex flex-col gap-4">
         {/* Top row: Keyword Search */}
         <div className="relative flex-1 w-full">
           <Search className="w-5 h-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -413,7 +413,7 @@ export default function AdminUsers() {
             placeholder="搜尋名稱、備註關鍵字..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white"
+            className="w-full pl-10 pr-4 py-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white"
           />
         </div>
         
@@ -421,11 +421,11 @@ export default function AdminUsers() {
         <div className="flex flex-wrap items-center gap-3 w-full text-sm">
           
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-500 whitespace-nowrap">Line官方群組</span>
+            <span className="font-bold text-black font-bold whitespace-nowrap">Line官方群組</span>
             <select 
               value={filterGroup}
               onChange={(e) => setFilterGroup(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+              className="p-2 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
             >
               <option value="all">全部</option>
               <option value="none">無分類</option>
@@ -436,11 +436,11 @@ export default function AdminUsers() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-500 whitespace-nowrap">性別</span>
+            <span className="font-bold text-black font-bold whitespace-nowrap">性別</span>
             <select 
               value={filterGender}
               onChange={(e) => setFilterGender(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+              className="p-2 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
             >
               <option value="all">全部</option>
               <option value="男">男</option>
@@ -450,11 +450,11 @@ export default function AdminUsers() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-500 whitespace-nowrap">星座</span>
+            <span className="font-bold text-black font-bold whitespace-nowrap">星座</span>
             <select 
               value={filterZodiac}
               onChange={(e) => setFilterZodiac(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
+              className="p-2 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none"
             >
               <option value="all">全部</option>
               {zodiacs.map(z => (
@@ -464,11 +464,11 @@ export default function AdminUsers() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-500 whitespace-nowrap">自訂標籤</span>
+            <span className="font-bold text-black font-bold whitespace-nowrap">自訂標籤</span>
             <select 
               value={filterTag}
               onChange={(e) => setFilterTag(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
+              className="p-2 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
             >
               <option value="all">全部</option>
               {globalTags.map(t => (
@@ -478,11 +478,11 @@ export default function AdminUsers() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="font-bold text-slate-500 whitespace-nowrap">興趣分類</span>
+            <span className="font-bold text-black font-bold whitespace-nowrap">興趣分類</span>
             <select 
               value={filterInterest}
               onChange={(e) => setFilterInterest(e.target.value)}
-              className="p-2 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
+              className="p-2 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-colors bg-slate-50 focus:bg-white appearance-none max-w-[150px]"
             >
               <option value="all">全部</option>
               {globalInterests.map(i => (
@@ -495,15 +495,15 @@ export default function AdminUsers() {
       </div>
       
       <div className="flex justify-between items-center px-1">
-        <div className="text-sm font-bold text-slate-500">
+        <div className="text-sm font-bold text-black font-bold">
           目前查詢結果：共 <span className="text-green-600 text-lg">{filteredUsers.length}</span> 筆
         </div>
-        <div className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
+        <div className="flex items-center space-x-2 text-sm text-black font-bold font-medium">
           <span>每頁顯示</span>
           <select 
             value={pageSize} 
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="border border-slate-200 rounded p-1 outline-none focus:border-green-500 bg-white"
+            className="border border-black rounded p-1 outline-none focus:border-green-500 bg-white"
           >
             <option value={5}>5</option>
             <option value={10}>10</option>
@@ -519,7 +519,7 @@ export default function AdminUsers() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+              <tr className="bg-slate-50 border-b border-black text-black font-bold text-sm">
                 <th className="p-4 font-semibold w-16 text-center">序號</th>
                 <th className="p-4 font-semibold w-16">頭像</th>
                 <th className="p-4 font-semibold">名稱 & 群組</th>
@@ -538,7 +538,7 @@ export default function AdminUsers() {
                 </tr>
               ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-500">找不到符合條件的用戶資料</td>
+                  <td colSpan="7" className="p-8 text-center text-black font-bold">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
                 displayedUsers.map((user, idx) => {
@@ -547,20 +547,20 @@ export default function AdminUsers() {
                   const globalIdx = (safeCurrentPage - 1) * pageSize + idx + 1;
                   return (
                     <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                      <td className="p-4 text-center text-slate-500 font-bold">
+                      <td className="p-4 text-center text-black font-bold font-bold">
                         {globalIdx}
                       </td>
                       <td className="p-4">
                         {user.pictureUrl ? (
-                          <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm shrink-0" />
+                          <img src={user.pictureUrl} alt={user.displayName} className="w-10 h-10 rounded-full object-cover border border-black shadow-[2px_2px_0_0_#000] shrink-0" />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-black font-bold shrink-0">
                             <User className="w-5 h-5" />
                           </div>
                         )}
                       </td>
                       <td className="p-4">
-                        <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
+                        <div className="font-bold text-black font-black">{user.displayName || '未提供'}</div>
                         <div className="flex flex-col items-start gap-1 mt-1">
                           {user.lineGroup && (
                             <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block font-medium border border-green-200 whitespace-nowrap">
@@ -568,16 +568,16 @@ export default function AdminUsers() {
                             </div>
                           )}
                           {user.childName && (
-                            <div className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full inline-block font-medium border border-blue-200 whitespace-nowrap">
+                            <div className="text-[10px] bg-cyan-200 text-black font-black border-2 border-black px-2 py-0.5 rounded-full inline-block font-medium border border-blue-200 whitespace-nowrap">
                               孩子：{user.childName} {user.childGender && `(${user.childGender})`}
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="p-4">
-                        <div className="text-slate-600 text-sm">{user.gender || '性別未提供'}</div>
+                        <div className="text-black font-black text-sm">{user.gender || '性別未提供'}</div>
                         {user.birthday && user.birthday !== '0000-00-00' && (
-                          <div className="text-xs text-slate-500 mt-1 flex items-center">
+                          <div className="text-xs text-black font-bold mt-1 flex items-center">
                             {user.birthday} 
                             {uZodiac && <span className="ml-1 text-purple-500 font-medium">({uZodiac.name})</span>}
                           </div>
@@ -586,7 +586,7 @@ export default function AdminUsers() {
                       <td className="p-4">
                         <div className="flex flex-wrap gap-1">
                           {(user.tags || []).map(t => (
-                            <div key={t} className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded flex items-center border border-blue-100">
+                            <div key={t} className="text-[10px] bg-cyan-200 text-black font-black border-2 border-black px-2 py-0.5 rounded flex items-center border border-blue-100">
                               <Tag className="w-3 h-3 mr-1" />{t}
                             </div>
                           ))}
@@ -597,17 +597,17 @@ export default function AdminUsers() {
                           ))}
                         </div>
                       </td>
-                      <td className="p-4 text-slate-600 max-w-[200px] truncate text-sm">{user.notes || '-'}</td>
+                      <td className="p-4 text-black font-black max-w-[200px] truncate text-sm">{user.notes || '-'}</td>
                       <td className="p-4 text-right space-x-2 whitespace-nowrap">
                         {user.userId && (
-                          <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="傳送訊息">
+                          <button onClick={() => handleOpenMessageModal(user)} className="p-2 text-green-600 hover:bg-green-50 border-2 border-black transition-colors" title="傳送訊息">
                             <MessageSquare className="w-4 h-4" />
                           </button>
                         )}
-                        <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                        <button onClick={() => handleOpenModal(user)} className="p-2 text-blue-600 hover:bg-blue-50 border-2 border-black transition-colors">
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => openDeleteConfirm(user.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <button onClick={() => openDeleteConfirm(user.id)} className="p-2 text-red-600 hover:bg-red-50 border-2 border-black transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -622,14 +622,14 @@ export default function AdminUsers() {
         {/* Pagination Controls */}
         {!loading && totalPages > 1 && (
           <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
-            <div className="text-sm text-slate-500 font-medium hidden sm:block">
+            <div className="text-sm text-black font-bold font-medium hidden sm:block">
               顯示第 {(safeCurrentPage - 1) * pageSize + 1} 到 {Math.min(safeCurrentPage * pageSize, filteredUsers.length)} 筆
             </div>
             <div className="flex space-x-1 items-center mx-auto sm:mx-0">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={safeCurrentPage === 1}
-                className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 border-2 border-black text-black font-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -646,8 +646,8 @@ export default function AdminUsers() {
                       key={page}
                       onClick={() => setCurrentPage(page)}
                       className={cn(
-                        "w-8 h-8 rounded-lg text-sm font-bold transition-colors",
-                        safeCurrentPage === page ? "bg-green-500 text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
+                        "w-8 h-8 border-2 border-black text-sm font-bold transition-colors",
+                        safeCurrentPage === page ? "bg-green-500 text-white shadow-[2px_2px_0_0_#000]" : "text-black font-black hover:bg-slate-200"
                       )}
                     >
                       {page}
@@ -662,7 +662,7 @@ export default function AdminUsers() {
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={safeCurrentPage === totalPages}
-                className="p-2 rounded-lg text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-2 border-2 border-black text-black font-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -674,12 +674,12 @@ export default function AdminUsers() {
       {/* Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+              <h2 className="text-xl font-bold text-black font-black flex items-center">
                 {editingUser ? '✏️ 編輯用戶' : '✨ 新增用戶'}
               </h2>
-              <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600">
+              <button onClick={handleCloseModal} className="text-slate-400 hover:text-black font-black">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -727,18 +727,18 @@ export default function AdminUsers() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">名稱 <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">名稱 <span className="text-red-500">*</span></label>
                   <input 
                     type="text" value={formData.displayName} onChange={e => setFormData({...formData, displayName: e.target.value})}
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors" required
+                    className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors" required
                     placeholder="輸入客戶名稱"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">性別</label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">性別</label>
                   <select 
                     value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})}
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors appearance-none"
+                    className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors appearance-none"
                   >
                     <option value="">未提供</option>
                     <option value="男">男</option>
@@ -751,18 +751,18 @@ export default function AdminUsers() {
               {/* Child Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">孩子姓名</label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">孩子姓名</label>
                   <input 
                     type="text" value={formData.childName} onChange={e => setFormData({...formData, childName: e.target.value})}
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors"
+                    className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors"
                     placeholder="輸入孩子姓名"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">孩子性別</label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">孩子性別</label>
                   <select 
                     value={formData.childGender} onChange={e => setFormData({...formData, childGender: e.target.value})}
-                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors appearance-none"
+                    className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors appearance-none"
                   >
                     <option value="">未提供</option>
                     <option value="男">男</option>
@@ -772,12 +772,12 @@ export default function AdminUsers() {
               </div>
 
               {/* Birthday and Zodiac */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <label className="text-sm font-bold text-slate-700 block mb-2">生日</label>
+              <div className="bg-slate-50 p-4 border-[3px] border-black comic-box border border-slate-100">
+                <label className="text-sm font-bold text-black font-black block mb-2">生日</label>
                 <div className="flex items-center space-x-2">
                   <select 
                     value={formData.bYear} onChange={e => setFormData({...formData, bYear: e.target.value})}
-                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                    className="flex-1 p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
                   >
                     <option value="">年</option>
                     {years.map(y => <option key={y} value={y}>{y}</option>)}
@@ -794,7 +794,7 @@ export default function AdminUsers() {
                         return {...prev, bMonth: m, bDay: newD};
                       });
                     }}
-                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                    className="flex-1 p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
                   >
                     <option value="">月</option>
                     {months.map(m => <option key={m} value={m}>{m}</option>)}
@@ -802,7 +802,7 @@ export default function AdminUsers() {
                   <span className="text-slate-400 font-bold">/</span>
                   <select 
                     value={formData.bDay} onChange={e => setFormData({...formData, bDay: e.target.value})}
-                    className="flex-1 p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
+                    className="flex-1 p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-white transition-colors appearance-none"
                   >
                     <option value="">日</option>
                     {days.map(d => <option key={d} value={d}>{d}</option>)}
@@ -811,12 +811,12 @@ export default function AdminUsers() {
 
                 {/* Zodiac Preview */}
                 {currentZodiac && (
-                  <div className="mt-4 flex items-center justify-center p-3 bg-white rounded-xl border border-purple-100 shadow-sm animate-in zoom-in-95 duration-300">
-                    <div className="w-12 h-12 rounded-full border-2 border-purple-200 mr-3 shadow-sm bg-purple-50 flex items-center justify-center">
+                  <div className="mt-4 flex items-center justify-center p-3 bg-white border-2 border-black comic-box-sm border border-purple-100 shadow-[2px_2px_0_0_#000] animate-in zoom-in-95 duration-300">
+                    <div className="w-12 h-12 rounded-full border-2 border-purple-200 mr-3 shadow-[2px_2px_0_0_#000] bg-purple-50 flex items-center justify-center">
                       <ZodiacIcon name={currentZodiac.en} className="w-8 h-8 text-purple-600" />
                     </div>
                     <div>
-                      <div className="text-sm text-slate-500 font-medium">專屬星座</div>
+                      <div className="text-sm text-black font-bold font-medium">專屬星座</div>
                       <div className="text-lg font-extrabold text-purple-600 tracking-wider">{currentZodiac.name}</div>
                     </div>
                   </div>
@@ -828,22 +828,22 @@ export default function AdminUsers() {
                 
                 {/* Custom Tags */}
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">自訂標籤 (Tags)</label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">自訂標籤 (Tags)</label>
                   
                   {/* Select from existing */}
                   {globalTags.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-1">
                       {globalTags.filter(t => !formData.tags.includes(t)).map(t => (
-                        <div key={t} className="flex items-stretch border border-slate-200 rounded overflow-hidden shadow-sm group">
+                        <div key={t} className="flex items-stretch border border-black rounded overflow-hidden shadow-[2px_2px_0_0_#000] group">
                           <button 
                             type="button" onClick={() => addTag(t)}
-                            className="text-[10px] bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 px-2 py-1 transition-colors flex-1"
+                            className="text-[10px] bg-slate-100 hover:bg-blue-100 text-black font-bold hover:text-blue-600 px-2 py-1 transition-colors flex-1"
                           >
                             + {t}
                           </button>
                           <button
                             type="button" onClick={() => deleteGlobalTag(t)}
-                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-slate-200"
+                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-black"
                             title="從推薦清單永久刪除"
                           >
                             <X className="w-3 h-3" />
@@ -853,9 +853,9 @@ export default function AdminUsers() {
                     </div>
                   )}
 
-                  <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
+                  <div className="w-full p-2 border-2 border-black comic-box-sm border border-black bg-slate-50 transition-colors focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
                     {(formData.tags || []).map(t => (
-                      <div key={t} className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center shadow-sm">
+                      <div key={t} className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 border-2 border-black flex items-center shadow-[2px_2px_0_0_#000]">
                         <Tag className="w-3 h-3 mr-1" />
                         {t}
                         <button type="button" onClick={() => removeTag(t)} className="ml-1 text-blue-400 hover:text-red-500 transition-colors">
@@ -868,7 +868,7 @@ export default function AdminUsers() {
                       value={tagInput}
                       onChange={e => setTagInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); } }}
-                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-slate-700"
+                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-black font-black"
                       placeholder="輸入新標籤後按 Enter..."
                     />
                   </div>
@@ -876,22 +876,22 @@ export default function AdminUsers() {
 
                 {/* Interests */}
                 <div>
-                  <label className="text-sm font-bold text-slate-700 block mb-1">興趣 / 喜好</label>
+                  <label className="text-sm font-bold text-black font-black block mb-1">興趣 / 喜好</label>
                   
                   {/* Select from existing */}
                   {globalInterests.length > 0 && (
                     <div className="mb-2 flex flex-wrap gap-1">
                       {globalInterests.filter(i => !formData.interests.includes(i)).map(i => (
-                        <div key={i} className="flex items-stretch border border-slate-200 rounded overflow-hidden shadow-sm group">
+                        <div key={i} className="flex items-stretch border border-black rounded overflow-hidden shadow-[2px_2px_0_0_#000] group">
                           <button 
                             type="button" onClick={() => addInterest(i)}
-                            className="text-[10px] bg-slate-100 hover:bg-pink-100 text-slate-500 hover:text-pink-600 px-2 py-1 transition-colors flex-1"
+                            className="text-[10px] bg-slate-100 hover:bg-pink-100 text-black font-bold hover:text-pink-600 px-2 py-1 transition-colors flex-1"
                           >
                             + {i}
                           </button>
                           <button
                             type="button" onClick={() => deleteGlobalInterest(i)}
-                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-slate-200"
+                            className="text-[10px] bg-slate-100 text-slate-300 hover:bg-red-500 hover:text-white px-1.5 transition-colors border-l border-black"
                             title="從推薦清單永久刪除"
                           >
                             <X className="w-3 h-3" />
@@ -901,9 +901,9 @@ export default function AdminUsers() {
                     </div>
                   )}
 
-                  <div className="w-full p-2 rounded-xl border border-slate-200 bg-slate-50 transition-colors focus-within:border-pink-500 focus-within:ring-2 focus-within:ring-pink-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
+                  <div className="w-full p-2 border-2 border-black comic-box-sm border border-black bg-slate-50 transition-colors focus-within:border-pink-500 focus-within:ring-2 focus-within:ring-pink-200 focus-within:bg-white flex flex-wrap gap-2 items-center">
                     {(formData.interests || []).map(i => (
-                      <div key={i} className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-1 rounded-lg flex items-center shadow-sm">
+                      <div key={i} className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-1 border-2 border-black flex items-center shadow-[2px_2px_0_0_#000]">
                         <Heart className="w-3 h-3 mr-1" />
                         {i}
                         <button type="button" onClick={() => removeInterest(i)} className="ml-1 text-pink-400 hover:text-red-500 transition-colors">
@@ -916,7 +916,7 @@ export default function AdminUsers() {
                       value={interestInput}
                       onChange={e => setInterestInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addInterest(interestInput); } }}
-                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-slate-700"
+                      className="flex-1 min-w-[100px] bg-transparent outline-none text-sm p-1 text-black font-black"
                       placeholder="輸入新興趣後按 Enter..."
                     />
                   </div>
@@ -925,19 +925,19 @@ export default function AdminUsers() {
               </div>
 
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">備註</label>
+                <label className="text-sm font-bold text-black font-black block mb-1">備註</label>
                 <textarea 
                   value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-24 resize-none" 
+                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-24 resize-none" 
                   placeholder="客戶相關備註，例如消費習慣等"
                 />
               </div>
               
               <div className="pt-4 flex space-x-3 shrink-0 pb-4">
-                <button type="button" onClick={handleCloseModal} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors">
+                <button type="button" onClick={handleCloseModal} className="flex-1 py-3 text-black font-black font-bold hover:bg-slate-100 border-2 border-black comic-box-sm transition-colors">
                   取消
                 </button>
-                <button type="submit" disabled={saving} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
+                <button type="submit" disabled={saving} className="flex-1 py-3 bg-green-400 hover:bg-green-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : '完成並儲存'}
                 </button>
               </div>
@@ -949,17 +949,17 @@ export default function AdminUsers() {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除用戶</h3>
-            <p className="text-slate-500 mb-6 font-medium">刪除後將無法復原，您確定要刪除這筆用戶資料嗎？</p>
+            <h3 className="text-xl font-bold text-black font-black mb-2">確認刪除用戶</h3>
+            <p className="text-black font-bold mb-6 font-medium">刪除後將無法復原，您確定要刪除這筆用戶資料嗎？</p>
             <div className="flex space-x-3">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-3 bg-slate-100 text-black font-black hover:bg-slate-200 font-bold border-2 border-black comic-box-sm transition-colors">
                 取消
               </button>
-              <button onClick={confirmDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
+              <button onClick={confirmDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-400 hover:bg-red-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定刪除'}
               </button>
             </div>
@@ -970,17 +970,17 @@ export default function AdminUsers() {
       {/* Dict Item Delete Confirmation Modal */}
       {dictDeleteModal.isOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">確認刪除{dictDeleteModal.type === 'tag' ? '標籤' : '興趣'}</h3>
-            <p className="text-slate-500 mb-6 font-medium">您確定要從推薦清單中永久刪除「{dictDeleteModal.value}」嗎？</p>
+            <h3 className="text-xl font-bold text-black font-black mb-2">確認刪除{dictDeleteModal.type === 'tag' ? '標籤' : '興趣'}</h3>
+            <p className="text-black font-bold mb-6 font-medium">您確定要從推薦清單中永久刪除「{dictDeleteModal.value}」嗎？</p>
             <div className="flex space-x-3">
-              <button onClick={() => setDictDeleteModal({ isOpen: false, type: '', value: '' })} className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors">
+              <button onClick={() => setDictDeleteModal({ isOpen: false, type: '', value: '' })} className="flex-1 py-3 bg-slate-100 text-black font-black hover:bg-slate-200 font-bold border-2 border-black comic-box-sm transition-colors">
                 取消
               </button>
-              <button onClick={confirmDictDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
+              <button onClick={confirmDictDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-400 hover:bg-red-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-red-500/20 transition-colors flex justify-center items-center">
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : '確定刪除'}
               </button>
             </div>
@@ -991,13 +991,13 @@ export default function AdminUsers() {
       {/* Message Modal */}
       {isMessageModalOpen && messageTarget && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center">
+              <h2 className="text-xl font-bold text-black font-black flex items-center">
                 <Send className="w-5 h-5 mr-2 text-green-500" />
                 傳送訊息給 {messageTarget.displayName}
               </h2>
-              <button onClick={() => setIsMessageModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setIsMessageModalOpen(false)} className="text-slate-400 hover:text-black font-black">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -1005,7 +1005,7 @@ export default function AdminUsers() {
             <form onSubmit={handleSendMessage} className="p-6 space-y-5">
               <div>
                 <div className="flex justify-between items-end mb-2">
-                  <label className="text-sm font-bold text-slate-700">訊息內容</label>
+                  <label className="text-sm font-bold text-black font-black">訊息內容</label>
                   <button 
                     type="button" 
                     onClick={loadTemplate}
@@ -1017,24 +1017,24 @@ export default function AdminUsers() {
                 <textarea 
                   value={messageText} 
                   onChange={e => setMessageText(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-40 resize-none" 
+                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-40 resize-none" 
                   placeholder="請輸入要傳送給客戶的訊息內容..."
                   required
                 />
               </div>
 
               {sendResult.text && (
-                <div className={`p-3 rounded-xl flex items-center text-sm ${sendResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                <div className={`p-3 border-2 border-black comic-box-sm flex items-center text-sm ${sendResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                   {sendResult.type === 'success' ? <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" /> : <AlertCircle className="w-4 h-4 mr-2 shrink-0" />}
                   <span>{sendResult.text}</span>
                 </div>
               )}
 
               <div className="pt-2 flex space-x-3 shrink-0">
-                <button type="button" onClick={() => setIsMessageModalOpen(false)} className="flex-1 py-3 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors">
+                <button type="button" onClick={() => setIsMessageModalOpen(false)} className="flex-1 py-3 text-black font-black font-bold hover:bg-slate-100 border-2 border-black comic-box-sm transition-colors">
                   取消
                 </button>
-                <button type="submit" disabled={messageSending} className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
+                <button type="submit" disabled={messageSending} className="flex-1 py-3 bg-green-400 hover:bg-green-300 text-black border-2 border-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-green-500/20 transition-colors flex justify-center items-center">
                   {messageSending ? <Loader2 className="w-5 h-5 animate-spin" /> : '傳送訊息'}
                 </button>
               </div>
