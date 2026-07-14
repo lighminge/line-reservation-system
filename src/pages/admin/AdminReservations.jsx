@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
