@@ -260,6 +260,21 @@ export default function AdminScheduling() {
         if (isApprovedReq) {
           // It's on the board, so confirm it
           promises.push(updateReservationStatus(req.id, 'confirmed'));
+          
+          // Send LINE notification
+          promises.push(
+            fetch('/api/send-line-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: req.userId,
+                reservationId: req.id,
+                date: req.date,
+                time: req.time,
+                purpose: req.purpose
+              }),
+            }).catch(e => console.warn("Push API error:", e))
+          );
         } else {
           // Not on the board.
           // Rule a: Cancel other pending users for that slot
