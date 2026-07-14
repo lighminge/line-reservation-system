@@ -327,8 +327,8 @@ export default function AdminScheduling() {
             className="px-4 py-2 bg-white border-2 border-slate-300 rounded-xl font-bold text-lg text-slate-800 focus:border-blue-500 outline-none flex-1 md:flex-none"
           >
             <option value="ALL">請選擇預約項目...</option>
-            {[...new Set(allReservations.filter(r => r.status === 'pending').map(r => r.purpose).filter(Boolean))].map(p => (
-              <option key={p} value={p}>{p}</option>
+            {purposesDict.map(p => (
+              <option key={p.id || p.name} value={p.name}>{p.name}</option>
             ))}
           </select>
           <button onClick={fetchData} className="flex items-center gap-2 p-2 bg-yellow-300 hover:bg-yellow-400 font-black text-black border-[3px] border-black shadow-[4px_4px_0_0_#000] active:translate-y-1 active:shadow-[0_0_0_0_#000] transition-all whitespace-nowrap comic-box-sm">
@@ -338,7 +338,7 @@ export default function AdminScheduling() {
         </div>
       </div>
 
-      {selectedPurpose !== 'ALL' && originalPending.length > 0 && (
+      {selectedPurpose !== 'ALL' && (
         <div className="bg-white p-6 comic-box mb-6">
           <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -366,6 +366,13 @@ export default function AdminScheduling() {
               </button>
             </div>
           </div>
+
+          {originalPending.length === 0 && (
+            <div className="bg-green-100 border-[3px] border-black comic-box p-8 text-center mb-6">
+              <p className="text-2xl font-black text-black">🎉 目前該項目沒有待審核的預約！</p>
+              <p className="text-slate-800 font-bold mt-2">（下方為該項目的開放時段配置，您可預覽目前的排班結構）</p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative min-h-[400px]">
             {slotsData.map(({ date, times }) => (
