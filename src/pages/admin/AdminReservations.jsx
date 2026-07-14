@@ -563,7 +563,7 @@ export default function AdminReservations() {
               });
             });
 
-            const sortedUsers = Object.values(uniqueUsersMap).sort((a, b) => a.firstDate.localeCompare(b.firstDate));
+            const sortedUsers = Object.values(uniqueUsersMap).sort((a, b) => (a.firstDate || '').localeCompare(b.firstDate || ''));
             const selectedUserId = pendingUserFilters[purpose] || '';
 
             return (
@@ -580,7 +580,7 @@ export default function AdminReservations() {
                     </span>
                     <span className="ml-2 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
                       總人數 {
-                        new Set(Object.values(pendingTree[purpose]).flatMap(dates => Object.keys(dates))).size
+                        new Set(Object.values(pendingTree[purpose]).reduce((acc, dates) => acc.concat(Object.keys(dates)), [])).size
                       } 人
                     </span>
                   </h3>
@@ -826,7 +826,7 @@ export default function AdminReservations() {
               });
             });
 
-            const sortedUsers = Object.values(uniqueUsersMap).sort((a, b) => a.name.localeCompare(b.name));
+            const sortedUsers = Object.values(uniqueUsersMap).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             const selectedUserId = confirmedUserFilters[purpose] || '';
 
             return (
@@ -843,7 +843,7 @@ export default function AdminReservations() {
                     </span>
                     <span className="ml-2 text-sm font-medium bg-white/20 px-2 py-1 rounded-full">
                       總人數 {
-                        new Set(Object.values(confirmedTree[purpose]).flatMap(dates => Object.keys(dates))).size
+                        new Set(Object.values(confirmedTree[purpose]).reduce((acc, dates) => acc.concat(Object.keys(dates)), [])).size
                       } 人
                     </span>
                   </h3>
@@ -878,7 +878,7 @@ export default function AdminReservations() {
                     if (allDateRes.length === 0) return null;
 
                     // Sort by time
-                    allDateRes.sort((a,b) => a.time.localeCompare(b.time));
+                    allDateRes.sort((a,b) => (a.time || '').localeCompare(b.time || ''));
 
                     return (
                       <div key={dateStr} className="space-y-4">
