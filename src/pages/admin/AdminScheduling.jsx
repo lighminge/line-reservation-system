@@ -294,27 +294,27 @@ export default function AdminScheduling() {
       </div>
 
       {selectedPurpose !== 'ALL' && originalPending.length > 0 && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+        <div className="bg-white p-6 comic-box mb-6">
           <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold border border-blue-200">
+              <span className="comic-box-sm bg-cyan-200 px-3 py-1 font-black border-2 border-black">
                 待排班人數: {new Set(originalPending.map(r => r.userId)).size} 人
               </span>
-              <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-bold border border-orange-200">
+              <span className="comic-box-sm bg-yellow-300 px-3 py-1 font-black border-2 border-black">
                 預約總數: {originalPending.length} 筆
               </span>
             </div>
             <div className="flex items-center gap-3">
               <button 
                 onClick={handleAutoArrange}
-                className="flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-xl border-2 border-yellow-500 shadow-sm transition-transform active:scale-95"
+                className="flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black comic-button"
               >
                 ✨ 一鍵自動安排
               </button>
               <button 
                 onClick={handleFinalize}
                 disabled={saving || boardData.length === 0}
-                className="flex items-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-sm transition-transform active:scale-95 disabled:opacity-50"
+                className="flex items-center px-4 py-2 bg-green-400 hover:bg-green-300 text-black font-black comic-button disabled:opacity-50"
               >
                 {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                 發布最終安排
@@ -322,10 +322,10 @@ export default function AdminScheduling() {
             </div>
           </div>
 
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x relative min-h-[400px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative min-h-[400px]">
             {slotsData.map(({ date, times }) => (
-              <div key={date} className="snap-center shrink-0 w-[320px] bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col">
-                <div className="text-center font-black text-xl text-slate-800 border-b-2 border-slate-200 pb-3 mb-4 sticky top-0 bg-slate-50 z-10">
+              <div key={date} className="comic-box bg-pink-100 p-4 flex flex-col">
+                <div className="text-center font-black text-xl text-black border-b-[3px] border-black pb-3 mb-4 sticky top-0 bg-pink-100 z-10">
                   📅 {date}
                 </div>
                 <div className="flex-1 space-y-4">
@@ -340,19 +340,19 @@ export default function AdminScheduling() {
                         onDragOver={e => e.preventDefault()}
                         onDrop={e => handleDrop(e, date, time)}
                         className={cn(
-                          "p-3 rounded-xl border-2 transition-colors min-h-[100px] flex flex-col",
-                          isConflict ? "bg-red-50 border-red-300" : 
-                          isBestChoice ? "bg-green-50/50 border-green-200" : "bg-white border-dashed border-slate-300"
+                          "p-3 comic-box-sm transition-colors min-h-[100px] flex flex-col bg-white border-2 border-black",
+                          isConflict ? "bg-red-200" : 
+                          isBestChoice ? "bg-green-100" : ""
                         )}
                       >
                         <div className="text-center mb-3">
-                          <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-full text-sm font-bold border border-slate-200">
+                          <span className="inline-block bg-white text-black px-3 py-1 font-black border-2 border-black comic-box-sm">
                             🕒 {time}
                           </span>
                         </div>
                         
                         {isConflict && (
-                          <div className="text-xs bg-red-100 text-red-600 font-bold text-center mb-3 py-1.5 rounded-lg flex items-center justify-center border border-red-200">
+                          <div className="text-xs bg-red-400 text-black font-black text-center mb-3 py-1.5 border-2 border-black comic-box-sm flex items-center justify-center">
                             <AlertCircle className="w-4 h-4 mr-1" /> 衝突！請拖曳移開 (共 {cards.length} 人)
                           </div>
                         )}
@@ -366,24 +366,24 @@ export default function AdminScheduling() {
                                 draggable
                                 onDragStart={e => handleDragStart(e, card.id)}
                                 className={cn(
-                                  "p-3 rounded-lg shadow-sm cursor-grab active:cursor-grabbing border bg-white group relative",
-                                  isBestChoice ? "border-green-400 shadow-md" : "border-slate-200 hover:border-blue-300"
+                                  "p-3 comic-box-sm shadow-[2px_2px_0_0_#000] cursor-grab active:cursor-grabbing border-2 border-black group relative",
+                                  isBestChoice ? "bg-yellow-200" : "bg-cyan-100 hover:bg-cyan-200"
                                 )}
                               >
-                                <div className="font-bold text-slate-800">
+                                <div className="font-black text-black pr-6">
                                   {u.childName || u.displayName || '未命名'}
                                 </div>
                                 {isBestChoice && (
-                                  <div className="mt-1 text-[10px] bg-green-100 text-green-800 px-2 py-0.5 rounded inline-block font-bold">
+                                  <div className="mt-1 text-[10px] bg-green-400 text-black px-2 py-0.5 font-black border-2 border-black comic-box-sm inline-block">
                                     ⭐ 最佳時段
                                   </div>
                                 )}
                                 <button 
                                   onClick={() => setBoardData(prev => prev.filter(p => p.id !== card.id))}
-                                  className="absolute top-2 right-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="absolute top-2 right-2 text-black hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-white border-2 border-black rounded-full p-0.5"
                                   title="移出排班板"
                                 >
-                                  <X className="w-4 h-4" />
+                                  <X className="w-4 h-4" strokeWidth={3} />
                                 </button>
                               </div>
                             );
@@ -397,53 +397,55 @@ export default function AdminScheduling() {
             ))}
           </div>
           
-          <div className="text-center text-sm font-bold text-slate-500 mt-6 bg-slate-50 py-3 rounded-xl">
+          <div className="text-center text-sm font-black text-black mt-6 bg-yellow-300 py-3 comic-box-sm border-2 border-black">
             💡 提示：您可以直接按住人員卡片，拖曳到其他時段格子來手動調整排班。
           </div>
         </div>
       )}
 
       {selectedPurpose !== 'ALL' && originalPending.length === 0 && (
-        <div className="bg-white p-12 text-center rounded-2xl border border-slate-200">
-          <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
-          <h3 className="text-2xl font-black text-slate-800">目前沒有待審核的預約</h3>
-          <p className="text-slate-500 font-bold mt-2">此項目所有的預約都已處理完畢！</p>
+        <div className="bg-white p-12 text-center comic-box border-[3px] border-black">
+          <CheckCircle2 className="w-16 h-16 text-black mx-auto mb-4" strokeWidth={3} />
+          <h3 className="text-2xl font-black text-black">目前沒有待審核的預約</h3>
+          <p className="text-black font-bold mt-2 text-lg bg-yellow-300 inline-block px-4 py-1 comic-box-sm border-2 border-black">此項目所有的預約都已處理完畢！</p>
         </div>
       )}
 
       {/* Modal for Multiple Perfect Solutions */}
       {dialog.isOpen && dialog.type === 'choose-solution' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border-4 border-yellow-400 overflow-hidden">
-            <div className="p-4 bg-yellow-400 flex justify-between items-center">
-              <h3 className="text-xl font-black text-yellow-900">✨ 找到 {dialog.totalCount} 組完美排班組合！</h3>
-              <button onClick={() => setDialog({ isOpen: false })} className="text-yellow-900 hover:bg-yellow-500 p-1 rounded-full"><X /></button>
+          <div className="bg-white comic-box shadow-[8px_8px_0_0_#000] w-full max-w-4xl max-h-[90vh] flex flex-col border-[4px] border-black overflow-hidden">
+            <div className="p-4 bg-yellow-300 flex justify-between items-center border-b-[4px] border-black">
+              <h3 className="text-xl font-black text-black">✨ 找到 {dialog.totalCount} 組完美排班組合！</h3>
+              <button onClick={() => setDialog({ isOpen: false })} className="text-black hover:bg-yellow-400 p-1 rounded-full border-2 border-transparent hover:border-black transition-colors"><X strokeWidth={3} /></button>
             </div>
-            <div className="p-4 bg-yellow-50 text-yellow-800 font-bold text-sm border-b border-yellow-200">
+            <div className="p-4 bg-cyan-100 text-black font-black text-sm border-b-[3px] border-black">
               系統為您計算出了多種「零衝突」的排班方式，請選擇其中一種套用至排班板：
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-pink-100">
               {dialog.solutions.map((sol, idx) => (
-                <div key={idx} className="border-2 border-slate-200 rounded-xl p-4 hover:border-yellow-400 transition-colors bg-white">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="font-black text-lg text-slate-800">方案 #{idx + 1}</span>
+                <div key={idx} className="border-[3px] border-black comic-box p-4 bg-white transition-transform hover:-translate-y-1">
+                  <div className="flex justify-between items-center mb-4 border-b-2 border-dashed border-slate-300 pb-2">
+                    <span className="font-black text-xl text-black bg-yellow-300 px-3 py-1 comic-box-sm border-2 border-black">方案 #{idx + 1}</span>
                     <button 
                       onClick={() => {
                         setBoardData(sol);
                         setDialog({ isOpen: false });
                       }}
-                      className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-4 py-2 rounded-lg font-bold shadow-sm"
+                      className="bg-green-400 hover:bg-green-300 text-black px-4 py-2 font-black comic-button"
                     >
                       套用此方案
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {sol.map(req => {
                       const u = allUsers[req.userId] || {};
                       return (
-                        <div key={req.id} className="bg-slate-50 border border-slate-200 rounded p-2 text-sm">
-                          <div className="font-bold text-slate-800 truncate">{u.childName || u.displayName}</div>
-                          <div className="text-slate-500 text-xs mt-1">{req.date} {req.time}</div>
+                        <div key={req.id} className="bg-cyan-100 border-2 border-black comic-box-sm p-2 text-sm flex flex-col justify-between">
+                          <div className="font-black text-black truncate text-base">{u.childName || u.displayName}</div>
+                          <div className="text-slate-700 font-bold text-xs mt-2 bg-white px-1.5 py-0.5 rounded border border-slate-300 text-center">
+                            {req.date} {req.time}
+                          </div>
                         </div>
                       )
                     })}
