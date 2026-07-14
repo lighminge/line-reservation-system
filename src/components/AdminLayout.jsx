@@ -37,6 +37,7 @@ export default function AdminLayout() {
 
   const navItems = [
     { name: '預約管理', path: '/admin/reservations', icon: CalendarCheck },
+    { name: '預約時段安排', path: '/admin/scheduling', icon: CalendarDays },
     { name: '預約設定', path: '/admin/availability', icon: CalendarDays },
     { name: '用戶管理', path: '/admin/users', icon: Users },
     { name: '訊息設定', path: '/admin/messages', icon: MessageSquare },

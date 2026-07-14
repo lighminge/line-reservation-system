@@ -6,6 +6,7 @@ import AdminAvailability from './pages/admin/AdminAvailability';
 import AdminReservations from './pages/admin/AdminReservations';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminMessages from './pages/admin/AdminMessages';
+import AdminScheduling from './pages/admin/AdminScheduling';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="availability" element={<AdminAvailability />} />
           <Route path="reservations" element={<AdminReservations />} />
+          <Route path="scheduling" element={<AdminScheduling />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="messages" element={<AdminMessages />} />
         </Route>
