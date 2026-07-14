@@ -21,6 +21,7 @@ export default function AdminScheduling() {
   // Dialog state
   const [dialog, setDialog] = useState({ isOpen: false, type: '', message: '', solutions: [], totalCount: 0 });
   const [finalizeConfirmModal, setFinalizeConfirmModal] = useState({ isOpen: false, count: 0 });
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: '' });
 
   useEffect(() => {
     fetchData();
@@ -131,8 +132,8 @@ export default function AdminScheduling() {
 
   // ---- Auto Arrange Logic ----
   const handleAutoArrange = () => {
-    if (selectedPurpose === 'ALL') return alert('請先選擇預約項目');
-    if (originalPending.length === 0) return alert('沒有待審核預約');
+    if (selectedPurpose === 'ALL') return setSuccessModal({ isOpen: true, message: '請先選擇預約項目' });
+    if (originalPending.length === 0) return setSuccessModal({ isOpen: true, message: '沒有待審核預約' });
 
     const childrenMap = {};
     originalPending.forEach(r => {
@@ -185,7 +186,7 @@ export default function AdminScheduling() {
       });
     } else if (totalPerfectSolutionsCount === 1) {
       setBoardData(perfectSolutions[0]);
-      alert('✨ 智慧自動排班完成！找到 1 種「完美無衝突」排班，已套用！');
+      setSuccessModal({ isOpen: true, message: '✨ 智慧自動排班完成！找到 1 種「完美無衝突」排班，已套用！' });
     } else {
       // Greedy match for conflicts
       const slotAssignments = {};
@@ -227,7 +228,7 @@ export default function AdminScheduling() {
       });
 
       setBoardData(finalBoardData);
-      alert('⚠️ 自動排班完成！目前無法達成零衝突，已盡量排開，無法排開的已標示紅框，請手動拖曳微調！');
+      setSuccessModal({ isOpen: true, message: '⚠️ 自動排班完成！目前無法達成零衝突，已盡量排開，無法排開的已標示紅框，請手動拖曳微調！' });
     }
   };
 
@@ -238,7 +239,7 @@ export default function AdminScheduling() {
     // Collect all users who are currently on the board
     const approvedResIds = new Set(boardData.map(r => r.id));
     
-    if (approvedResIds.size === 0) return alert('沒有排班資料可確認');
+    if (approvedResIds.size === 0) return setSuccessModal({ isOpen: true, message: '沒有排班資料可確認' });
 
     setFinalizeConfirmModal({ isOpen: true, count: approvedResIds.size });
   };
@@ -275,13 +276,13 @@ export default function AdminScheduling() {
       }
       
       await Promise.all(promises);
-      alert('✅ 最終安排已成功核准並發布！落選及衝突的時段已自動取消。');
+      setSuccessModal({ isOpen: true, message: '最終安排已成功核准並發布！\n落選及衝突的時段已自動取消。' });
       
       // Refresh
       fetchData();
     } catch (e) {
       console.error(e);
-      alert('發生錯誤，請稍後再試');
+      setSuccessModal({ isOpen: true, message: '發生錯誤，請稍後再試！' });
     } finally {
       setSaving(false);
     }
@@ -519,6 +520,32 @@ export default function AdminScheduling() {
               >
                 <CheckCircle2 className="w-5 h-5" strokeWidth={3} />
                 確定發布
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white comic-box shadow-[8px_8px_0_0_#000] w-full max-w-sm flex flex-col border-[4px] border-black overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 bg-green-400 flex justify-between items-center border-b-[4px] border-black">
+              <h3 className="text-xl font-black text-black flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6" strokeWidth={3} />
+                系統提示
+              </h3>
+              <button onClick={() => setSuccessModal({ isOpen: false, message: '' })} className="text-black hover:bg-green-500 p-1 rounded-full border-2 border-transparent hover:border-black transition-colors"><X strokeWidth={3} /></button>
+            </div>
+            <div className="p-6 bg-green-50 text-center">
+              <p className="font-black text-black text-lg whitespace-pre-line">{successModal.message}</p>
+            </div>
+            <div className="p-4 bg-white border-t-[4px] border-black flex justify-center">
+              <button 
+                onClick={() => setSuccessModal({ isOpen: false, message: '' })}
+                className="px-6 py-2 bg-green-400 hover:bg-green-300 text-black font-black comic-button w-full"
+              >
+                我知道了
               </button>
             </div>
           </div>
