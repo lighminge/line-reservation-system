@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Loader2, CalendarDays, Puzzle, CheckCircle2, AlertCircle, RefreshCw, X, Check } from 'lucide-react';
-import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
+import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary, getAllAvailability } from '../../services/db';
 import { cn } from '../../utils/cn';
 
 export default function AdminScheduling() {
@@ -11,6 +11,7 @@ export default function AdminScheduling() {
   const [allReservations, setAllReservations] = useState([]);
   const [allUsers, setAllUsers] = useState({});
   const [purposesDict, setPurposesDict] = useState([]);
+  const [allAvailability, setAllAvailability] = useState({});
   
   // UI State
   const [selectedPurpose, setSelectedPurpose] = useState('ALL');
@@ -27,10 +28,11 @@ export default function AdminScheduling() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [res, usersList, dict] = await Promise.all([
+      const [res, usersList, dict, availData] = await Promise.all([
         getAdminReservations(),
         getAllUsers(),
-        getDictionary()
+        getDictionary(),
+        getAllAvailability()
       ]);
       
       const userMap = {};
@@ -39,6 +41,7 @@ export default function AdminScheduling() {
       setAllUsers(userMap);
       setAllReservations(res || []);
       setPurposesDict(dict?.purposes || []);
+      setAllAvailability(availData || {});
       
       // Auto select the first purpose if exists
       const uniquePurposes = [...new Set(res.filter(r => r.status === 'pending').map(r => r.purpose).filter(Boolean))];
@@ -70,7 +73,29 @@ export default function AdminScheduling() {
 
   // Extract unique slots (date + time)
   const getSlots = () => {
+    if (selectedPurpose === 'ALL') return [];
+    
     const slotsMap = {};
+    
+    // 1. Add all configured slots for the selected purpose from availability settings
+    Object.keys(allAvailability).forEach(date => {
+      const dayData = allAvailability[date];
+      if (dayData && dayData.slots && Array.isArray(dayData.slots)) {
+        dayData.slots.forEach(slot => {
+          if (slot.purposes && slot.purposes.includes(selectedPurpose)) {
+            // Time string format must match how reservations store it.
+            // In AdminAvailability, we only configure startTime and endTime.
+            // Reservations typically store `startTime~endTime` or just what is displayed.
+            // Wait, in ReservationForm.jsx, how is `r.time` saved? It's `startTime~endTime`.
+            const timeStr = `${slot.startTime || '00:00'}~${slot.endTime || '23:59'}`;
+            if (!slotsMap[date]) slotsMap[date] = new Set();
+            slotsMap[date].add(timeStr);
+          }
+        });
+      }
+    });
+
+    // 2. Also add any slots from originalPending (in case some requests exist for slots that were removed)
     originalPending.forEach(r => {
       const date = r.date;
       const time = r.time || '未指定時間';
@@ -287,8 +312,9 @@ export default function AdminScheduling() {
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
-          <button onClick={fetchData} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl border-2 border-slate-200 transition-colors">
-            <RefreshCw className="w-5 h-5 text-slate-600" />
+          <button onClick={fetchData} className="flex items-center gap-2 p-2 bg-yellow-300 hover:bg-yellow-400 font-black text-black border-[3px] border-black shadow-[4px_4px_0_0_#000] active:translate-y-1 active:shadow-[0_0_0_0_#000] transition-all whitespace-nowrap comic-box-sm">
+            <RefreshCw className="w-5 h-5 text-black" strokeWidth={3} />
+            重新載入待審核預約
           </button>
         </div>
       </div>

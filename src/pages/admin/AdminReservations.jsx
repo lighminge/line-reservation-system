@@ -274,41 +274,41 @@ export default function AdminReservations() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8 comic-theme">
       <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">預約管理</h1>
-          <p className="text-slate-500 mt-1">審核並管理所有客戶的預約，發送確認通知</p>
+          <h1 className="text-3xl font-bold text-black font-black">預約管理</h1>
+          <p className="text-black font-bold mt-1">審核並管理所有客戶的預約，發送確認通知</p>
         </div>
         <button 
           onClick={() => setExportModal({ ...exportModal, isOpen: true })}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2 transition-colors shadow-sm font-bold"
+          className="bg-emerald-400 hover:bg-emerald-300 text-white px-4 py-2 border-2 border-black comic-box-sm flex items-center space-x-2 transition-colors shadow-[2px_2px_0_0_#000] font-bold"
         >
           <Download className="w-5 h-5" />
           <span>匯出Excel檔案</span>
         </button>
       </div>
 
-      <div className="bg-white comic-box overflow-hidden">
+      <div className="bg-white border-[3px] border-black shadow-[8px_8px_0_0_#000] overflow-hidden">
         {/* Calendar Header with Filters and Toggles */}
         <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50 gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <h2 className="text-xl font-bold text-slate-800 flex items-center whitespace-nowrap">
-              <CalendarIcon className="w-6 h-6 mr-2 text-slate-500" />
+            <h2 className="text-xl font-bold text-black font-black flex items-center whitespace-nowrap">
+              <CalendarIcon className="w-6 h-6 mr-2 text-black font-bold" />
               {format(currentMonth, 'yyyy 年 MM 月')}
             </h2>
             
-            <div className="flex items-center space-x-2 bg-slate-200/50 p-1 rounded-lg">
+            <div className="flex items-center space-x-2 bg-slate-200/50 p-1 border-2 border-black">
               <button 
                 onClick={() => setViewMode('TIME')}
-                className={cn("px-3 py-1.5 rounded-md text-sm font-bold flex items-center transition-all", viewMode === 'TIME' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                className={cn("px-3 py-1.5 border-2 border-black font-black text-sm font-bold flex items-center transition-all", viewMode === 'TIME' ? "bg-white text-black font-black shadow-[2px_2px_0_0_#000]" : "text-black font-bold hover:text-black font-black")}
               >
                 <Clock className="w-4 h-4 mr-1.5" />
                 時段模式
               </button>
               <button 
                 onClick={() => setViewMode('USER')}
-                className={cn("px-3 py-1.5 rounded-md text-sm font-bold flex items-center transition-all", viewMode === 'USER' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}
+                className={cn("px-3 py-1.5 border-2 border-black font-black text-sm font-bold flex items-center transition-all", viewMode === 'USER' ? "bg-white text-black font-black shadow-[2px_2px_0_0_#000]" : "text-black font-bold hover:text-black font-black")}
               >
                 <Users className="w-4 h-4 mr-1.5" />
                 用戶模式
@@ -319,7 +319,7 @@ export default function AdminReservations() {
               <select 
                 value={calendarStatus}
                 onChange={(e) => setCalendarStatus(e.target.value)}
-                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
+                className="p-2 border border-black border-2 border-black outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
               >
                 <option value="ALL">全部狀態</option>
                 <option value="pending">待審核</option>
@@ -330,7 +330,7 @@ export default function AdminReservations() {
               <select 
                 value={calendarPurpose}
                 onChange={(e) => setCalendarPurpose(e.target.value)}
-                className="p-2 border border-slate-200 rounded-lg outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
+                className="p-2 border border-black border-2 border-black outline-none focus:border-blue-500 bg-white text-sm font-medium min-w-[120px]"
               >
                 <option value="ALL">全部項目</option>
                 {purposesDict.map(p => (
@@ -343,15 +343,15 @@ export default function AdminReservations() {
           <div className="flex space-x-2 shrink-0">
             <button 
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+              className="p-2 border-2 border-black bg-white border border-black hover:bg-slate-50 transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-slate-600" />
+              <ChevronLeft className="w-5 h-5 text-black font-black" />
             </button>
             <button 
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+              className="p-2 border-2 border-black bg-white border border-black hover:bg-slate-50 transition-colors"
             >
-              <ChevronRight className="w-5 h-5 text-slate-600" />
+              <ChevronRight className="w-5 h-5 text-black font-black" />
             </button>
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function AdminReservations() {
 
           <div className="grid grid-cols-7 gap-2 md:gap-4">
             {paddingDays.map(i => (
-              <div key={`padding-${i}`} className="min-h-[140px] rounded-xl bg-slate-50/50" />
+              <div key={`padding-${i}`} className="min-h-[140px] border-2 border-black comic-box-sm bg-slate-50/50" />
             ))}
             
             {days.map(date => {
@@ -447,15 +447,15 @@ export default function AdminReservations() {
                 <div
                   key={date.toString()}
                   className={cn(
-                    "min-h-[140px] p-2 md:p-3 rounded-xl border transition-all duration-200 flex flex-col items-start relative",
-                    isToday(date) ? "border-green-400 ring-1 ring-green-400 bg-green-50/10" : "border-slate-200",
+                    "min-h-[140px] p-2 md:p-3 border-2 border-black comic-box-sm border transition-all duration-200 flex flex-col items-start relative",
+                    isToday(date) ? "border-green-400 ring-1 ring-green-400 bg-green-50/10" : "border-black",
                     isWeekend && !isToday(date) ? "bg-red-50/50" : (!isToday(date) ? "bg-white" : "")
                   )}
                 >
                   <div className="flex justify-between items-start w-full mb-2">
                     <span className={cn(
                       "text-sm font-semibold",
-                      isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-slate-700"
+                      isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-black font-black"
                     )}>
                       {format(date, 'd')}
                     </span>
@@ -472,7 +472,7 @@ export default function AdminReservations() {
                         <div key={b.id} className="flex items-start gap-1 w-full mt-1">
                           {viewMode === 'USER' && b.status === 'confirmed' && <Check strokeWidth={4} className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
                           {viewMode === 'USER' && b.status === 'cancelled' && <X strokeWidth={4} className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />}
-                          <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-sm font-medium line-clamp-2 leading-tight ${b.color}`}>
+                          <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-[2px_2px_0_0_#000] font-medium line-clamp-2 leading-tight ${b.color}`}>
                             {b.text}
                           </div>
                         </div>
@@ -491,10 +491,10 @@ export default function AdminReservations() {
       <div className="flex flex-col md:flex-row gap-4 mb-8 mt-12">
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 border-[3px] border-black comic-box border-2 shadow-[2px_2px_0_0_#000] bg-white",
             activeTab === 'pending' 
               ? "border-amber-400 text-amber-700 bg-amber-50" 
-              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              : "border-black text-black font-bold hover:text-black font-black hover:border-slate-300"
           )}
           onClick={() => setActiveTab('pending')}
         >
@@ -503,10 +503,10 @@ export default function AdminReservations() {
         </button>
         <button
           className={cn(
-            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 rounded-2xl border-2 shadow-sm bg-white",
+            "flex-1 py-4 text-center font-bold text-lg transition-all flex items-center justify-center gap-2 border-[3px] border-black comic-box border-2 shadow-[2px_2px_0_0_#000] bg-white",
             activeTab === 'confirmed' 
               ? "border-green-400 text-green-700 bg-green-50" 
-              : "border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              : "border-black text-black font-bold hover:text-black font-black hover:border-slate-300"
           )}
           onClick={() => setActiveTab('confirmed')}
         >
@@ -519,15 +519,15 @@ export default function AdminReservations() {
       {activeTab === 'pending' && (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+          <h2 className="text-2xl font-bold text-black font-black flex items-center">
             <Clock className="w-6 h-6 mr-2 text-amber-500" />
             待審核預約
           </h2>
-          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg w-full md:w-auto">
+          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 border-2 border-black w-full md:w-auto">
             <select 
               value={pendingPurposeFilter}
               onChange={(e) => setPendingPurposeFilter(e.target.value)}
-              className="bg-white border border-slate-200 text-slate-700 text-sm outline-none w-full min-w-[150px] font-medium p-2 rounded-md focus:border-blue-500"
+              className="bg-white border border-black text-black font-black text-sm outline-none w-full min-w-[150px] font-medium p-2 border-2 border-black font-black focus:border-blue-500"
             >
               <option value="ALL">全部項目</option>
               {purposesDict.map(p => (
@@ -538,7 +538,7 @@ export default function AdminReservations() {
         </div>
         
         {Object.keys(pendingTree).filter(p => pendingPurposeFilter === 'ALL' || p === pendingPurposeFilter).length === 0 ? (
-          <div className="bg-white comic-box p-12 text-center text-slate-500">
+          <div className="bg-white comic-box p-12 text-center text-black font-bold">
             目前沒有任何待審核的預約
           </div>
         ) : (
@@ -586,16 +586,16 @@ export default function AdminReservations() {
                   </h3>
                   
                   {/* User Filter Dropdown */}
-                  <div className="flex items-center space-x-2 bg-slate-700 p-1.5 rounded-lg w-full md:w-auto">
+                  <div className="flex items-center space-x-2 bg-slate-700 p-1.5 border-2 border-black w-full md:w-auto">
                     <User className="w-4 h-4 text-slate-300 ml-1 shrink-0" />
                     <select 
                       value={selectedUserId}
                       onChange={(e) => setPendingUserFilters({...pendingUserFilters, [purpose]: e.target.value})}
                       className="bg-transparent text-white text-sm outline-none w-full min-w-[150px] font-medium"
                     >
-                      <option value="" className="text-slate-800">所有用戶</option>
+                      <option value="" className="text-black font-black">所有用戶</option>
                       {sortedUsers.map(u => (
-                        <option key={u.id} value={u.id} className="text-slate-800">
+                        <option key={u.id} value={u.id} className="text-black font-black">
                           {u.name} (最早: {u.firstDate})
                         </option>
                       ))}
@@ -629,9 +629,9 @@ export default function AdminReservations() {
 
                     return (
                       <div key={dateStr} className="space-y-6">
-                        <div className="bg-slate-200/50 px-4 py-3 rounded-xl border border-slate-200">
-                          <h4 className="text-lg font-bold text-slate-700 flex items-center">
-                            <CalendarIcon className="w-5 h-5 mr-2 text-slate-500" />
+                        <div className="bg-slate-200/50 px-4 py-3 border-2 border-black comic-box-sm border border-black">
+                          <h4 className="text-lg font-bold text-black font-black flex items-center">
+                            <CalendarIcon className="w-5 h-5 mr-2 text-black font-bold" />
                             {dateStr}
                           </h4>
                         </div>
@@ -642,18 +642,18 @@ export default function AdminReservations() {
                             const isOverLimit = resList.length > slotLimit;
                             
                             return (
-                              <div key={timeStr} className={cn("p-5 rounded-2xl border-2 shadow-sm transition-colors", isOverLimit ? "bg-red-50 border-red-400" : "bg-white border-slate-200")}>
+                              <div key={timeStr} className={cn("p-5 border-[3px] border-black comic-box border-2 shadow-[2px_2px_0_0_#000] transition-colors", isOverLimit ? "bg-red-50 border-red-400" : "bg-white border-black")}>
                                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-5 gap-3 border-b border-slate-100 pb-4">
-                                  <div className="font-bold text-2xl flex items-center gap-3 text-slate-800">
-                                    <div className={cn("p-2 rounded-xl", isOverLimit ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-600")}>
+                                  <div className="font-bold text-2xl flex items-center gap-3 text-black font-black">
+                                    <div className={cn("p-2 border-2 border-black comic-box-sm", isOverLimit ? "bg-red-100 text-red-600" : "bg-slate-100 text-black font-black")}>
                                       <Clock className="w-6 h-6" />
                                     </div>
                                     {timeStr}
-                                    <span className={cn("text-sm font-medium px-3 py-1 rounded-full border", isOverLimit ? "bg-red-100 text-red-700 border-red-200" : "bg-slate-100 text-slate-600 border-slate-200")}>共 {resList.length} 人預約</span>
+                                    <span className={cn("text-sm font-medium px-3 py-1 rounded-full border", isOverLimit ? "bg-red-100 text-red-700 border-red-200" : "bg-slate-100 text-black font-black border-black")}>共 {resList.length} 人預約</span>
                                   </div>
                                   
                                   {isOverLimit && (
-                                    <div className="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center shadow-sm animate-pulse border border-red-600">
+                                    <div className="bg-red-500 text-white px-4 py-2 border-2 border-black comic-box-sm text-sm font-bold flex items-center shadow-[2px_2px_0_0_#000] animate-pulse border border-red-600">
                                       <AlertCircle className="w-5 h-5 mr-2" />
                                       超過核准人數 (上限 {slotLimit} 人)，請協調時段
                                     </div>
@@ -673,35 +673,35 @@ export default function AdminReservations() {
                                     const totalResPurpose = reservations.filter(r => r.userId === userId && r.purpose === purpose && r.status !== 'cancelled').length;
 
                                     return (
-                                      <div key={res.id} className={cn("bg-white rounded-2xl flex flex-col overflow-hidden shadow-sm hover:shadow-md transition-shadow relative", isOverLimit ? "border-2 border-red-200" : "border border-slate-200")}>
+                                      <div key={res.id} className={cn("bg-white border-[3px] border-black comic-box flex flex-col overflow-hidden shadow-[2px_2px_0_0_#000] hover:shadow-[4px_4px_0_0_#000] transition-shadow relative", isOverLimit ? "border-2 border-red-200" : "border border-black")}>
                                         
                                         {/* User Header */}
                                         <div className="p-4 bg-white flex gap-4">
                                           {u.pictureUrl ? (
-                                            <img src={u.pictureUrl} alt={u.displayName} className="w-14 h-14 rounded-full object-cover shadow-sm border border-slate-200" />
+                                            <img src={u.pictureUrl} alt={u.displayName} className="w-14 h-14 rounded-full object-cover shadow-[2px_2px_0_0_#000] border border-black" />
                                           ) : (
-                                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 shrink-0">
+                                            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-black shrink-0">
                                               <User className="w-6 h-6" />
                                             </div>
                                           )}
                                           
                                           <div className="flex-1 min-w-0">
-                                            <h5 className="font-bold text-slate-800 text-lg truncate">{u.displayName || '未知用戶'}</h5>
+                                            <h5 className="font-bold text-black font-black text-lg truncate">{u.displayName || '未知用戶'}</h5>
                                             <div className="flex flex-col items-start gap-1 mt-1 mb-2">
                                               {u.lineGroup && (
-                                                <div className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full inline-block font-medium border border-slate-200 whitespace-nowrap">
+                                                <div className="text-[10px] bg-slate-100 text-black font-black px-2 py-0.5 rounded-full inline-block font-medium border border-black whitespace-nowrap">
                                                   Line 官方：{u.lineGroup}
                                                 </div>
                                               )}
                                               {u.childName && (
-                                                <div className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full inline-block font-medium border border-blue-200 whitespace-nowrap">
+                                                <div className="text-[10px] bg-cyan-200 text-black font-black px-2 py-0.5 rounded-full inline-block font-medium border border-blue-200 whitespace-nowrap">
                                                   孩子：{u.childName} {u.childGender && `(${u.childGender})`}
                                                 </div>
                                               )}
                                             </div>
                                             <div className="flex flex-wrap gap-1">
                                               {uTags.map(t => (
-                                                <span key={t} className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded flex items-center border border-blue-100">
+                                                <span key={t} className="text-[10px] bg-cyan-200 text-black font-black px-1.5 py-0.5 rounded flex items-center border border-blue-100">
                                                   <Tag className="w-3 h-3 mr-1" />{t}
                                                 </span>
                                               ))}
@@ -720,9 +720,9 @@ export default function AdminReservations() {
                                           </div>
                                         )}
                                         
-                                        <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500 font-medium">
-                                          <span>本日預約：<strong className="text-slate-800">{totalResToday}</strong> 筆</span>
-                                          <span>本項目總計：<strong className="text-slate-800">{totalResPurpose}</strong> 筆</span>
+                                        <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-black font-bold font-medium">
+                                          <span>本日預約：<strong className="text-black font-black">{totalResToday}</strong> 筆</span>
+                                          <span>本項目總計：<strong className="text-black font-black">{totalResPurpose}</strong> 筆</span>
                                         </div>
 
                                         {/* Actions */}
@@ -731,20 +731,20 @@ export default function AdminReservations() {
                                             <button 
                                               onClick={() => handleConfirm(res)}
                                               disabled={confirmingId === res.id}
-                                              className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center transition-colors shadow-sm disabled:opacity-50"
+                                              className="flex-1 bg-green-400 hover:bg-green-300 text-black text-white py-2.5 border-2 border-black comic-box-sm text-sm font-bold flex items-center justify-center transition-colors shadow-[2px_2px_0_0_#000] disabled:opacity-50"
                                             >
                                               {confirmingId === res.id ? <Loader2 className="w-4 h-4 animate-spin" /> : '確認核准'}
                                             </button>
                                             <button 
                                               onClick={() => handleCancel(res.id)}
                                               disabled={confirmingId === res.id}
-                                              className="flex-none bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 px-4 py-2.5 rounded-xl text-sm font-bold transition-colors border border-slate-200 shadow-sm"
+                                              className="flex-none bg-white hover:bg-red-50 text-black font-black hover:text-red-600 px-4 py-2.5 border-2 border-black comic-box-sm text-sm font-bold transition-colors border border-black shadow-[2px_2px_0_0_#000]"
                                             >
                                               取消
                                             </button>
                                           </div>
                                           {userResThisDay.length > 1 && (
-                                            <div className="mt-3 bg-amber-50 text-amber-700 text-xs text-center border border-amber-200 py-1.5 rounded-lg font-medium">
+                                            <div className="mt-3 bg-amber-50 text-amber-700 text-xs text-center border border-amber-200 py-1.5 border-2 border-black font-medium">
                                               ⚠️ 核准此筆將自動取消該用戶本日其他預約
                                             </div>
                                           )}
@@ -767,7 +767,7 @@ export default function AdminReservations() {
                     if (!selectedUserId) return false;
                     return !pendingTree[purpose][dateStr][selectedUserId];
                   }) && selectedUserId && (
-                    <div className="text-center p-8 text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
+                    <div className="text-center p-8 text-black font-bold bg-white border-[3px] border-black comic-box border border-black border-dashed">
                       該用戶在此項目沒有待審核的預約
                     </div>
                   )}
@@ -784,15 +784,15 @@ export default function AdminReservations() {
       {activeTab === 'confirmed' && (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+          <h2 className="text-2xl font-bold text-black font-black flex items-center">
             <Check className="w-6 h-6 mr-2 text-green-500" />
             已核准預約
           </h2>
-          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-lg w-full md:w-auto">
+          <div className="flex items-center space-x-2 bg-slate-100 p-1.5 border-2 border-black w-full md:w-auto">
             <select 
               value={confirmedPurposeFilter}
               onChange={(e) => setConfirmedPurposeFilter(e.target.value)}
-              className="bg-white border border-slate-200 text-slate-700 text-sm outline-none w-full min-w-[150px] font-medium p-2 rounded-md focus:border-blue-500"
+              className="bg-white border border-black text-black font-black text-sm outline-none w-full min-w-[150px] font-medium p-2 border-2 border-black font-black focus:border-blue-500"
             >
               <option value="ALL">全部項目</option>
               {purposesDict.map(p => (
@@ -803,7 +803,7 @@ export default function AdminReservations() {
         </div>
         
         {Object.keys(confirmedTree).filter(p => confirmedPurposeFilter === 'ALL' || p === confirmedPurposeFilter).length === 0 ? (
-          <div className="bg-white comic-box p-12 text-center text-slate-500">
+          <div className="bg-white comic-box p-12 text-center text-black font-bold">
             目前沒有任何已核准的預約
           </div>
         ) : (
@@ -849,16 +849,16 @@ export default function AdminReservations() {
                   </h3>
                   
                   {/* User Filter Dropdown */}
-                  <div className="flex items-center space-x-2 bg-green-700/50 p-1.5 rounded-lg w-full md:w-auto">
+                  <div className="flex items-center space-x-2 bg-green-700/50 p-1.5 border-2 border-black w-full md:w-auto">
                     <User className="w-4 h-4 text-green-100 ml-1 shrink-0" />
                     <select 
                       value={selectedUserId}
                       onChange={(e) => setConfirmedUserFilters({...confirmedUserFilters, [purpose]: e.target.value})}
                       className="bg-transparent text-white text-sm outline-none w-full min-w-[150px] font-medium"
                     >
-                      <option value="" className="text-slate-800">所有用戶</option>
+                      <option value="" className="text-black font-black">所有用戶</option>
                       {sortedUsers.map(u => (
-                        <option key={u.id} value={u.id} className="text-slate-800">
+                        <option key={u.id} value={u.id} className="text-black font-black">
                           {u.name}
                         </option>
                       ))}
@@ -882,9 +882,9 @@ export default function AdminReservations() {
 
                     return (
                       <div key={dateStr} className="space-y-4">
-                        <div className="bg-slate-200/50 px-4 py-3 rounded-xl border border-slate-200">
-                          <h4 className="text-lg font-bold text-slate-700 flex items-center">
-                            <CalendarIcon className="w-5 h-5 mr-2 text-slate-500" />
+                        <div className="bg-slate-200/50 px-4 py-3 border-2 border-black comic-box-sm border border-black">
+                          <h4 className="text-lg font-bold text-black font-black flex items-center">
+                            <CalendarIcon className="w-5 h-5 mr-2 text-black font-bold" />
                             {dateStr}
                           </h4>
                         </div>
@@ -897,11 +897,11 @@ export default function AdminReservations() {
                             const uName = users[res.userId] || '未知用戶';
 
                             return (
-                              <div key={res.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow">
+                              <div key={res.id} className="bg-white border-[3px] border-black comic-box border border-black shadow-[2px_2px_0_0_#000] overflow-hidden flex flex-col group hover:shadow-[4px_4px_0_0_#000] transition-shadow">
                                 {/* Header */}
                                 <div className="p-4 bg-white border-b border-slate-100 flex gap-4">
                                   {u.pictureUrl ? (
-                                    <img src={u.pictureUrl} alt={u.displayName || uName} className="w-12 h-12 rounded-full object-cover shadow-sm border border-slate-200 shrink-0" />
+                                    <img src={u.pictureUrl} alt={u.displayName || uName} className="w-12 h-12 rounded-full object-cover shadow-[2px_2px_0_0_#000] border border-black shrink-0" />
                                   ) : (
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-inner shrink-0 ${getUserColor(res.userId)}`}>
                                       {uName.charAt(0)}
@@ -909,15 +909,15 @@ export default function AdminReservations() {
                                   )}
                                   
                                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                    <h5 className="font-bold text-slate-800 text-lg truncate">{uName}</h5>
-                                    <div className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md inline-block mt-1 w-fit">
+                                    <h5 className="font-bold text-black font-black text-lg truncate">{uName}</h5>
+                                    <div className="text-xs text-black font-bold bg-slate-100 px-2 py-0.5 border-2 border-black font-black inline-block mt-1 w-fit">
                                       Line 官方：{u.lineGroup || '未綁定群組'}
                                     </div>
                                   </div>
                                 </div>
                                 
                                 {u.notes && (
-                                  <div className="px-4 py-2 bg-yellow-50/50 border-b border-slate-100 text-xs text-slate-600 line-clamp-2">
+                                  <div className="px-4 py-2 bg-yellow-50/50 border-b border-slate-100 text-xs text-black font-black line-clamp-2">
                                     <span className="font-bold text-yellow-700">備註：</span>{u.notes}
                                   </div>
                                 )}
@@ -927,13 +927,13 @@ export default function AdminReservations() {
                                   {u.email && (
                                     <div className="flex items-start text-sm">
                                       <span className="text-slate-400 w-12 shrink-0">Email</span>
-                                      <span className="text-slate-700 truncate">{u.email}</span>
+                                      <span className="text-black font-black truncate">{u.email}</span>
                                     </div>
                                   )}
                                   {u.phone && (
                                     <div className="flex items-start text-sm">
                                       <span className="text-slate-400 w-12 shrink-0">手機</span>
-                                      <span className="text-slate-700">{u.phone}</span>
+                                      <span className="text-black font-black">{u.phone}</span>
                                     </div>
                                   )}
                                   
@@ -944,7 +944,7 @@ export default function AdminReservations() {
                                           <Tag className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                                           <div className="flex flex-wrap gap-1">
                                             {uTags.map(tag => (
-                                              <span key={tag} className="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-blue-100">{tag}</span>
+                                              <span key={tag} className="bg-cyan-200 text-black font-black text-[10px] px-2 py-0.5 border-2 border-black font-black font-medium border border-blue-100">{tag}</span>
                                             ))}
                                           </div>
                                         </div>
@@ -954,7 +954,7 @@ export default function AdminReservations() {
                                           <Heart className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                                           <div className="flex flex-wrap gap-1">
                                             {uInterests.map(interest => (
-                                              <span key={interest} className="bg-rose-50 text-rose-600 text-[10px] px-2 py-0.5 rounded-md font-medium border border-rose-100">{interest}</span>
+                                              <span key={interest} className="bg-pink-200 text-black font-black text-[10px] px-2 py-0.5 border-2 border-black font-black font-medium border border-rose-100">{interest}</span>
                                             ))}
                                           </div>
                                         </div>
@@ -965,9 +965,9 @@ export default function AdminReservations() {
 
                                 {/* Res Details */}
                                 <div className="p-4 flex-1 flex flex-col gap-3 bg-slate-50/50">
-                                  <div className="bg-white border border-green-200 rounded-xl p-3 shadow-sm flex flex-col gap-3 relative overflow-hidden">
+                                  <div className="bg-white border border-green-200 border-2 border-black comic-box-sm p-3 shadow-[2px_2px_0_0_#000] flex flex-col gap-3 relative overflow-hidden">
                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
-                                    <div className="font-bold text-slate-700 text-lg flex items-center pl-2">
+                                    <div className="font-bold text-black font-black text-lg flex items-center pl-2">
                                       <Clock className="w-5 h-5 mr-2 text-green-500" />
                                       {res.time}
                                     </div>
@@ -977,7 +977,7 @@ export default function AdminReservations() {
                                       <button 
                                         onClick={() => handleResendLineMessage(res)}
                                         disabled={confirmingId === res.id}
-                                        className="flex-1 min-w-[120px] bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 px-2 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
+                                        className="flex-1 min-w-[120px] bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 px-2 py-2 border-2 border-black text-xs md:text-sm font-bold transition-colors shadow-[2px_2px_0_0_#000] flex items-center justify-center disabled:opacity-50"
                                       >
                                         {confirmingId === res.id ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                                           <>
@@ -990,7 +990,7 @@ export default function AdminReservations() {
                                       <button 
                                         onClick={() => handleReturnPending(res)}
                                         disabled={confirmingId === res.id}
-                                        className="flex-1 min-w-[100px] bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-2 py-2 rounded-lg text-xs md:text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
+                                        className="flex-1 min-w-[100px] bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 px-2 py-2 border-2 border-black text-xs md:text-sm font-bold transition-colors shadow-[2px_2px_0_0_#000] flex items-center justify-center disabled:opacity-50"
                                       >
                                         <Clock className="w-4 h-4 mr-1" />
                                         退回待審核
@@ -999,7 +999,7 @@ export default function AdminReservations() {
                                       <button 
                                         onClick={() => handleCancel(res)}
                                         disabled={confirmingId === res.id}
-                                        className="flex-none bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center disabled:opacity-50"
+                                        className="flex-none bg-white border border-red-200 hover:bg-red-50 text-red-600 px-3 py-2 border-2 border-black text-sm font-bold transition-colors shadow-[2px_2px_0_0_#000] flex items-center justify-center disabled:opacity-50"
                                       >
                                         取消預約
                                       </button>
@@ -1019,7 +1019,7 @@ export default function AdminReservations() {
                     if (!selectedUserId) return false;
                     return !confirmedTree[purpose][dateStr][selectedUserId];
                   }) && selectedUserId && (
-                    <div className="text-center p-8 text-slate-500 bg-white rounded-2xl border border-slate-200 border-dashed">
+                    <div className="text-center p-8 text-black font-bold bg-white border-[3px] border-black comic-box border border-black border-dashed">
                       該用戶在此項目沒有已核准的預約
                     </div>
                   )}
@@ -1035,24 +1035,24 @@ export default function AdminReservations() {
       {/* Export Excel Modal */}
       {exportModal.isOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800 flex items-center">
+              <h3 className="text-xl font-bold text-black font-black flex items-center">
                 <Download className="w-5 h-5 mr-2 text-emerald-500" />
                 匯出預約資料至 Excel
               </h3>
-              <button onClick={() => setExportModal({ ...exportModal, isOpen: false })} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => setExportModal({ ...exportModal, isOpen: false })} className="text-slate-400 hover:text-black font-black">
                 <X className="w-6 h-6" />
               </button>
             </div>
             
             <div className="space-y-4 mb-6">
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">選取預約項目</label>
+                <label className="text-sm font-bold text-black font-black block mb-1">選取預約項目</label>
                 <select 
                   value={exportModal.purpose}
                   onChange={(e) => setExportModal({ ...exportModal, purpose: e.target.value })}
-                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                  className="w-full p-2 border border-black border-2 border-black outline-none focus:border-emerald-500 bg-slate-50"
                 >
                   <option value="ALL">全部項目</option>
                   {purposesDict.map(p => (
@@ -1062,11 +1062,11 @@ export default function AdminReservations() {
               </div>
               
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">選取預約狀態</label>
+                <label className="text-sm font-bold text-black font-black block mb-1">選取預約狀態</label>
                 <select 
                   value={exportModal.status}
                   onChange={(e) => setExportModal({ ...exportModal, status: e.target.value })}
-                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                  className="w-full p-2 border border-black border-2 border-black outline-none focus:border-emerald-500 bg-slate-50"
                 >
                   <option value="ALL">全部狀態</option>
                   <option value="pending">待審核</option>
@@ -1076,11 +1076,11 @@ export default function AdminReservations() {
               </div>
 
               <div>
-                <label className="text-sm font-bold text-slate-700 block mb-1">排序條件</label>
+                <label className="text-sm font-bold text-black font-black block mb-1">排序條件</label>
                 <select 
                   value={exportModal.sort}
                   onChange={(e) => setExportModal({ ...exportModal, sort: e.target.value })}
-                  className="w-full p-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 bg-slate-50"
+                  className="w-full p-2 border border-black border-2 border-black outline-none focus:border-emerald-500 bg-slate-50"
                 >
                   <option value="DATE">依日期排序 (舊到新)</option>
                   <option value="NAME">依名稱排序 (筆畫/字母)</option>
@@ -1088,7 +1088,7 @@ export default function AdminReservations() {
               </div>
             </div>
 
-            <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 mb-6 flex items-center justify-between">
+            <div className="bg-emerald-50 p-4 border-2 border-black comic-box-sm border border-emerald-100 mb-6 flex items-center justify-between">
               <span className="font-bold text-emerald-800">符合條件總筆數</span>
               <span className="text-xl font-black text-emerald-600">{getExportCount()} 筆</span>
             </div>
@@ -1096,13 +1096,13 @@ export default function AdminReservations() {
             <div className="flex space-x-3">
               <button 
                 onClick={() => setExportModal({ ...exportModal, isOpen: false })}
-                className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors"
+                className="flex-1 py-3 bg-slate-100 text-black font-black hover:bg-slate-200 font-bold border-2 border-black comic-box-sm transition-colors"
               >
                 取消
               </button>
               <button 
                 onClick={handleExport}
-                className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 transition-colors flex justify-center items-center"
+                className="flex-1 py-3 bg-emerald-400 hover:bg-emerald-300 text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-emerald-500/20 transition-colors flex justify-center items-center"
               >
                 確定匯出
               </button>
@@ -1114,7 +1114,7 @@ export default function AdminReservations() {
       {/* Action Confirmation Modal */}
       {actionConfirmModal.isOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
               actionConfirmModal.type === 'cancel' ? 'bg-red-100 text-red-500' :
               actionConfirmModal.type === 'return_pending' ? 'bg-amber-100 text-amber-500' :
@@ -1125,13 +1125,13 @@ export default function AdminReservations() {
                <Send className="w-8 h-8" />}
             </div>
             
-            <h3 className="text-xl font-bold text-slate-800 mb-2">
+            <h3 className="text-xl font-bold text-black font-black mb-2">
               {actionConfirmModal.type === 'cancel' ? '確認取消預約' :
                actionConfirmModal.type === 'return_pending' ? '確認退回待審核' :
                '確認重新傳送推播'}
             </h3>
             
-            <p className="text-slate-500 mb-6 font-medium">
+            <p className="text-black font-bold mb-6 font-medium">
               {actionConfirmModal.type === 'cancel' ? '確定要取消此預約嗎？取消後將從行事曆中移除。' :
                actionConfirmModal.type === 'return_pending' ? '確定要將此預約退回「待審核」狀態嗎？' :
                `確定要重新傳送「預約成功」訊息給 ${users[actionConfirmModal.res.userId]} 嗎？`}
@@ -1140,16 +1140,16 @@ export default function AdminReservations() {
             <div className="flex space-x-3">
               <button 
                 onClick={() => setActionConfirmModal({ isOpen: false, type: '', res: null })}
-                className="flex-1 py-3 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold rounded-xl transition-colors"
+                className="flex-1 py-3 bg-slate-100 text-black font-black hover:bg-slate-200 font-bold border-2 border-black comic-box-sm transition-colors"
               >
                 取消返回
               </button>
               <button 
                 onClick={executeConfirmAction}
-                className={`flex-1 py-3 text-white font-bold rounded-xl shadow-lg transition-colors flex justify-center items-center ${
-                  actionConfirmModal.type === 'cancel' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' :
+                className={`flex-1 py-3 text-white font-bold border-2 border-black comic-box-sm shadow-lg transition-colors flex justify-center items-center ${
+                  actionConfirmModal.type === 'cancel' ? 'bg-red-400 hover:bg-red-300 text-black shadow-red-500/20' :
                   actionConfirmModal.type === 'return_pending' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' :
-                  'bg-green-500 hover:bg-green-600 shadow-green-500/20'
+                  'bg-green-400 hover:bg-green-300 text-black shadow-green-500/20'
                 }`}
               >
                 確定執行
@@ -1162,20 +1162,20 @@ export default function AdminReservations() {
       {/* Success Modal */}
       {successModal.isOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
             <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-100 text-green-500">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             
-            <h3 className="text-xl font-bold text-slate-800 mb-2">執行成功</h3>
+            <h3 className="text-xl font-bold text-black font-black mb-2">執行成功</h3>
             
-            <p className="text-slate-500 mb-6 font-medium">
+            <p className="text-black font-bold mb-6 font-medium">
               {successModal.message}
             </p>
             
             <button 
               onClick={() => setSuccessModal({ isOpen: false, message: '' })}
-              className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transition-colors"
+              className="w-full py-3 bg-green-400 hover:bg-green-300 text-black text-white font-bold border-2 border-black comic-box-sm shadow-lg shadow-green-500/20 transition-colors"
             >
               確定
             </button>
