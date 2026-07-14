@@ -42,7 +42,7 @@ export default function AdminScheduling() {
       
       setAllUsers(userMap);
       setAllReservations(res || []);
-      setPurposesDict(dict?.purposes || []);
+      setPurposesDict(dict || []);
       setAllAvailability(availData || {});
       
       // Auto select the first purpose if exists
