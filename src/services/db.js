@@ -247,22 +247,42 @@ export const saveUserProfile = async (userId, displayName, lineGroup = null, pic
       if (pictureUrl) data.pictureUrl = pictureUrl;
       
       await setDoc(userRef, data);
+      return data;
     } else {
-      // Update name and line config if changed
-      const updateData = { displayName };
+      const userData = userSnap.data();
+      const updateData = {};
+      
+      // Update name only if admin hasn't overridden it
+      if (!userData.isAdminModifiedName) {
+        updateData.displayName = displayName;
+      }
+      
       if (lineGroup) updateData.lineGroup = lineGroup;
       
-      // Only set pictureUrl if the database doesn't have one, or if we want to constantly update it
-      // The requirement says: "當有新的使用者從line開啟預約畫面，然後新增到系統時，可以把該使用者的頭像圖片直接抓到到用戶管理的頭像裡來嗎"
-      // If the user hasn't set one manually in admin, it's nice to keep it updated.
-      if (pictureUrl && !userSnap.data().pictureUrl) {
+      // Only set pictureUrl if the database doesn't have one
+      if (pictureUrl && !userData.pictureUrl) {
         updateData.pictureUrl = pictureUrl;
       }
       
-      await setDoc(userRef, updateData, { merge: true });
+      if (Object.keys(updateData).length > 0) {
+        await setDoc(userRef, updateData, { merge: true });
+      }
+      
+      return { ...userData, ...updateData };
     }
   } catch (error) {
     console.error("Error saving user profile:", error);
+    throw error;
+  }
+};
+
+// Update user profile from client (like adding childName)
+export const updateUserProfile = async (userId, data) => {
+  try {
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, data, { merge: true });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
     throw error;
   }
 };

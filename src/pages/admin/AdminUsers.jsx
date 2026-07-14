@@ -245,6 +245,8 @@ export default function AdminUsers() {
       setFormData({
         displayName: user.displayName || '',
         gender: user.gender || '',
+        childName: user.childName || '',
+        childGender: user.childGender || '',
         bYear: y ? parseInt(y).toString() : '',
         bMonth: m ? parseInt(m).toString() : '',
         bDay: d ? parseInt(d).toString() : '',
@@ -257,7 +259,7 @@ export default function AdminUsers() {
       setImagePreview(user.pictureUrl || '');
     } else {
       setEditingUser(null);
-      setFormData({ displayName: '', gender: '', bYear: '', bMonth: '', bDay: '', interests: [], notes: '', pictureUrl: '', tags: [], lineGroup: '' });
+      setFormData({ displayName: '', gender: '', childName: '', childGender: '', bYear: '', bMonth: '', bDay: '', interests: [], notes: '', pictureUrl: '', tags: [], lineGroup: '' });
       setImagePreview('');
     }
     setImageFile(null);
@@ -343,6 +345,9 @@ export default function AdminUsers() {
       const dataToSave = { 
         displayName: formData.displayName,
         gender: formData.gender,
+        childName: formData.childName,
+        childGender: formData.childGender,
+        isAdminModifiedName: true,
         birthday: birthdayStr,
         interests: formData.interests,
         notes: formData.notes,
@@ -556,11 +561,18 @@ export default function AdminUsers() {
                       </td>
                       <td className="p-4">
                         <div className="font-bold text-slate-800">{user.displayName || '未提供'}</div>
-                        {user.lineGroup && (
-                          <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block mt-1 font-medium border border-green-200 whitespace-nowrap">
-                            Line 官方：{user.lineGroup}
-                          </div>
-                        )}
+                        <div className="flex flex-col items-start gap-1 mt-1">
+                          {user.lineGroup && (
+                            <div className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full inline-block font-medium border border-green-200 whitespace-nowrap">
+                              Line 官方：{user.lineGroup}
+                            </div>
+                          )}
+                          {user.childName && (
+                            <div className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full inline-block font-medium border border-blue-200 whitespace-nowrap">
+                              孩子：{user.childName} {user.childGender && `(${user.childGender})`}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="text-slate-600 text-sm">{user.gender || '性別未提供'}</div>
@@ -732,6 +744,29 @@ export default function AdminUsers() {
                     <option value="男">男</option>
                     <option value="女">女</option>
                     <option value="其他">其他</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Child Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">孩子姓名</label>
+                  <input 
+                    type="text" value={formData.childName} onChange={e => setFormData({...formData, childName: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors"
+                    placeholder="輸入孩子姓名"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-slate-700 block mb-1">孩子性別</label>
+                  <select 
+                    value={formData.childGender} onChange={e => setFormData({...formData, childGender: e.target.value})}
+                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none bg-slate-50 focus:bg-white transition-colors appearance-none"
+                  >
+                    <option value="">未提供</option>
+                    <option value="男">男</option>
+                    <option value="女">女</option>
                   </select>
                 </div>
               </div>

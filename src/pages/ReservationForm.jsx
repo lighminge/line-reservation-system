@@ -3,12 +3,14 @@ import liff from '@line/liff';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isBefore, startOfDay, addMonths, parseISO } from 'date-fns';
 import { Calendar, Clock, Loader2, CheckCircle2, Tag, Trash2, List, AlertCircle } from 'lucide-react';
 import { cn } from '../utils/cn';
-import { getAvailability, getLineSettings, addReservation, saveUserProfile, getAdminReservations, getMessageTemplates, updateReservationStatus, getDictionary } from '../services/db';
+import { getAvailability, getLineSettings, addReservation, saveUserProfile, updateUserProfile, getAdminReservations, getMessageTemplates, updateReservationStatus, getDictionary } from '../services/db';
 
 export default function ReservationForm() {
   const [liffError, setLiffError] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [childName, setChildName] = useState('');
+  const [dbProfile, setDbProfile] = useState(null);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [availability, setAvailability] = useState({});
@@ -68,14 +70,19 @@ export default function ReservationForm() {
       }
 
       const userProfile = await liff.getProfile();
-      setProfile(userProfile);
+      setProfile(userProfile); // keep LINE profile for display name
       
-      await saveUserProfile(
+      const savedDbProfile = await saveUserProfile(
         userProfile.userId, 
         userProfile.displayName, 
         activeConfig.name || "預設 Line 官方", 
         userProfile.pictureUrl
       );
+      
+      setDbProfile(savedDbProfile);
+      if (savedDbProfile?.childName) {
+        setChildName(savedDbProfile.childName);
+      }
       
       await fetchAvailability(currentMonth);
 
@@ -112,6 +119,9 @@ export default function ReservationForm() {
 
     setIsSubmitting(true);
     try {
+      if (dbProfile && childName !== dbProfile.childName) {
+        await updateUserProfile(profile.userId, { childName });
+      }
       await addReservation(profile.userId, formData);
       setSubmitSuccess(true);
       const resData = await getAdminReservations();
@@ -416,8 +426,33 @@ export default function ReservationForm() {
             </div>
           )}
           
+          {/* Child Name Section */}
+          <section className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-sm">👤</span>
+              </div>
+              <h2 className="text-lg font-bold text-slate-800">孩子姓名 <span className="text-red-500">*</span></h2>
+            </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <input 
+                type="text"
+                value={childName}
+                onChange={e => setChildName(e.target.value)}
+                placeholder="請輸入孩子姓名"
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500 focus:bg-white transition-colors"
+                required
+              />
+              {!childName && (
+                <div className="mt-2 text-red-500 text-sm font-medium flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-1" /> 請先填寫孩子姓名，再選擇預約項目
+                </div>
+              )}
+            </div>
+          </section>
+
           {!formData.purpose ? (
-            <section className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <section className={cn("animate-in fade-in slide-in-from-bottom-4 duration-300", !childName && "opacity-50 pointer-events-none")}>
               <div className="flex items-center space-x-2 mb-4">
                 <div className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
                   <List className="w-4 h-4" />
