@@ -224,7 +224,10 @@ export default function AdminUsers() {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageText) return;
+    if (!messageText && !messageImageFile && !messageImageUrl) {
+      setSendResult({ text: '請至少輸入文字內容或上傳圖片', type: 'error' });
+      return;
+    }
     
     setMessageSending(true);
     setSendResult({ text: '', type: '' });

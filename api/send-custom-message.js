@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     targetUserIds = [userId];
   }
 
-  if (targetUserIds.length === 0 || !text) {
+  if (targetUserIds.length === 0 || (!text && !imageUrl)) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -59,8 +59,11 @@ export default async function handler(req, res) {
 
     // 2. Construct the Line push message payload
     const flexContents = {
-      type: "bubble",
-      body: {
+      type: "bubble"
+    };
+
+    if (text) {
+      flexContents.body = {
         type: "box",
         layout: "vertical",
         spacing: "md",
@@ -74,8 +77,8 @@ export default async function handler(req, res) {
             color: "#333333"
           }
         ]
-      }
-    };
+      };
+    }
 
     let finalImageUrl = imageUrl;
     if (finalImageUrl && finalImageUrl.startsWith('internal://')) {
