@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates, getDictTags, saveDictTags, getDictInterests, saveDictInterests } from '../../services/db';
+import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates, getDictTags, saveDictTags, getDictInterests, saveDictInterests, resolveImageUrl } from '../../services/db';
 import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag, Heart } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getZodiac, zodiacs } from '../../utils/zodiac';
@@ -37,11 +37,16 @@ export default function AdminUsers() {
   // Message Modal state
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [messageTarget, setMessageTarget] = useState(null);
+  const [messageTitle, setMessageTitle] = useState('系統通知');
   const [messageText, setMessageText] = useState('');
+  const [messageImageFile, setMessageImageFile] = useState(null);
+  const [messageImagePreview, setMessageImagePreview] = useState('');
+  const [messageImageUrl, setMessageImageUrl] = useState('');
   const [messageSending, setMessageSending] = useState(false);
   const [sendResult, setSendResult] = useState({ text: '', type: '' });
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [isBulkMessage, setIsBulkMessage] = useState(false);
+  const messageFileRef = useRef(null);
 
   // Delete Dict Item Modal state
   const [dictDeleteModal, setDictDeleteModal] = useState({ isOpen: false, type: '', value: '' });
@@ -144,17 +149,39 @@ export default function AdminUsers() {
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
     setIsBulkMessage(false);
+    setMessageTitle('系統通知');
     setMessageText('');
+    setMessageImageFile(null);
+    setMessageImagePreview('');
+    setMessageImageUrl('');
     setSendResult({ text: '', type: '' });
+    loadTemplate();
     setIsMessageModalOpen(true);
   };
 
   const handleOpenBulkMessageModal = () => {
     setMessageTarget(null);
     setIsBulkMessage(true);
+    setMessageTitle('系統通知');
     setMessageText('');
+    setMessageImageFile(null);
+    setMessageImagePreview('');
+    setMessageImageUrl('');
     setSendResult({ text: '', type: '' });
+    loadTemplate();
     setIsMessageModalOpen(true);
+  };
+
+  const handleMessageImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMessageImageFile(file);
+        setMessageImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Delete Global Dict Items
@@ -184,10 +211,14 @@ export default function AdminUsers() {
 
   const loadTemplate = async () => {
     const templates = await getMessageTemplates();
-    if (templates && templates.lineConfirm) {
-      setMessageText(templates.lineConfirm.text);
-    } else {
-      setSendResult({ text: '無法載入樣板', type: 'error' });
+    if (templates && templates.adminCustomMessage) {
+      setMessageTitle(templates.adminCustomMessage.title || '系統通知');
+      setMessageText(templates.adminCustomMessage.text || '');
+      if (templates.adminCustomMessage.imageUrl) {
+        setMessageImageUrl(templates.adminCustomMessage.imageUrl);
+        const resolved = await resolveImageUrl(templates.adminCustomMessage.imageUrl);
+        setMessageImagePreview(resolved);
+      }
     }
   };
 
@@ -198,9 +229,15 @@ export default function AdminUsers() {
     setMessageSending(true);
     setSendResult({ text: '', type: '' });
     try {
+      let finalImageUrl = messageImageUrl;
+      if (messageImageFile) {
+        finalImageUrl = await uploadImage(messageImageFile, `messages/${Date.now()}_customUserMsg_${messageImageFile.name}`);
+      }
+
       const payload = {
         text: messageText,
-        title: "系統通知"
+        title: messageTitle || "系統通知",
+        imageUrl: finalImageUrl
       };
 
       if (isBulkMessage) {
@@ -1044,7 +1081,7 @@ export default function AdminUsers() {
       {/* Message Modal */}
       {isMessageModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
               <h2 className="text-xl font-bold text-black font-black flex items-center">
                 <Send className="w-5 h-5 mr-2 text-green-500" />

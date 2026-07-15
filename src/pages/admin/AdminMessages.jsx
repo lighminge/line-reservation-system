@@ -6,6 +6,7 @@ export default function AdminMessages() {
   const [templates, setTemplates] = useState({
     clientSuccess: { title: '', text: '', imageUrl: '' },
     lineConfirm: { title: '', text: '', imageUrl: '' },
+    adminCustomMessage: { title: '', text: '', imageUrl: '' },
     settings: { useOriginalLineNameForPush: false }
   });
   
@@ -15,12 +16,15 @@ export default function AdminMessages() {
 
   const clientFileRef = useRef(null);
   const lineFileRef = useRef(null);
+  const customMessageFileRef = useRef(null);
   
   const [clientFile, setClientFile] = useState(null);
   const [lineFile, setLineFile] = useState(null);
+  const [customMessageFile, setCustomMessageFile] = useState(null);
   
   const [clientPreview, setClientPreview] = useState('');
   const [linePreview, setLinePreview] = useState('');
+  const [customMessagePreview, setCustomMessagePreview] = useState('');
 
   useEffect(() => {
     fetchTemplates();
@@ -37,6 +41,9 @@ export default function AdminMessages() {
       if (data.lineConfirm?.imageUrl) {
         setLinePreview(await resolveImageUrl(data.lineConfirm.imageUrl));
       }
+      if (data.adminCustomMessage?.imageUrl) {
+        setCustomMessagePreview(await resolveImageUrl(data.adminCustomMessage.imageUrl));
+      }
     }
     setLoading(false);
   };
@@ -49,9 +56,12 @@ export default function AdminMessages() {
         if (type === 'client') {
           setClientFile(file);
           setClientPreview(reader.result);
-        } else {
+        } else if (type === 'line') {
           setLineFile(file);
           setLinePreview(reader.result);
+        } else if (type === 'customMessage') {
+          setCustomMessageFile(file);
+          setCustomMessagePreview(reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -66,6 +76,7 @@ export default function AdminMessages() {
     try {
       let finalClientImg = templates.clientSuccess.imageUrl;
       let finalLineImg = templates.lineConfirm.imageUrl;
+      let finalCustomImg = templates.adminCustomMessage?.imageUrl || '';
 
       if (clientFile) {
         finalClientImg = await uploadImage(clientFile, `messages/${Date.now()}_client_${clientFile.name}`);
@@ -73,10 +84,14 @@ export default function AdminMessages() {
       if (lineFile) {
         finalLineImg = await uploadImage(lineFile, `messages/${Date.now()}_line_${lineFile.name}`);
       }
+      if (customMessageFile) {
+        finalCustomImg = await uploadImage(customMessageFile, `messages/${Date.now()}_custom_${customMessageFile.name}`);
+      }
 
       const finalTemplates = {
         clientSuccess: { ...templates.clientSuccess, imageUrl: finalClientImg },
         lineConfirm: { ...templates.lineConfirm, imageUrl: finalLineImg },
+        adminCustomMessage: { ...templates.adminCustomMessage, imageUrl: finalCustomImg },
         settings: { ...templates.settings }
       };
 
@@ -85,6 +100,7 @@ export default function AdminMessages() {
       setTemplates(finalTemplates);
       setClientFile(null);
       setLineFile(null);
+      setCustomMessageFile(null);
       setMessage({ text: '訊息畫面設定儲存成功！', type: 'success' });
     } catch (error) {
       let errorMsg = error.message;
@@ -250,6 +266,78 @@ export default function AdminMessages() {
                   <li><span className="font-semibold text-black font-black">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
                   <li><span className="font-semibold text-black font-black">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
                   <li><span className="font-semibold text-black font-black">上傳設計建議</span>：由於推播文字會顯示在圖片下方，圖片可著重視覺氛圍呈現，不需包含過多說明文字或壓字。</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Admin Custom Message (Users Page) */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col lg:col-span-2">
+          <div className="bg-yellow-500 p-5 text-black border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              用戶管理 - 客製化推播訊息
+            </h2>
+            <span className="text-yellow-900 font-bold text-sm">於「用戶管理」發送訊息時的預設範本</span>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div className="space-y-6">
+              <div>
+                <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
+                <input 
+                  type="text" 
+                  value={templates.adminCustomMessage?.title || ''}
+                  onChange={e => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, title: e.target.value}})}
+                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-yellow-500 bg-white outline-none"
+                  placeholder="例如：系統通知"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-semibold text-black font-black block mb-2">
+                  預設內文說明
+                  <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                </label>
+                <textarea 
+                  value={templates.adminCustomMessage?.text || ''}
+                  onChange={e => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text: e.target.value}})}
+                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-yellow-500 bg-white outline-none h-32 resize-none"
+                  placeholder="請輸入預設發送的內容"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">預設卡片橫幅圖案 (選項)</label>
+              <div 
+                onClick={() => customMessageFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-yellow-400 hover:bg-yellow-50 transition-colors overflow-hidden relative group"
+              >
+                {customMessagePreview ? (
+                  <>
+                    <img src={customMessagePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-yellow-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-yellow-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={customMessageFileRef} onChange={e => handleImageChange(e, 'customMessage')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {customMessagePreview && (
+                <button type="button" onClick={() => { setCustomMessagePreview(''); setCustomMessageFile(null); setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+              <div className="mt-3 bg-slate-100 p-3 border-2 border-black border border-black">
+                <ul className="text-xs text-black font-bold space-y-1 list-disc list-inside">
+                  <li><span className="font-semibold text-black font-black">支援檔案類型</span>：JPG, JPEG, PNG。</li>
+                  <li><span className="font-semibold text-black font-black">檔案大小限制</span>：建議 1MB 以下，以確保載入速度。</li>
+                  <li><span className="font-semibold text-black font-black">檔案比例建議</span>：推薦使用 20:13 (橫式) 比例，以達到最佳顯示效果。</li>
                 </ul>
               </div>
             </div>
