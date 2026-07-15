@@ -42,6 +42,7 @@ export default function AdminUsers() {
   const [messageImageFile, setMessageImageFile] = useState(null);
   const [messageImagePreview, setMessageImagePreview] = useState('');
   const [messageImageUrl, setMessageImageUrl] = useState('');
+  const [messageImageAspectRatio, setMessageImageAspectRatio] = useState('1.51:1');
   const [messageSending, setMessageSending] = useState(false);
   const [sendResult, setSendResult] = useState({ text: '', type: '' });
   const [selectedUserIds, setSelectedUserIds] = useState([]);
@@ -179,6 +180,11 @@ export default function AdminUsers() {
       reader.onloadend = () => {
         setMessageImageFile(file);
         setMessageImagePreview(reader.result);
+        const img = new Image();
+        img.onload = () => {
+          setMessageImageAspectRatio(`${img.width}:${img.height}`);
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
@@ -240,7 +246,8 @@ export default function AdminUsers() {
       const payload = {
         text: messageText,
         title: messageTitle || "系統通知",
-        imageUrl: finalImageUrl
+        imageUrl: finalImageUrl,
+        imageAspectRatio: messageImageAspectRatio
       };
 
       if (isBulkMessage) {

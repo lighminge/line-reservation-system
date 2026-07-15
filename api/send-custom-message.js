@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { userId, userIds, text, imageUrl, title } = req.body;
+  const { userId, userIds, text, imageUrl, imageAspectRatio, title } = req.body;
 
   let targetUserIds = [];
   if (userIds && Array.isArray(userIds) && userIds.length > 0) {
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
         type: "image",
         url: finalImageUrl,
         size: "full",
-        aspectRatio: "1.51:1",
+        aspectRatio: imageAspectRatio || "1.51:1",
         aspectMode: "cover"
       };
     }
