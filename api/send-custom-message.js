@@ -20,9 +20,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { userId, text, imageUrl, title } = req.body;
+  const { userId, userIds, text, imageUrl, title } = req.body;
 
-  if (!userId || !text) {
+  let targetUserIds = [];
+  if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+    targetUserIds = userIds;
+  } else if (userId) {
+    targetUserIds = [userId];
+  }
+
+  if (targetUserIds.length === 0 || !text) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -106,7 +113,6 @@ export default async function handler(req, res) {
     }
 
     const messagePayload = {
-      to: userId,
       messages: [
         {
           type: "flex",
@@ -117,19 +123,51 @@ export default async function handler(req, res) {
     };
 
     // 3. Call Line Messaging API
-    const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lineChannelToken}`,
-      },
-      body: JSON.stringify(messagePayload),
-    });
+    let allSuccess = true;
+    let errorDetails = null;
 
-    if (!lineResponse.ok) {
-      const errorData = await lineResponse.text();
-      console.error("Line API Error:", errorData);
-      throw new Error(`Line API responded with ${lineResponse.status}`);
+    if (targetUserIds.length === 1) {
+      messagePayload.to = targetUserIds[0];
+      const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${lineChannelToken}`,
+        },
+        body: JSON.stringify(messagePayload),
+      });
+
+      if (!lineResponse.ok) {
+        allSuccess = false;
+        errorDetails = await lineResponse.text();
+      }
+    } else {
+      // Chunk userIds into 500 max (LINE multicast limit)
+      const chunkSize = 500;
+      for (let i = 0; i < targetUserIds.length; i += chunkSize) {
+        const chunk = targetUserIds.slice(i, i + chunkSize);
+        messagePayload.to = chunk;
+        
+        const lineResponse = await fetch('https://api.line.me/v2/bot/message/multicast', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineChannelToken}`,
+          },
+          body: JSON.stringify(messagePayload),
+        });
+
+        if (!lineResponse.ok) {
+          allSuccess = false;
+          errorDetails = await lineResponse.text();
+          break; // Stop on first error
+        }
+      }
+    }
+
+    if (!allSuccess) {
+      console.error("Line API Error:", errorDetails);
+      throw new Error(`Line API responded with error: ${errorDetails}`);
     }
 
     return res.status(200).json({ success: true, message: 'Message sent successfully' });

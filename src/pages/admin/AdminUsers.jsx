@@ -40,6 +40,8 @@ export default function AdminUsers() {
   const [messageText, setMessageText] = useState('');
   const [messageSending, setMessageSending] = useState(false);
   const [sendResult, setSendResult] = useState({ text: '', type: '' });
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+  const [isBulkMessage, setIsBulkMessage] = useState(false);
 
   // Delete Dict Item Modal state
   const [dictDeleteModal, setDictDeleteModal] = useState({ isOpen: false, type: '', value: '' });
@@ -141,6 +143,15 @@ export default function AdminUsers() {
 
   const handleOpenMessageModal = (user) => {
     setMessageTarget(user);
+    setIsBulkMessage(false);
+    setMessageText('');
+    setSendResult({ text: '', type: '' });
+    setIsMessageModalOpen(true);
+  };
+
+  const handleOpenBulkMessageModal = () => {
+    setMessageTarget(null);
+    setIsBulkMessage(true);
     setMessageText('');
     setSendResult({ text: '', type: '' });
     setIsMessageModalOpen(true);
@@ -187,14 +198,21 @@ export default function AdminUsers() {
     setMessageSending(true);
     setSendResult({ text: '', type: '' });
     try {
+      const payload = {
+        text: messageText,
+        title: "系統通知"
+      };
+
+      if (isBulkMessage) {
+        payload.userIds = selectedUserIds.map(id => users.find(u => u.id === id)?.userId).filter(Boolean);
+      } else {
+        payload.userId = messageTarget?.userId;
+      }
+
       const response = await fetch('/api/send-custom-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: messageTarget.userId,
-          text: messageText,
-          title: "系統通知"
-        })
+        body: JSON.stringify(payload)
       });
       
       const data = await response.json();
@@ -515,11 +533,35 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      {selectedUserIds.length > 0 && (
+        <div className="bg-white comic-box p-4 mb-6 flex justify-between items-center border-[3px] border-black">
+          <span className="font-black text-black text-lg">已勾選 {selectedUserIds.length} 位用戶</span>
+          <button 
+            onClick={handleOpenBulkMessageModal}
+            className="flex items-center gap-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-black font-black border-2 border-black comic-box-sm transition-all"
+          >
+            <MessageSquare className="w-5 h-5" />
+            批次發送訊息
+          </button>
+        </div>
+      )}
+
       <div className="bg-white comic-box overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="bg-slate-50 border-b border-black text-black font-bold text-sm">
+                <th className="p-4 font-semibold w-12 text-center">
+                  <input 
+                    type="checkbox" 
+                    checked={filteredUsers.length > 0 && selectedUserIds.length === filteredUsers.length}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedUserIds(filteredUsers.map(u => u.id));
+                      else setSelectedUserIds([]);
+                    }}
+                    className="w-4 h-4 cursor-pointer border-2 border-black accent-yellow-400"
+                  />
+                </th>
                 <th className="p-4 font-semibold w-16 text-center">序號</th>
                 <th className="p-4 font-semibold w-16">頭像</th>
                 <th className="p-4 font-semibold">名稱 & 群組</th>
@@ -532,13 +574,13 @@ export default function AdminUsers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-400">
+                  <td colSpan="8" className="p-8 text-center text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : displayedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-black font-bold">找不到符合條件的用戶資料</td>
+                  <td colSpan="8" className="p-8 text-center text-black font-bold">找不到符合條件的用戶資料</td>
                 </tr>
               ) : (
                 displayedUsers.map((user, idx) => {
@@ -546,7 +588,18 @@ export default function AdminUsers() {
                   const uInterests = getDisplayInterests(user);
                   const globalIdx = (safeCurrentPage - 1) * pageSize + idx + 1;
                   return (
-                    <tr key={user.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <tr key={user.id} className={cn("border-b border-slate-100 hover:bg-slate-50 transition-colors", selectedUserIds.includes(user.id) ? "bg-yellow-50/50" : "")}>
+                      <td className="p-4 text-center">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedUserIds([...selectedUserIds, user.id]);
+                            else setSelectedUserIds(selectedUserIds.filter(id => id !== user.id));
+                          }}
+                          className="w-4 h-4 cursor-pointer border-2 border-black accent-yellow-400"
+                        />
+                      </td>
                       <td className="p-4 text-center text-black font-bold font-bold">
                         {globalIdx}
                       </td>
@@ -989,13 +1042,13 @@ export default function AdminUsers() {
       )}
 
       {/* Message Modal */}
-      {isMessageModalOpen && messageTarget && (
+      {isMessageModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col">
             <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50 shrink-0">
               <h2 className="text-xl font-bold text-black font-black flex items-center">
                 <Send className="w-5 h-5 mr-2 text-green-500" />
-                傳送訊息給 {messageTarget.displayName}
+                {isBulkMessage ? `發送訊息給 ${selectedUserIds.length} 位用戶` : `傳送訊息給 ${messageTarget?.displayName || '用戶'}`}
               </h2>
               <button onClick={() => setIsMessageModalOpen(false)} className="text-slate-400 hover:text-black font-black">
                 <X className="w-6 h-6" />
