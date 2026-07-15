@@ -70,11 +70,21 @@ export default async function handler(req, res) {
     }
 
     // 2.5 Get user nickname for template variables
+    let useOriginalName = false;
+    if (templatesSnap.exists() && templatesSnap.data().settings) {
+      useOriginalName = !!templatesSnap.data().settings.useOriginalLineNameForPush;
+    }
+
     let nickname = "會員";
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
-    if (userSnap.exists() && userSnap.data().displayName) {
-      nickname = userSnap.data().displayName;
+    if (userSnap.exists()) {
+      const uData = userSnap.data();
+      if (useOriginalName && uData.originalLineName) {
+        nickname = uData.originalLineName;
+      } else if (uData.displayName) {
+        nickname = uData.displayName;
+      }
     }
 
     let accountName = "系統";

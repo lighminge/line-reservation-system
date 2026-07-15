@@ -241,6 +241,7 @@ export const saveUserProfile = async (userId, displayName, lineGroup = null, pic
       const data = {
         userId,
         displayName,
+        originalLineName: displayName,
         createdAt: serverTimestamp()
       };
       if (lineGroup) data.lineGroup = lineGroup;
@@ -256,6 +257,9 @@ export const saveUserProfile = async (userId, displayName, lineGroup = null, pic
       if (!userData.isAdminModifiedName) {
         updateData.displayName = displayName;
       }
+      
+      // Always keep the latest LINE name as originalLineName if not set or if they login again
+      updateData.originalLineName = displayName;
       
       if (lineGroup) updateData.lineGroup = lineGroup;
       

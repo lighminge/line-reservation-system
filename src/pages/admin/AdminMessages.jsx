@@ -5,7 +5,8 @@ import { getMessageTemplates, saveMessageTemplates, uploadImage, resolveImageUrl
 export default function AdminMessages() {
   const [templates, setTemplates] = useState({
     clientSuccess: { title: '', text: '', imageUrl: '' },
-    lineConfirm: { title: '', text: '', imageUrl: '' }
+    lineConfirm: { title: '', text: '', imageUrl: '' },
+    settings: { useOriginalLineNameForPush: false }
   });
   
   const [loading, setLoading] = useState(true);
@@ -75,7 +76,8 @@ export default function AdminMessages() {
 
       const finalTemplates = {
         clientSuccess: { ...templates.clientSuccess, imageUrl: finalClientImg },
-        lineConfirm: { ...templates.lineConfirm, imageUrl: finalLineImg }
+        lineConfirm: { ...templates.lineConfirm, imageUrl: finalLineImg },
+        settings: { ...templates.settings }
       };
 
       await saveMessageTemplates(finalTemplates);
@@ -255,7 +257,20 @@ export default function AdminMessages() {
         </div>
 
         {/* Form Actions */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-4 comic-box border-[3px] border-black">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={templates.settings?.useOriginalLineNameForPush || false}
+                onChange={e => setTemplates({...templates, settings: { ...templates.settings, useOriginalLineNameForPush: e.target.checked }})}
+                className="w-5 h-5 border-2 border-black accent-yellow-400"
+              />
+              <span className="font-black text-black">在推播訊息中，使用原本的 LINE 名稱 (取代系統自訂名稱)</span>
+            </label>
+            <p className="text-sm text-slate-600 mt-2 font-bold pl-8">若勾選，不論管理員是否修改過用戶名稱，推播中對應的 {'{好友的顯示名稱}'} 都將優先使用用戶的原始 LINE 名稱。</p>
+          </div>
+
           {message.text && (
             <div className={`p-4 border-2 border-black comic-box-sm flex items-center mb-6 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
               {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 mr-2 shrink-0" /> : <AlertCircle className="w-5 h-5 mr-2 shrink-0" />}

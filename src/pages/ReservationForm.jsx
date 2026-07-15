@@ -326,6 +326,7 @@ export default function ReservationForm() {
 
   // Get unique purposes from all user reservations for the dropdown
   const uniqueUserPurposes = [...new Set(allUserReservations.map(r => r.purpose))];
+  const userConfirmedPurposes = [...new Set(allUserReservations.filter(r => r.status === 'confirmed').map(r => r.purpose))];
 
   const handleSelectPurpose = (p) => {
     if (p.userLimit && p.userLimit !== -1) {
@@ -464,7 +465,8 @@ export default function ReservationForm() {
                 {purposesDict.map(p => {
                   const isRestricted = p.restrictedUsers?.includes(profile?.userId);
                   const isNotStarted = p.startDate && format(today, 'yyyy-MM-dd') < p.startDate;
-                  const isDisabled = isRestricted || isNotStarted;
+                  const hasConfirmed = userConfirmedPurposes.includes(p.name);
+                  const isDisabled = isRestricted || isNotStarted || hasConfirmed;
                   
                   return (
                     <button
@@ -482,6 +484,8 @@ export default function ReservationForm() {
                         <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-medium mt-1">您無權預約此項目</span>
                       ) : isNotStarted ? (
                         <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-medium mt-1">預約未開始 (開始日: {p.startDate.slice(5)})</span>
+                      ) : hasConfirmed ? (
+                        <span className="text-xs bg-slate-200 text-slate-500 px-2 py-0.5 rounded-full font-medium mt-1">已獲核准，無法重複預約</span>
                       ) : null}
                     </button>
                   );
