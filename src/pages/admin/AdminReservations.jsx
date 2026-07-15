@@ -472,7 +472,7 @@ export default function AdminReservations() {
                         <div key={b.id} className="flex items-start gap-1 w-full mt-1">
                           {viewMode === 'USER' && b.status === 'confirmed' && <Check strokeWidth={4} className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />}
                           {viewMode === 'USER' && b.status === 'cancelled' && <X strokeWidth={4} className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />}
-                          <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-[2px_2px_0_0_#000] font-medium line-clamp-2 leading-tight ${b.color}`}>
+                          <div className={`flex-1 text-[10px] md:text-xs text-white px-1.5 py-1 rounded shadow-[2px_2px_0_0_#000] font-medium break-words whitespace-normal leading-tight ${b.color}`}>
                             {b.text}
                           </div>
                         </div>
