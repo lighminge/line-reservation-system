@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllUsers, saveAdminUser, deleteUser, uploadImage, getMessageTemplates, getDictTags, saveDictTags, getDictInterests, saveDictInterests, resolveImageUrl } from '../../services/db';
-import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag, Heart } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, X, Loader2, UploadCloud, User, MessageSquare, Send, CheckCircle2, AlertCircle, Search, ChevronLeft, ChevronRight, Tag, Heart, Image as ImageIcon } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { getZodiac, zodiacs } from '../../utils/zodiac';
 import ZodiacIcon from '../../components/ZodiacIcon';
