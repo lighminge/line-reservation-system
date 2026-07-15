@@ -1092,33 +1092,74 @@ export default function AdminUsers() {
               </button>
             </div>
             
-            <form onSubmit={handleSendMessage} className="p-6 space-y-5">
-              <div>
-                <div className="flex justify-between items-end mb-2">
-                  <label className="text-sm font-bold text-black font-black">訊息內容</label>
-                  <button 
-                    type="button" 
-                    onClick={loadTemplate}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded"
-                  >
-                    帶入「Line 確認推播訊息」樣板
-                  </button>
+            <div className="p-6 bg-white flex-1 overflow-y-auto">
+              <form onSubmit={handleSendMessage} className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="text-sm font-semibold text-black font-black block mb-2">訊息標題</label>
+                    <button 
+                      type="button" 
+                      onClick={loadTemplate}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded mb-2 border border-blue-200"
+                    >
+                      還原至預設樣板
+                    </button>
+                  </div>
+                  <input 
+                    type="text" 
+                    value={messageTitle}
+                    onChange={e => setMessageTitle(e.target.value)}
+                    className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none"
+                    placeholder="輸入推播主標題"
+                  />
                 </div>
-                <textarea 
-                  value={messageText} 
-                  onChange={e => setMessageText(e.target.value)}
-                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none bg-slate-50 focus:bg-white transition-colors h-40 resize-none" 
-                  placeholder="請輸入要傳送給客戶的訊息內容..."
-                  required
-                />
-              </div>
 
-              {sendResult.text && (
-                <div className={`p-3 border-2 border-black comic-box-sm flex items-center text-sm ${sendResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                  {sendResult.type === 'success' ? <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" /> : <AlertCircle className="w-4 h-4 mr-2 shrink-0" />}
-                  <span>{sendResult.text}</span>
+                <div>
+                  <label className="text-sm font-semibold text-black font-black block mb-2">
+                    推播訊息內容
+                    <span className="text-xs text-green-600 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                  </label>
+                  <textarea 
+                    value={messageText}
+                    onChange={e => setMessageText(e.target.value)}
+                    className="w-full h-32 p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none resize-none"
+                    placeholder="請輸入您想發送的訊息內容..."
+                  />
                 </div>
-              )}
+
+                <div>
+                  <label className="text-sm font-semibold text-black font-black block mb-2">附加圖片 (選填)</label>
+                  <div 
+                    onClick={() => messageFileRef.current?.click()}
+                    className="w-full h-32 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50 transition-colors overflow-hidden relative group"
+                  >
+                    {messageImagePreview ? (
+                      <>
+                        <img src={messageImagePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-green-500" />
+                        <span className="text-sm text-black font-bold group-hover:text-green-600 font-medium">點擊上傳圖片</span>
+                      </>
+                    )}
+                  </div>
+                  <input type="file" ref={messageFileRef} onChange={handleMessageImageChange} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+                  {messageImagePreview && (
+                    <button type="button" onClick={() => { setMessageImagePreview(''); setMessageImageFile(null); setMessageImageUrl(''); }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+                  )}
+                  <p className="text-xs text-slate-500 font-bold mt-1">支援 JPG, PNG。建議比例 20:13，大小 1MB 以下。</p>
+                </div>
+                
+                {sendResult.text && (
+                  <div className={`p-3 border-2 border-black comic-box-sm flex items-center text-sm ${sendResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {sendResult.type === 'success' ? <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" /> : <AlertCircle className="w-4 h-4 mr-2 shrink-0" />}
+                    <span>{sendResult.text}</span>
+                  </div>
+                )}
 
               <div className="pt-2 flex space-x-3 shrink-0">
                 <button type="button" onClick={() => setIsMessageModalOpen(false)} className="flex-1 py-3 text-black font-black font-bold hover:bg-slate-100 border-2 border-black comic-box-sm transition-colors">
