@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import ReactQuill from 'react-quill-new';
-import EmojiPicker from 'emoji-picker-react';
+import EmojiPicker, { Categories } from 'emoji-picker-react';
+import zhHantData from 'emoji-picker-react/dist/data/emojis-zh-hant';
 import { Smile } from 'lucide-react';
 import { renderToString } from 'react-dom/server';
 import 'react-quill-new/dist/quill.snow.css';
@@ -90,6 +91,21 @@ const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) =
             onEmojiClick={onEmojiClick} 
             searchDisabled={false}
             skinTonesDisabled={true}
+            emojiData={zhHantData}
+            searchPlaceholder="搜尋表情符號..."
+            searchClearButtonLabel="清除"
+            previewConfig={{ defaultCaption: "選擇表情符號..." }}
+            categories={[
+              { category: Categories.SUGGESTED, name: '最近使用' },
+              { category: Categories.SMILEYS_PEOPLE, name: '表情與人物' },
+              { category: Categories.ANIMALS_NATURE, name: '動物與自然' },
+              { category: Categories.FOOD_DRINK, name: '食物與飲料' },
+              { category: Categories.TRAVEL_PLACES, name: '旅遊與地點' },
+              { category: Categories.ACTIVITIES, name: '活動' },
+              { category: Categories.OBJECTS, name: '物品' },
+              { category: Categories.SYMBOLS, name: '符號' },
+              { category: Categories.FLAGS, name: '旗幟' }
+            ]}
           />
         </div>
       )}
