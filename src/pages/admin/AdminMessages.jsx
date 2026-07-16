@@ -427,6 +427,7 @@ export default function AdminMessages() {
       <QuickRepliesModal 
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+        activeCategory={activeQrField}
         onSelect={(text) => {
           if (activeQrField === 'clientSuccess') {
             setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text}});

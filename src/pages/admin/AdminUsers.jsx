@@ -1200,6 +1200,7 @@ export default function AdminUsers() {
       <QuickRepliesModal 
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
+        activeCategory="adminCustom"
         onSelect={(text) => {
           setMessageText(text);
           setQrModalOpen(false);
