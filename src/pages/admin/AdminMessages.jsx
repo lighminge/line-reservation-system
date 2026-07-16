@@ -40,7 +40,13 @@ export default function AdminMessages() {
     setLoading(true);
     const data = await getMessageTemplates();
     if (data) {
-      setTemplates(data);
+      setTemplates(prev => ({
+        ...prev,
+        clientSuccess: { ...prev.clientSuccess, ...data.clientSuccess },
+        lineConfirm: { ...prev.lineConfirm, ...data.lineConfirm },
+        adminCustomMessage: { ...prev.adminCustomMessage, ...data.adminCustomMessage },
+        settings: { ...prev.settings, ...data.settings }
+      }));
       if (data.clientSuccess?.imageUrl) {
         setClientPreview(await resolveImageUrl(data.clientSuccess.imageUrl));
       }

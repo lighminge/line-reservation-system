@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) => {
   const modules = useMemo(() => ({
@@ -21,7 +21,7 @@ const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) =
     <div className="bg-white border-2 border-black comic-box-sm flex flex-col">
       <ReactQuill
         theme="snow"
-        value={value}
+        value={value || ''}
         onChange={onChange}
         modules={modules}
         formats={formats}

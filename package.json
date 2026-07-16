@@ -19,7 +19,7 @@
     "lunar-javascript": "^1.7.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-quill": "^2.0.0",
+    "react-quill-new": "^3.8.3",
     "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3.6.0",
     "xlsx": "^0.18.5"
