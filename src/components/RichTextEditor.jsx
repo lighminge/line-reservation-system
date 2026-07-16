@@ -43,7 +43,7 @@ const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) =
   }, []);
 
   return (
-    <div ref={wrapperRef} className="bg-white border-2 border-black comic-box-sm flex flex-col w-full overflow-visible">
+    <div ref={wrapperRef} className="bg-white border-2 border-black shadow-[2px_2px_0_0_#000] flex flex-col w-full">
       <ReactQuill
         theme="snow"
         value={value || ''}
@@ -55,19 +55,21 @@ const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) =
       />
       <style>{`
         .ql-toolbar.ql-snow {
-          border: none;
-          border-bottom: 2px solid black;
+          border: none !important;
+          border-bottom: 2px solid black !important;
           background-color: #f8fafc;
-          border-radius: 4px 4px 0 0;
-          box-sizing: border-box;
-          padding: 8px;
+          border-radius: 0 !important;
+          box-sizing: border-box !important;
+          padding: 8px !important;
+          width: 100% !important;
         }
         .ql-container.ql-snow {
-          border: none;
+          border: none !important;
           flex-grow: 1;
           font-family: inherit;
-          box-sizing: border-box;
-          border-radius: 0 0 4px 4px;
+          box-sizing: border-box !important;
+          border-radius: 0 !important;
+          width: 100% !important;
         }
         .ql-editor {
           font-size: 16px;
