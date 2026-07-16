@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@line/liff": "^2.29.1",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "firebase": "^12.15.0",
@@ -18,6 +19,7 @@
     "lunar-javascript": "^1.7.7",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^7.18.1",
     "tailwind-merge": "^3.6.0",
     "xlsx": "^0.18.5"

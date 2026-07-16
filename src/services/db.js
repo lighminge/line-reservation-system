@@ -178,6 +178,30 @@ export const saveMessageTemplates = async (templates) => {
   }
 };
 
+export const getQuickReplies = async () => {
+  try {
+    const docRef = doc(db, "system_config", "quick_replies");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().replies || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching quick replies:", error);
+    return [];
+  }
+};
+
+export const saveQuickReplies = async (replies) => {
+  try {
+    const docRef = doc(db, "system_config", "quick_replies");
+    await setDoc(docRef, { replies, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (error) {
+    console.error("Error saving quick replies:", error);
+    throw error;
+  }
+};
+
 // ==========================================
 // Dict Management (Tags and Interests)
 // ==========================================

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { parseHtmlToFlexContents, stripHtml } from "./utils/htmlToFlex.js";
 
 // Initialize Firebase using environment variables or hardcoded values
 const firebaseConfig = {
@@ -20,16 +21,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { userId, userIds, text, imageUrl, imageAspectRatio, title } = req.body;
+  const { userId, userIds, targetUsers: inputTargetUsers, text, imageUrl, imageAspectRatio, title } = req.body;
 
-  let targetUserIds = [];
-  if (userIds && Array.isArray(userIds) && userIds.length > 0) {
-    targetUserIds = userIds;
+  let targetUsers = [];
+  if (inputTargetUsers && Array.isArray(inputTargetUsers) && inputTargetUsers.length > 0) {
+    targetUsers = inputTargetUsers;
+  } else if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+    targetUsers = userIds.map(id => ({ userId: id, displayName: '用戶' }));
   } else if (userId) {
-    targetUserIds = [userId];
+    targetUsers = [{ userId, displayName: '用戶' }];
   }
 
-  if (targetUserIds.length === 0 || (!text && !imageUrl)) {
+  if (targetUsers.length === 0 || (!text && !imageUrl)) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -57,29 +60,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'System not configured properly' });
     }
 
-    // 2. Construct the Line push message payload
-    const flexContents = {
-      type: "bubble"
-    };
-
-    if (text) {
-      flexContents.body = {
-        type: "box",
-        layout: "vertical",
-        spacing: "md",
-        contents: [
-          {
-            type: "text",
-            text: text,
-            wrap: true,
-            size: "md",
-            weight: "regular",
-            color: "#333333"
-          }
-        ]
-      };
-    }
-
     let finalImageUrl = imageUrl;
     if (finalImageUrl && finalImageUrl.startsWith('internal://')) {
       const docId = finalImageUrl.replace('internal://', '');
@@ -88,70 +68,60 @@ export default async function handler(req, res) {
       finalImageUrl = `${protocol}://${host}/api/image?id=${docId}`;
     }
 
-    if (finalImageUrl && finalImageUrl.startsWith('http')) {
-      flexContents.hero = {
-        type: "image",
-        url: finalImageUrl,
-        size: "full",
-        aspectRatio: imageAspectRatio || "1.51:1",
-        aspectMode: "cover"
-      };
-    }
-    
-    if (title) {
-      flexContents.header = {
-        type: "box",
-        layout: "vertical",
-        contents: [
-          {
-            type: "text",
-            text: title,
-            weight: "bold",
-            size: "xl",
-            color: "#ffffff"
-          }
-        ],
-        backgroundColor: "#00B900"
-      };
-    }
-
-    const messagePayload = {
-      messages: [
-        {
-          type: "flex",
-          altText: title || "系統通知",
-          contents: flexContents
-        }
-      ]
+    const constructFlexContents = (msgTitle, msgText) => {
+      const flexContents = { type: "bubble" };
+      if (msgText) {
+        flexContents.body = {
+          type: "box",
+          layout: "vertical",
+          spacing: "md",
+          contents: parseHtmlToFlexContents(msgText, "#333333")
+        };
+      }
+      if (finalImageUrl && finalImageUrl.startsWith('http')) {
+        flexContents.hero = {
+          type: "image",
+          url: finalImageUrl,
+          size: "full",
+          aspectRatio: imageAspectRatio || "1.51:1",
+          aspectMode: "cover"
+        };
+      }
+      if (msgTitle) {
+        flexContents.header = {
+          type: "box",
+          layout: "vertical",
+          contents: parseHtmlToFlexContents(msgTitle, "#ffffff"),
+          backgroundColor: "#00B900"
+        };
+      }
+      return flexContents;
     };
 
-    // 3. Call Line Messaging API
+    const hasVariables = (text || '').includes('{好友的顯示名稱}') || (text || '').includes('{帳號名稱}') || 
+                         (title || '').includes('{好友的顯示名稱}') || (title || '').includes('{帳號名稱}');
+
     let allSuccess = true;
     let errorDetails = null;
 
-    if (targetUserIds.length === 1) {
-      messagePayload.to = targetUserIds[0];
-      const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${lineChannelToken}`,
-        },
-        body: JSON.stringify(messagePayload),
-      });
-
-      if (!lineResponse.ok) {
-        allSuccess = false;
-        errorDetails = await lineResponse.text();
-      }
-    } else {
-      // Chunk userIds into 500 max (LINE multicast limit)
-      const chunkSize = 500;
-      for (let i = 0; i < targetUserIds.length; i += chunkSize) {
-        const chunk = targetUserIds.slice(i, i + chunkSize);
-        messagePayload.to = chunk;
+    if (hasVariables) {
+      // Send individually
+      for (const u of targetUsers) {
+        const t = (title || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
+        const txt = (text || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
         
-        const lineResponse = await fetch('https://api.line.me/v2/bot/message/multicast', {
+        const messagePayload = {
+          to: u.userId,
+          messages: [
+            {
+              type: "flex",
+              altText: stripHtml(t) || "系統通知",
+              contents: constructFlexContents(t, txt)
+            }
+          ]
+        };
+
+        const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -163,7 +133,57 @@ export default async function handler(req, res) {
         if (!lineResponse.ok) {
           allSuccess = false;
           errorDetails = await lineResponse.text();
-          break; // Stop on first error
+          break;
+        }
+      }
+    } else {
+      // No variables, safe to multicast
+      const messagePayload = {
+        messages: [
+          {
+            type: "flex",
+            altText: stripHtml(title) || "系統通知",
+            contents: constructFlexContents(title, text)
+          }
+        ]
+      };
+
+      const targetUserIds = targetUsers.map(u => u.userId).filter(Boolean);
+      if (targetUserIds.length === 1) {
+        messagePayload.to = targetUserIds[0];
+        const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${lineChannelToken}`,
+          },
+          body: JSON.stringify(messagePayload),
+        });
+
+        if (!lineResponse.ok) {
+          allSuccess = false;
+          errorDetails = await lineResponse.text();
+        }
+      } else {
+        const chunkSize = 500;
+        for (let i = 0; i < targetUserIds.length; i += chunkSize) {
+          const chunk = targetUserIds.slice(i, i + chunkSize);
+          messagePayload.to = chunk;
+          
+          const lineResponse = await fetch('https://api.line.me/v2/bot/message/multicast', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${lineChannelToken}`,
+            },
+            body: JSON.stringify(messagePayload),
+          });
+
+          if (!lineResponse.ok) {
+            allSuccess = false;
+            errorDetails = await lineResponse.text();
+            break;
+          }
         }
       }
     }

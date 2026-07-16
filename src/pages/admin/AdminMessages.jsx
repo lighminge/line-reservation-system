@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, UploadCloud, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { MessageSquare, UploadCloud, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon, BookmarkPlus } from 'lucide-react';
 import { getMessageTemplates, saveMessageTemplates, uploadImage, resolveImageUrl } from '../../services/db';
+import RichTextEditor from '../../components/RichTextEditor';
+import QuickRepliesModal from '../../components/QuickRepliesModal';
 
 export default function AdminMessages() {
   const [templates, setTemplates] = useState({
@@ -25,6 +27,10 @@ export default function AdminMessages() {
   const [clientPreview, setClientPreview] = useState('');
   const [linePreview, setLinePreview] = useState('');
   const [customMessagePreview, setCustomMessagePreview] = useState('');
+
+  // Quick Replies Modal State
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [activeQrField, setActiveQrField] = useState(''); // 'clientSuccess', 'lineConfirm', 'adminCustom'
 
   useEffect(() => {
     fetchTemplates();
@@ -142,26 +148,37 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
-              <input 
-                type="text" 
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+              </label>
+              <RichTextEditor 
                 value={templates.clientSuccess.title}
-                onChange={e => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, title: e.target.value}})}
-                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 bg-white outline-none"
+                onChange={val => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, title: val}})}
                 placeholder="例如：預約已送出！"
+                styleClass="h-24"
               />
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">
-                內文說明
-                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
-              </label>
-              <textarea 
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('clientSuccess'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
                 value={templates.clientSuccess.text}
-                onChange={e => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text: e.target.value}})}
-                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-blue-500 bg-white outline-none h-32 resize-none"
+                onChange={val => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text: val}})}
                 placeholder="請輸入成功提示文字"
+                styleClass="h-48"
               />
             </div>
 
@@ -213,26 +230,37 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
-              <input 
-                type="text" 
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+              </label>
+              <RichTextEditor 
                 value={templates.lineConfirm.title}
-                onChange={e => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, title: e.target.value}})}
-                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none"
+                onChange={val => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, title: val}})}
                 placeholder="例如：預約成功確認"
+                styleClass="h-24"
               />
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">
-                內文說明 (下方會自動附上時間等資訊)
-                <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
-              </label>
-              <textarea 
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明 (下方會自動附上時間等資訊)
+                  <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('lineConfirm'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
                 value={templates.lineConfirm.text}
-                onChange={e => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text: e.target.value}})}
-                className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-green-500 bg-white outline-none h-32 resize-none"
+                onChange={val => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text: val}})}
                 placeholder="例如：期待您的到來！"
+                styleClass="h-48"
               />
             </div>
 
@@ -285,26 +313,37 @@ export default function AdminMessages() {
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             <div className="space-y-6">
               <div>
-                <label className="text-sm font-semibold text-black font-black block mb-2">主標題</label>
-                <input 
-                  type="text" 
+                <label className="text-sm font-semibold text-black font-black block mb-2">
+                  主標題
+                  <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                </label>
+                <RichTextEditor 
                   value={templates.adminCustomMessage?.title || ''}
-                  onChange={e => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, title: e.target.value}})}
-                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-yellow-500 bg-white outline-none"
+                  onChange={val => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, title: val}})}
                   placeholder="例如：系統通知"
+                  styleClass="h-24"
                 />
               </div>
               
               <div>
-                <label className="text-sm font-semibold text-black font-black block mb-2">
-                  預設內文說明
-                  <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
-                </label>
-                <textarea 
+                <div className="flex justify-between items-end mb-2">
+                  <label className="text-sm font-semibold text-black font-black block">
+                    預設內文說明
+                    <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                  </label>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('adminCustom'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-black bg-yellow-400 hover:bg-yellow-500 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
+                <RichTextEditor 
                   value={templates.adminCustomMessage?.text || ''}
-                  onChange={e => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text: e.target.value}})}
-                  className="w-full p-3 border-2 border-black comic-box-sm border border-black focus:border-yellow-500 bg-white outline-none h-32 resize-none"
+                  onChange={val => setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text: val}})}
                   placeholder="請輸入預設發送的內容"
+                  styleClass="h-48"
                 />
               </div>
             </div>
@@ -378,6 +417,21 @@ export default function AdminMessages() {
           </button>
         </div>
       </form>
+      
+      <QuickRepliesModal 
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        onSelect={(text) => {
+          if (activeQrField === 'clientSuccess') {
+            setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text}});
+          } else if (activeQrField === 'lineConfirm') {
+            setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text}});
+          } else if (activeQrField === 'adminCustom') {
+            setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text}});
+          }
+          setQrModalOpen(false);
+        }}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { parseHtmlToFlexContents } from "./utils/htmlToFlex.js";
 
 // Initialize Firebase using environment variables or hardcoded values
 const firebaseConfig = {
@@ -158,8 +159,8 @@ export default async function handler(req, res) {
           layout: "vertical",
           spacing: "md",
           contents: [
-            { type: "text", text: titleText, weight: "bold", size: "xl", color: "#111111" },
-            { type: "text", text: messageText, wrap: true, size: "sm", weight: "bold", color: "#111111" },
+            ...parseHtmlToFlexContents(titleText, "#111111"),
+            ...parseHtmlToFlexContents(messageText, "#111111"),
             { type: "separator", margin: "lg" },
             { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
           ]
@@ -180,7 +181,7 @@ export default async function handler(req, res) {
           type: "box",
           layout: "vertical",
           contents: [
-            { type: "text", text: titleText, weight: "bold", size: "xl", color: "#ffffff" }
+            ...parseHtmlToFlexContents(titleText, "#ffffff")
           ],
           backgroundColor: "#00B900"
         },
@@ -189,7 +190,7 @@ export default async function handler(req, res) {
           layout: "vertical",
           spacing: "md",
           contents: [
-            { type: "text", text: messageText, wrap: true, size: "sm", weight: "regular" },
+            ...parseHtmlToFlexContents(messageText, "#333333"),
             { type: "separator", margin: "lg" },
             { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
           ]
