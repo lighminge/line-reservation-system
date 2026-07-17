@@ -91,7 +91,7 @@ export default async function handler(req, res) {
         flexContents.header = {
           type: "box",
           layout: "vertical",
-          contents: parseHtmlToFlexContents(msgTitle, "#ffffff"),
+          contents: parseHtmlToFlexContents(msgTitle, "#ffffff", "xl", "bold"),
           backgroundColor: "#00B900"
         };
       }

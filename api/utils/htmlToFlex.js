@@ -15,15 +15,15 @@ function rgbToHex(rgbStr) {
   return null;
 }
 
-export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333") {
+export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333", defaultSize = "md", defaultWeight = "regular") {
   if (!htmlString || !htmlString.includes('<')) {
     // Plain text fallback
     return [{
       type: "text",
       text: htmlString || " ",
       wrap: true,
-      size: "md",
-      weight: "regular",
+      size: defaultSize,
+      weight: defaultWeight,
       color: defaultColor
     }];
   }
@@ -59,8 +59,8 @@ export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333") {
           spans.push({
             type: "span",
             text: node.data,
-            size: currentStyles.size || "md",
-            weight: currentStyles.weight || "regular",
+            size: currentStyles.size || defaultSize,
+            weight: currentStyles.weight || defaultWeight,
             color: currentStyles.color || defaultColor
           });
         }
@@ -69,8 +69,8 @@ export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333") {
           spans.push({
             type: "span",
             text: "\n",
-            size: currentStyles.size || "md",
-            weight: currentStyles.weight || "regular",
+            size: currentStyles.size || defaultSize,
+            weight: currentStyles.weight || defaultWeight,
             color: currentStyles.color || defaultColor
           });
           return;

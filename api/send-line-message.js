@@ -108,7 +108,8 @@ export default async function handler(req, res) {
       finalImageUrl = `${protocol}://${host}/api/image?id=${docId}`;
     }
 
-    const titleText = lineTemplate.title || "預約成功通知";
+    let titleText = lineTemplate.title || "預約成功通知";
+    titleText = titleText.replace(/{好友的顯示名稱}/g, nickname).replace(/{帳號名稱}/g, accountName);
 
     // Text details array to be reused
     const detailsBoxContents = [
@@ -159,8 +160,8 @@ export default async function handler(req, res) {
           layout: "vertical",
           spacing: "md",
           contents: [
-            ...parseHtmlToFlexContents(titleText, "#111111"),
-            ...parseHtmlToFlexContents(messageText, "#111111"),
+            ...parseHtmlToFlexContents(titleText, "#111111", "xl", "bold"),
+            ...parseHtmlToFlexContents(messageText, "#111111", "md", "regular"),
             { type: "separator", margin: "lg" },
             { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
           ]
@@ -181,7 +182,7 @@ export default async function handler(req, res) {
           type: "box",
           layout: "vertical",
           contents: [
-            ...parseHtmlToFlexContents(titleText, "#ffffff")
+            ...parseHtmlToFlexContents(titleText, "#ffffff", "xl", "bold")
           ],
           backgroundColor: "#00B900"
         },
