@@ -247,17 +247,31 @@ export default function AdminUsers() {
         finalImageUrl = await uploadImage(messageImageFile, `messages/${Date.now()}_customUserMsg_${messageImageFile.name}`);
       }
 
+      const templates = await getMessageTemplates();
+      const useOriginal = templates?.settings?.useOriginalLineNameForPush;
+
       const payload = {
         text: messageText,
         title: messageTitle || "系統通知",
         imageUrl: finalImageUrl,
-        imageAspectRatio: messageImageAspectRatio
+        imageAspectRatio: messageImageAspectRatio,
+        targetUsers: []
       };
 
       if (isBulkMessage) {
-        payload.userIds = selectedUserIds.map(id => users.find(u => u.id === id)?.userId).filter(Boolean);
+        payload.targetUsers = selectedUserIds.map(id => {
+          const u = users.find(u => u.id === id);
+          if (u) {
+            let name = u.displayName || '用戶';
+            if (useOriginal && u.originalLineName) name = u.originalLineName;
+            return { userId: u.userId, displayName: name };
+          }
+          return null;
+        }).filter(Boolean);
       } else {
-        payload.userId = messageTarget?.userId;
+        let name = messageTarget?.displayName || '用戶';
+        if (useOriginal && messageTarget?.originalLineName) name = messageTarget.originalLineName;
+        payload.targetUsers = [{ userId: messageTarget?.userId, displayName: name }];
       }
 
       const response = await fetch('/api/send-custom-message', {
