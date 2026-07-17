@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { parseHtmlToFlexContents } from "./utils/htmlToFlex.js";
+import { parseHtmlToFlexContents, stripHtml } from "./utils/htmlToFlex.js";
 
 // Initialize Firebase using environment variables or hardcoded values
 const firebaseConfig = {
@@ -211,7 +211,7 @@ export default async function handler(req, res) {
       messages: [
         {
           type: "flex",
-          altText: lineTemplate.title || "預約成功通知",
+          altText: stripHtml(titleText) || "預約成功通知",
           contents: flexContents
         }
       ]
