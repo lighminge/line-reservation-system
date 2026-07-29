@@ -7,7 +7,9 @@ const CATEGORY_OPTIONS = [
   { value: 'ALL', label: '所有場景通用' },
   { value: 'clientSuccess', label: '預約成功推播' },
   { value: 'lineConfirm', label: 'Line 審核通知' },
-  { value: 'adminCustom', label: '自訂推播/批次發送' }
+  { value: 'adminCustom', label: '自訂推播/批次發送' },
+  { value: 'eventNotify', label: '活動通知' },
+  { value: 'reservationReminder', label: '預約提醒' }
 ];
 
 export default function QuickRepliesModal({ isOpen, onClose, onSelect, activeCategory = 'ALL' }) {

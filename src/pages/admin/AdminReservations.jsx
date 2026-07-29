@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import TimePicker from '../../components/TimePicker';
 import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary, getReminderSettings, saveReminderSettings } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
 import * as XLSX from 'xlsx';
@@ -834,12 +835,10 @@ export default function AdminReservations() {
                 />
                 <span className="font-black text-sm">前一日通知</span>
               </label>
-              <input 
-                type="time" 
+              <TimePicker 
                 value={reminderSettings.dayBefore?.time || '20:00'}
-                onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, time: e.target.value}})}
+                onChange={(newVal) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, time: newVal}})}
                 disabled={!reminderSettings.dayBefore?.enabled}
-                className="border-2 border-black p-1 font-bold outline-none disabled:opacity-50"
               />
             </div>
             
@@ -853,12 +852,10 @@ export default function AdminReservations() {
                 />
                 <span className="font-black text-sm">當日通知</span>
               </label>
-              <input 
-                type="time" 
+              <TimePicker 
                 value={reminderSettings.sameDay?.time || '09:00'}
-                onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, time: e.target.value}})}
+                onChange={(newVal) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, time: newVal}})}
                 disabled={!reminderSettings.sameDay?.enabled}
-                className="border-2 border-black p-1 font-bold outline-none disabled:opacity-50"
               />
             </div>
           </div>

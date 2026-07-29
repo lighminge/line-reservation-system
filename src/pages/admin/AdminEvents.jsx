@@ -4,6 +4,7 @@ import { Calendar, Clock, Image as ImageIcon, Plus, Trash2, Edit2, Users, Search
 import { cn } from '../../utils/cn';
 import RichTextEditor from '../../components/RichTextEditor';
 import QuickRepliesModal from '../../components/QuickRepliesModal';
+import TimePicker from '../../components/TimePicker';
 
 export default function AdminEvents() {
   const [activeTab, setActiveTab] = useState('events'); // 'events' or 'sentUsers'
@@ -279,6 +280,15 @@ export default function AdminEvents() {
             >
               已通知人員清單
             </button>
+            <button 
+              onClick={() => setActiveTab('messageFormat')}
+              className={cn(
+                "flex-1 md:flex-none px-4 py-2 font-black border-2 border-black comic-box-sm transition-transform active:scale-95",
+                activeTab === 'messageFormat' ? "bg-black text-white" : "bg-white text-black hover:bg-slate-100"
+              )}
+            >
+              活動訊息清單
+            </button>
           </div>
         </div>
 
@@ -342,7 +352,30 @@ export default function AdminEvents() {
       </div>
 
       {activeTab === 'events' && (
-        <>
+        <div className="space-y-4">
+          {/* Pagination Controls Moved to Top */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 bg-white p-3 border-2 border-black comic-box-sm">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
+              >
+                <ChevronLeft className="w-5 h-5 font-black" />
+              </button>
+              <span className="font-black text-lg">
+                第 {currentPage} 頁 / 共 {totalPages} 頁
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
+              >
+                <ChevronRight className="w-5 h-5 font-black" />
+              </button>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedEvents.map(ev => {
               const isSent = ev.status === 'sent';
@@ -403,47 +436,29 @@ export default function AdminEvents() {
             )}
           </div>
 
-          {/* Pagination */}
-          {filteredEvents.length > 0 && (
-            <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 comic-box border-[3px] border-black gap-4 mt-6">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm">每頁顯示:</span>
-                <select 
-                  value={pageSize} 
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                  className="border-2 border-black bg-white p-1 font-bold outline-none comic-box-sm"
-                >
-                  <option value={5}>5 筆</option>
-                  <option value={10}>10 筆</option>
-                  <option value={15}>15 筆</option>
-                  <option value={20}>20 筆</option>
-                </select>
-                <span className="font-bold text-sm ml-2">
-                  共 {filteredEvents.length} 筆
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 bg-yellow-300 border-2 border-black comic-box-sm hover:bg-yellow-200 disabled:opacity-50 disabled:bg-slate-200"
-                >
-                  <ChevronLeft className="w-5 h-5 text-black" />
-                </button>
-                <span className="font-black text-lg">
-                  {currentPage} / {totalPages}
-                </span>
-                <button 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="p-2 bg-yellow-300 border-2 border-black comic-box-sm hover:bg-yellow-200 disabled:opacity-50 disabled:bg-slate-200"
-                >
-                  <ChevronRight className="w-5 h-5 text-black" />
-                </button>
-              </div>
+          {/* Bottom Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-6">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 bg-white hover:bg-slate-100 disabled:opacity-50 border-[3px] border-black comic-box-sm transition-transform active:scale-95"
+              >
+                <ChevronLeft className="w-6 h-6 text-black font-black" />
+              </button>
+              <span className="font-black text-lg text-black bg-white px-4 py-2 border-[3px] border-black comic-box-sm">
+                第 {currentPage} 頁 / 共 {totalPages} 頁
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 bg-white hover:bg-slate-100 disabled:opacity-50 border-[3px] border-black comic-box-sm transition-transform active:scale-95"
+              >
+                <ChevronRight className="w-6 h-6 text-black font-black" />
+              </button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Sent Users Tab */}
@@ -492,6 +507,62 @@ export default function AdminEvents() {
         </div>
       )}
 
+      {activeTab === 'messageFormat' && (
+        <div className="bg-white p-6 comic-box border-[3px] border-black space-y-6">
+          <h2 className="text-xl font-black flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-blue-500" />
+            已發送活動訊息預覽
+          </h2>
+          
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <span className="font-bold">請選擇已發送活動：</span>
+            <select
+              value={selectedSentEventId}
+              onChange={(e) => setSelectedSentEventId(e.target.value)}
+              className="flex-1 p-2 border-2 border-black comic-box-sm font-bold bg-slate-50 outline-none"
+            >
+              <option value="">-- 請選擇 --</option>
+              {events.filter(e => e.status === 'sent').map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.sendDate} {ev.sendTime} - {ev.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedSentEventId && (
+            <div className="mt-6 border-2 border-black p-4 bg-slate-50 relative">
+              {(() => {
+                const ev = events.find(e => e.id === selectedSentEventId);
+                if (!ev) return null;
+                return (
+                  <div className="space-y-4 max-w-sm mx-auto bg-[#849ebf] p-4 rounded-xl">
+                    <div className="bg-white rounded-xl overflow-hidden shadow-sm relative">
+                      {/* Header */}
+                      <div className="bg-[#00B900] p-3">
+                        <div dangerouslySetInnerHTML={{ __html: (ev.messageTitle || '').replace(/{好友的顯示名稱}/g, '用戶').replace(/{帳號名稱}/g, '用戶') }} className="text-white font-bold text-center text-lg" />
+                      </div>
+                      
+                      {/* Hero Image */}
+                      {ev.imageUrl && (
+                        <div className="w-full">
+                          <img src={ev.imageUrl} alt="Event Hero" className="w-full object-cover" />
+                        </div>
+                      )}
+                      
+                      {/* Body */}
+                      <div className="p-4">
+                        <div dangerouslySetInnerHTML={{ __html: (ev.content || '').replace(/{好友的顯示名稱}/g, '用戶').replace(/{帳號名稱}/g, '用戶') }} className="text-slate-800 text-sm whitespace-pre-wrap" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
@@ -529,12 +600,12 @@ export default function AdminEvents() {
                   </div>
                   <div className="flex-1 relative">
                     <label className="block text-sm font-black mb-2 flex items-center gap-1"><Clock className="w-4 h-4"/> 發送時間</label>
-                    <input 
-                      type="time" 
-                      value={sendTime} 
-                      onChange={e => setSendTime(e.target.value)}
-                      className="w-full p-3 border-2 border-black outline-none focus:border-green-500 comic-box-sm bg-white font-black text-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
-                    />
+                    <div className="p-1 bg-white border-2 border-black comic-box-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] h-[52px] flex items-center">
+                      <TimePicker 
+                        value={sendTime || '09:00'}
+                        onChange={(newVal) => setSendTime(newVal)}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -680,10 +751,14 @@ export default function AdminEvents() {
       )}
 
       {/* Quick Replies Modal */}
-      <QuickRepliesModal
-        isOpen={qrModalOpen}
-        onClose={() => setQrModalOpen(false)}
-        onApply={applyQuickReply}
+      <QuickRepliesModal 
+        isOpen={qrModalOpen} 
+        onClose={() => setQrModalOpen(false)} 
+        activeCategory="eventNotify"
+        onSelect={(text) => {
+          setContent(text);
+          setQrModalOpen(false);
+        }}
       />
 
       {/* Custom Delete Confirm Modal */}

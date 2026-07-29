@@ -40,6 +40,9 @@ export default function AdminMessages() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [activeQrField, setActiveQrField] = useState(''); // 'clientSuccess', 'lineConfirm', 'adminCustom'
 
+  // View Category State
+  const [viewCategory, setViewCategory] = useState('ALL');
+
   useEffect(() => {
     fetchTemplates();
   }, []);
@@ -169,14 +172,31 @@ export default function AdminMessages() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 comic-theme">
-      <div>
-        <h1 className="text-3xl font-bold text-black font-black">預約訊息畫面管理</h1>
-        <p className="text-black font-bold mt-2">自訂客戶端送出預約後的成功畫面，以及 Line 官方帳號的推播確認訊息。</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-black font-black">預約訊息畫面管理</h1>
+          <p className="text-black font-bold mt-2">自訂預約、客製推播與預約提醒的訊息內容。</p>
+        </div>
+        <div className="flex items-center gap-2 bg-slate-100 p-2 border-2 border-black w-full md:w-auto comic-box-sm">
+          <span className="font-black text-sm">設定類別：</span>
+          <select 
+            value={viewCategory}
+            onChange={(e) => setViewCategory(e.target.value)}
+            className="p-2 border-2 border-black font-black bg-white min-w-[150px] outline-none"
+          >
+            <option value="ALL">全部顯示</option>
+            <option value="RESERVATION">預約 (成功與審核)</option>
+            <option value="CUSTOM">客製化推播訊息</option>
+            <option value="REMINDER">預約提醒 (前一日與當日)</option>
+          </select>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Client Web Success Screen */}
+        {(viewCategory === 'ALL' || viewCategory === 'RESERVATION') && (
+          <>
+            {/* Client Web Success Screen */}
         <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-blue-600 p-5 text-white flex justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
@@ -339,9 +359,13 @@ export default function AdminMessages() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
-        {/* Admin Custom Message (Users Page) */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col lg:col-span-2">
+        {(viewCategory === 'ALL' || viewCategory === 'CUSTOM') && (
+          <>
+            {/* Admin Custom Message (Users Page) */}
+            <div className="bg-white comic-box overflow-hidden flex flex-col lg:col-span-2">
           <div className="bg-yellow-500 p-5 text-black border-b-2 border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
@@ -422,7 +446,11 @@ export default function AdminMessages() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
+        {(viewCategory === 'ALL' || viewCategory === 'REMINDER') && (
+          <>
         {/* Reminder Day Before */}
         <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-purple-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
@@ -568,6 +596,8 @@ export default function AdminMessages() {
             </div>
           </div>
         </div>
+          </>
+        )}
 
         {/* Form Actions */}
         <div className="lg:col-span-2 space-y-6">
