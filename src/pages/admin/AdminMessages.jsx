@@ -9,6 +9,8 @@ export default function AdminMessages() {
     clientSuccess: { title: '', text: '', imageUrl: '' },
     lineConfirm: { title: '', text: '', imageUrl: '' },
     adminCustomMessage: { title: '', text: '', imageUrl: '' },
+    reminderDayBefore: { title: '', text: '', imageUrl: '' },
+    reminderSameDay: { title: '', text: '', imageUrl: '' },
     settings: { useOriginalLineNameForPush: false }
   });
   
@@ -19,14 +21,20 @@ export default function AdminMessages() {
   const clientFileRef = useRef(null);
   const lineFileRef = useRef(null);
   const customMessageFileRef = useRef(null);
+  const dayBeforeFileRef = useRef(null);
+  const sameDayFileRef = useRef(null);
   
   const [clientFile, setClientFile] = useState(null);
   const [lineFile, setLineFile] = useState(null);
   const [customMessageFile, setCustomMessageFile] = useState(null);
+  const [dayBeforeFile, setDayBeforeFile] = useState(null);
+  const [sameDayFile, setSameDayFile] = useState(null);
   
   const [clientPreview, setClientPreview] = useState('');
   const [linePreview, setLinePreview] = useState('');
   const [customMessagePreview, setCustomMessagePreview] = useState('');
+  const [dayBeforePreview, setDayBeforePreview] = useState('');
+  const [sameDayPreview, setSameDayPreview] = useState('');
 
   // Quick Replies Modal State
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -45,6 +53,8 @@ export default function AdminMessages() {
         clientSuccess: { ...prev.clientSuccess, ...data.clientSuccess },
         lineConfirm: { ...prev.lineConfirm, ...data.lineConfirm },
         adminCustomMessage: { ...prev.adminCustomMessage, ...data.adminCustomMessage },
+        reminderDayBefore: { ...prev.reminderDayBefore, ...data.reminderDayBefore },
+        reminderSameDay: { ...prev.reminderSameDay, ...data.reminderSameDay },
         settings: { ...prev.settings, ...data.settings }
       }));
       if (data.clientSuccess?.imageUrl) {
@@ -55,6 +65,12 @@ export default function AdminMessages() {
       }
       if (data.adminCustomMessage?.imageUrl) {
         setCustomMessagePreview(await resolveImageUrl(data.adminCustomMessage.imageUrl));
+      }
+      if (data.reminderDayBefore?.imageUrl) {
+        setDayBeforePreview(await resolveImageUrl(data.reminderDayBefore.imageUrl));
+      }
+      if (data.reminderSameDay?.imageUrl) {
+        setSameDayPreview(await resolveImageUrl(data.reminderSameDay.imageUrl));
       }
     }
     setLoading(false);
@@ -74,6 +90,12 @@ export default function AdminMessages() {
         } else if (type === 'customMessage') {
           setCustomMessageFile(file);
           setCustomMessagePreview(reader.result);
+        } else if (type === 'dayBefore') {
+          setDayBeforeFile(file);
+          setDayBeforePreview(reader.result);
+        } else if (type === 'sameDay') {
+          setSameDayFile(file);
+          setSameDayPreview(reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -89,6 +111,8 @@ export default function AdminMessages() {
       let finalClientImg = templates.clientSuccess.imageUrl;
       let finalLineImg = templates.lineConfirm.imageUrl;
       let finalCustomImg = templates.adminCustomMessage?.imageUrl || '';
+      let finalDayBeforeImg = templates.reminderDayBefore?.imageUrl || '';
+      let finalSameDayImg = templates.reminderSameDay?.imageUrl || '';
 
       if (clientFile) {
         finalClientImg = await uploadImage(clientFile, `messages/${Date.now()}_client_${clientFile.name}`);
@@ -99,11 +123,19 @@ export default function AdminMessages() {
       if (customMessageFile) {
         finalCustomImg = await uploadImage(customMessageFile, `messages/${Date.now()}_custom_${customMessageFile.name}`);
       }
+      if (dayBeforeFile) {
+        finalDayBeforeImg = await uploadImage(dayBeforeFile, `messages/${Date.now()}_dayBefore_${dayBeforeFile.name}`);
+      }
+      if (sameDayFile) {
+        finalSameDayImg = await uploadImage(sameDayFile, `messages/${Date.now()}_sameDay_${sameDayFile.name}`);
+      }
 
       const finalTemplates = {
         clientSuccess: { ...templates.clientSuccess, imageUrl: finalClientImg },
         lineConfirm: { ...templates.lineConfirm, imageUrl: finalLineImg },
         adminCustomMessage: { ...templates.adminCustomMessage, imageUrl: finalCustomImg },
+        reminderDayBefore: { ...templates.reminderDayBefore, imageUrl: finalDayBeforeImg },
+        reminderSameDay: { ...templates.reminderSameDay, imageUrl: finalSameDayImg },
         settings: { ...templates.settings }
       };
 
@@ -113,6 +145,8 @@ export default function AdminMessages() {
       setClientFile(null);
       setLineFile(null);
       setCustomMessageFile(null);
+      setDayBeforeFile(null);
+      setSameDayFile(null);
       setMessage({ text: '訊息畫面設定儲存成功！', type: 'success' });
     } catch (error) {
       let errorMsg = error.message;
@@ -389,6 +423,152 @@ export default function AdminMessages() {
           </div>
         </div>
 
+        {/* Reminder Day Before */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
+          <div className="bg-purple-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              預約提醒 - 前一日
+            </h2>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+              </label>
+              <RichTextEditor 
+                value={templates.reminderDayBefore?.title || ''}
+                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, title: val}})}
+                placeholder="例如：貼心提醒：明日預約"
+                styleClass="h-24"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('reminderDayBefore'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
+                value={templates.reminderDayBefore?.text || ''}
+                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text: val}})}
+                placeholder="請輸入前一日的預約提醒內容"
+                styleClass="h-48"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
+              <div 
+                onClick={() => dayBeforeFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors overflow-hidden relative group"
+              >
+                {dayBeforePreview ? (
+                  <>
+                    <img src={dayBeforePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-purple-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-purple-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={dayBeforeFileRef} onChange={e => handleImageChange(e, 'dayBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {dayBeforePreview && (
+                <button type="button" onClick={() => { setDayBeforePreview(''); setDayBeforeFile(null); setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Reminder Same Day */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
+          <div className="bg-orange-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              預約提醒 - 當日
+            </h2>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-orange-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+              </label>
+              <RichTextEditor 
+                value={templates.reminderSameDay?.title || ''}
+                onChange={val => setTemplates({...templates, reminderSameDay: {...templates.reminderSameDay, title: val}})}
+                placeholder="例如：今日預約提醒！"
+                styleClass="h-24"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-orange-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('reminderSameDay'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
+                value={templates.reminderSameDay?.text || ''}
+                onChange={val => setTemplates({...templates, reminderSameDay: {...templates.reminderSameDay, text: val}})}
+                placeholder="請輸入當日的預約提醒內容"
+                styleClass="h-48"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
+              <div 
+                onClick={() => sameDayFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-colors overflow-hidden relative group"
+              >
+                {sameDayPreview ? (
+                  <>
+                    <img src={sameDayPreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-orange-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-orange-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={sameDayFileRef} onChange={e => handleImageChange(e, 'sameDay')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {sameDayPreview && (
+                <button type="button" onClick={() => { setSameDayPreview(''); setSameDayFile(null); setTemplates({...templates, reminderSameDay: {...templates.reminderSameDay, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Form Actions */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-4 comic-box border-[3px] border-black">
@@ -435,6 +615,10 @@ export default function AdminMessages() {
             setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text}});
           } else if (activeQrField === 'adminCustom') {
             setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text}});
+          } else if (activeQrField === 'reminderDayBefore') {
+            setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text}});
+          } else if (activeQrField === 'reminderSameDay') {
+            setTemplates({...templates, reminderSameDay: {...templates.reminderSameDay, text}});
           }
           setQrModalOpen(false);
         }}

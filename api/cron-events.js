@@ -39,27 +39,22 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'System not configured properly' });
     }
 
-    // 2. Fetch pending events
-    const eventsRef = collection(db, "events");
-    const eventsSnap = await getDocs(eventsRef);
+    // Use Taipei time for all comparisons
     const now = new Date();
-    // Use Taipei time
-    const taipeiTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
+    const taipeiTimeStr = now.toLocaleString("en-US", {timeZone: "Asia/Taipei"});
+    const taipeiTime = new Date(taipeiTimeStr);
+    
+    // Format YYYY-MM-DD
+    const pad = n => (n < 10 ? '0' + n : n);
+    const todayDateStr = `${taipeiTime.getFullYear()}-${pad(taipeiTime.getMonth()+1)}-${pad(taipeiTime.getDate())}`;
+    const todayTimeStr = `${pad(taipeiTime.getHours())}:${pad(taipeiTime.getMinutes())}`;
+    
+    const tomorrow = new Date(taipeiTime);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDateStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
 
-    const eventsToProcess = [];
-    eventsSnap.forEach(docSnap => {
-      const ev = docSnap.data();
-      if (ev.status === 'pending' && ev.sendDate && ev.sendTime) {
-        const evDateTime = new Date(`${ev.sendDate}T${ev.sendTime}`);
-        if (taipeiTime >= evDateTime) {
-          eventsToProcess.push({ id: docSnap.id, ...ev });
-        }
-      }
-    });
-
-    if (eventsToProcess.length === 0) {
-      return res.status(200).json({ message: 'No events to process' });
-    }
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
 
     const constructFlexContents = (msgTitle, msgText, finalImageUrl, imageAspectRatio) => {
       const flexContents = { type: "bubble" };
@@ -91,17 +86,54 @@ export default async function handler(req, res) {
       return flexContents;
     };
 
-    const results = [];
-
-    for (const ev of eventsToProcess) {
-      let finalImageUrl = ev.imageUrl;
-      if (finalImageUrl && finalImageUrl.startsWith('internal://')) {
-        const docId = finalImageUrl.replace('internal://', '');
-        const protocol = req.headers['x-forwarded-proto'] || 'https';
-        const host = req.headers.host;
-        finalImageUrl = `${protocol}://${host}/api/image?id=${docId}`;
+    const resolveImg = (url) => {
+      if (url && url.startsWith('internal://')) {
+        return `${protocol}://${host}/api/image?id=${url.replace('internal://', '')}`;
       }
+      return url;
+    };
 
+    const sendLineMessage = async (userId, title, text, imgUrl, aspectRatio = "1.51:1") => {
+      const messagePayload = {
+        to: userId,
+        messages: [
+          {
+            type: "flex",
+            altText: stripHtml(title) || "系統通知",
+            contents: constructFlexContents(title, text, resolveImg(imgUrl), aspectRatio)
+          }
+        ]
+      };
+      return fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${lineChannelToken}`,
+        },
+        body: JSON.stringify(messagePayload),
+      });
+    };
+
+    // =====================================
+    // 2. Process Pending Events
+    // =====================================
+    const eventsRef = collection(db, "events");
+    const eventsSnap = await getDocs(eventsRef);
+    
+    const eventsToProcess = [];
+    eventsSnap.forEach(docSnap => {
+      const ev = docSnap.data();
+      if (ev.status === 'pending' && ev.sendDate && ev.sendTime) {
+        const evDateTime = new Date(`${ev.sendDate}T${ev.sendTime}`);
+        if (taipeiTime >= evDateTime) {
+          eventsToProcess.push({ id: docSnap.id, ...ev });
+        }
+      }
+    });
+
+    const eventResults = [];
+    for (const ev of eventsToProcess) {
+      const finalImageUrl = resolveImg(ev.imageUrl);
       const hasVariables = (ev.content || '').includes('{好友的顯示名稱}') || (ev.content || '').includes('{帳號名稱}') || 
                            (ev.messageTitle || '').includes('{好友的顯示名稱}') || (ev.messageTitle || '').includes('{帳號名稱}');
 
@@ -114,30 +146,8 @@ export default async function handler(req, res) {
           const t = (ev.messageTitle || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
           const txt = (ev.content || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
           
-          const messagePayload = {
-            to: u.userId,
-            messages: [
-              {
-                type: "flex",
-                altText: stripHtml(t) || "活動通知",
-                contents: constructFlexContents(t, txt, finalImageUrl, ev.imageAspectRatio)
-              }
-            ]
-          };
-
-          const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${lineChannelToken}`,
-            },
-            body: JSON.stringify(messagePayload),
-          });
-
-          if (!lineResponse.ok) {
-            allSuccess = false;
-            console.error(`Failed to send event ${ev.id} to ${u.userId}:`, await lineResponse.text());
-          }
+          const lineResponse = await sendLineMessage(u.userId, t, txt, finalImageUrl, ev.imageAspectRatio);
+          if (!lineResponse.ok) allSuccess = false;
         }
       } else {
         // Multicast
@@ -156,15 +166,11 @@ export default async function handler(req, res) {
           messagePayload.to = targetUserIds[0];
           const lineResponse = await fetch('https://api.line.me/v2/bot/message/push', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${lineChannelToken}`,
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lineChannelToken}` },
             body: JSON.stringify(messagePayload),
           });
           if (!lineResponse.ok) allSuccess = false;
         } else if (targetUserIds.length > 1) {
-          // Chunk by 500 for multicast
           const chunkSize = 500;
           for (let i = 0; i < targetUserIds.length; i += chunkSize) {
             const chunk = targetUserIds.slice(i, i + chunkSize);
@@ -172,32 +178,107 @@ export default async function handler(req, res) {
             
             const lineResponse = await fetch('https://api.line.me/v2/bot/message/multicast', {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${lineChannelToken}`,
-              },
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${lineChannelToken}` },
               body: JSON.stringify(chunkPayload),
             });
             if (!lineResponse.ok) {
               allSuccess = false;
-              console.error(`Failed multicast for event ${ev.id}:`, await lineResponse.text());
             }
           }
         }
       }
 
-      // Mark as sent
       await updateDoc(doc(db, "events", ev.id), {
         status: 'sent',
         sentAt: taipeiTime.toISOString()
       });
-
-      results.push({ id: ev.id, success: allSuccess });
+      eventResults.push({ id: ev.id, success: allSuccess });
     }
 
-    return res.status(200).json({ message: 'Processed events', results });
+    // =====================================
+    // 3. Process Reservation Reminders
+    // =====================================
+    const reminderResults = [];
+    const reminderSettingsSnap = await getDoc(doc(db, "system_config", "reminder_settings"));
+    
+    if (reminderSettingsSnap.exists()) {
+      const reminderSettings = reminderSettingsSnap.data();
+      const checkDayBefore = reminderSettings.dayBefore?.enabled;
+      const checkSameDay = reminderSettings.sameDay?.enabled;
+      
+      if (checkDayBefore || checkSameDay) {
+        // Fetch message templates
+        const templatesSnap = await getDoc(doc(db, "system_config", "message_templates"));
+        const templates = templatesSnap.exists() ? templatesSnap.data() : {};
+        
+        // Fetch users map for names
+        const usersSnap = await getDocs(collection(db, "users"));
+        const usersMap = {};
+        let useOriginal = templates.settings?.useOriginalLineNameForPush || false;
+        usersSnap.forEach(doc => {
+          const u = doc.data();
+          let name = u.displayName || '用戶';
+          if (useOriginal && u.originalLineName) name = u.originalLineName;
+          usersMap[u.userId] = name;
+        });
+
+        // Fetch confirmed reservations
+        const resSnap = await getDocs(collection(db, "reservations"));
+        const reservations = [];
+        resSnap.forEach(doc => {
+          const r = doc.data();
+          if (r.status === 'confirmed') reservations.push({ id: doc.id, ...r });
+        });
+
+        for (const res of reservations) {
+          const resDate = res.date; // YYYY-MM-DD
+          const uName = usersMap[res.userId] || '用戶';
+          let updateData = {};
+
+          // Day Before Logic
+          if (checkDayBefore && resDate === tomorrowDateStr && !res.reminderDayBeforeSent) {
+            if (todayTimeStr >= reminderSettings.dayBefore.time) {
+              const tmpl = templates.reminderDayBefore || {};
+              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
+              const txt = (tmpl.text || '提醒您明日的預約即將到來').replace(/{好友的顯示名稱}/g, uName);
+              
+              const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
+              if (sendRes.ok) {
+                updateData.reminderDayBeforeSent = true;
+                reminderResults.push({ id: res.id, type: 'dayBefore', success: true });
+              }
+            }
+          }
+          
+          // Same Day Logic
+          if (checkSameDay && resDate === todayDateStr && !res.reminderSameDaySent) {
+            if (todayTimeStr >= reminderSettings.sameDay.time) {
+              const tmpl = templates.reminderSameDay || {};
+              const t = (tmpl.title || '今日預約').replace(/{好友的顯示名稱}/g, uName);
+              const txt = (tmpl.text || '提醒您今日的預約').replace(/{好友的顯示名稱}/g, uName);
+              
+              const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
+              if (sendRes.ok) {
+                updateData.reminderSameDaySent = true;
+                reminderResults.push({ id: res.id, type: 'sameDay', success: true });
+              }
+            }
+          }
+
+          if (Object.keys(updateData).length > 0) {
+            await updateDoc(doc(db, "reservations", res.id), updateData);
+          }
+        }
+      }
+    }
+
+    return res.status(200).json({ 
+      message: 'Processed cron jobs successfully', 
+      events: eventResults,
+      reminders: reminderResults
+    });
   } catch (error) {
-    console.error('Error in cron-events:', error);
+    console.error('Error in cron jobs:', error);
     return res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 }

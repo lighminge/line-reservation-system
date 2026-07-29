@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
-import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary } from '../../services/db';
+import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary, getReminderSettings, saveReminderSettings } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
@@ -36,6 +36,13 @@ export default function AdminReservations() {
   const [actionConfirmModal, setActionConfirmModal] = useState({ isOpen: false, type: '', res: null });
   const [successModal, setSuccessModal] = useState({ isOpen: false, message: '' });
 
+  // Reminder Settings state
+  const [reminderSettings, setReminderSettings] = useState({
+    dayBefore: { enabled: false, time: '20:00' },
+    sameDay: { enabled: false, time: '09:00' }
+  });
+  const [savingReminder, setSavingReminder] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -59,14 +66,18 @@ export default function AdminReservations() {
   const fetchData = async () => {
     setLoading(true);
     
-    const [resData, pDict, usersData] = await Promise.all([
+    const [resData, pDict, usersData, reminderData] = await Promise.all([
       getAdminReservations(),
       getDictionary('purposes'),
-      getAllUsers()
+      getAllUsers(),
+      getReminderSettings()
     ]);
     
     setReservations(resData);
     setPurposesDict(pDict || []);
+    if (reminderData) {
+      setReminderSettings(reminderData);
+    }
     
     const userMap = {};
     const fullUserMap = {};
@@ -78,6 +89,17 @@ export default function AdminReservations() {
     setFullUsers(fullUserMap);
     
     setLoading(false);
+  };
+
+  const handleSaveReminderSettings = async () => {
+    setSavingReminder(true);
+    try {
+      await saveReminderSettings(reminderSettings);
+      alert('預約提醒設定已成功儲存！');
+    } catch (e) {
+      alert('儲存失敗');
+    }
+    setSavingReminder(false);
   };
 
   const handleConfirm = async (res) => {
@@ -790,6 +812,67 @@ export default function AdminReservations() {
       {/* Confirmed Reservations Wall */}
       {activeTab === 'confirmed' && (
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        {/* Reminder Settings Panel */}
+        <div className="bg-cyan-100 p-4 border-[3px] border-black comic-box flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="text-xl font-black text-black flex items-center gap-2 mb-2">
+              <AlertCircle className="w-6 h-6 text-black" />
+              全域預約提醒設定
+            </h3>
+            <p className="text-sm font-bold text-slate-700">設定後將自動套用於所有已核准的預約</p>
+          </div>
+          
+          <div className="flex flex-col gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={reminderSettings.dayBefore?.enabled || false}
+                  onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, enabled: e.target.checked}})}
+                  className="w-5 h-5 accent-green-500 border-2 border-black"
+                />
+                <span className="font-black text-sm">前一日通知</span>
+              </label>
+              <input 
+                type="time" 
+                value={reminderSettings.dayBefore?.time || '20:00'}
+                onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, time: e.target.value}})}
+                disabled={!reminderSettings.dayBefore?.enabled}
+                className="border-2 border-black p-1 font-bold outline-none disabled:opacity-50"
+              />
+            </div>
+            
+            <div className="flex items-center gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={reminderSettings.sameDay?.enabled || false}
+                  onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, enabled: e.target.checked}})}
+                  className="w-5 h-5 accent-green-500 border-2 border-black"
+                />
+                <span className="font-black text-sm">當日通知</span>
+              </label>
+              <input 
+                type="time" 
+                value={reminderSettings.sameDay?.time || '09:00'}
+                onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, time: e.target.value}})}
+                disabled={!reminderSettings.sameDay?.enabled}
+                className="border-2 border-black p-1 font-bold outline-none disabled:opacity-50"
+              />
+            </div>
+          </div>
+          
+          <button 
+            onClick={handleSaveReminderSettings}
+            disabled={savingReminder}
+            className="bg-green-400 text-black font-black px-6 py-3 border-2 border-black comic-box-sm hover:bg-green-300 w-full md:w-auto disabled:opacity-50 shadow-[4px_4px_0_0_#000] active:scale-95 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center"
+          >
+            {savingReminder ? '儲存中...' : '儲存提醒設定'}
+          </button>
+        </div>
+
+
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h2 className="text-2xl font-bold text-black font-black flex items-center">
             <Check className="w-6 h-6 mr-2 text-green-500" />

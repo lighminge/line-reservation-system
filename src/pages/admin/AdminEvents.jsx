@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAllEvents, saveEvent, deleteEvent, getAllUsers, uploadImage, resolveImageUrl, getMessageTemplates } from '../../services/db';
-import { Calendar, Clock, Image as ImageIcon, Plus, Trash2, Edit2, Users, Search, X, MessageSquare, Check } from 'lucide-react';
+import { Calendar, Clock, Image as ImageIcon, Plus, Trash2, Edit2, Users, Search, X, MessageSquare, Check, ChevronLeft, ChevronRight, AlertCircle, BookmarkPlus } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import RichTextEditor from '../../components/RichTextEditor';
+import QuickRepliesModal from '../../components/QuickRepliesModal';
 
 export default function AdminEvents() {
+  const [activeTab, setActiveTab] = useState('events'); // 'events' or 'sentUsers'
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -12,10 +15,25 @@ export default function AdminEvents() {
   const [allUsers, setAllUsers] = useState([]);
   const [userSearchTerm, setUserSearchTerm] = useState('');
   
+  // Filter States
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
+  // Sent Users Tab States
+  const [selectedSentEventId, setSelectedSentEventId] = useState('');
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, eventId: null });
   
   // Form states
   const [title, setTitle] = useState('');
@@ -163,11 +181,17 @@ export default function AdminEvents() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("確定要刪除這個活動通知嗎？")) {
-      await deleteEvent(id);
+  const confirmDelete = async () => {
+    if (deleteModal.eventId) {
+      await deleteEvent(deleteModal.eventId);
+      setDeleteModal({ isOpen: false, eventId: null });
       await fetchData();
     }
+  };
+
+  const applyQuickReply = (htmlText) => {
+    setContent(htmlText);
+    setQrModalOpen(false);
   };
 
   const filteredUsers = allUsers.filter(u => {
@@ -196,6 +220,29 @@ export default function AdminEvents() {
     setSelectedUserIds(newSelected);
   };
 
+  // Main Events Filter & Pagination
+  const filteredEvents = events.filter(ev => {
+    if (filterStatus !== 'all' && ev.status !== filterStatus) return false;
+    if (filterStartDate && ev.sendDate < filterStartDate) return false;
+    if (filterEndDate && ev.sendDate > filterEndDate) return false;
+    if (searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
+      const t = (ev.title || '').toLowerCase();
+      const c = (ev.content || '').toLowerCase();
+      if (!t.includes(kw) && !c.includes(kw)) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredEvents.length / pageSize) || 1;
+  const paginatedEvents = filteredEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredEvents.length, pageSize, currentPage, totalPages]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -205,85 +252,250 @@ export default function AdminEvents() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 comic-box border-[3px] border-black">
-        <h1 className="text-2xl font-black text-black flex items-center gap-2">
-          <MessageSquare className="w-8 h-8 text-green-500" />
-          活動通知管理
-        </h1>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="bg-green-400 hover:bg-green-300 text-black px-4 py-2 border-2 border-black comic-box-sm font-black flex items-center gap-2 transition-transform active:scale-95 shadow-[2px_2px_0_0_#000]"
-        >
-          <Plus className="w-5 h-5" />
-          新增活動
-        </button>
-      </div>
+    <div className="space-y-6 pb-12">
+      {/* Header & Tabs */}
+      <div className="bg-white comic-box border-[3px] border-black overflow-hidden">
+        <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-yellow-300 border-b-[3px] border-black">
+          <h1 className="text-2xl font-black text-black flex items-center gap-2">
+            <MessageSquare className="w-8 h-8 text-black" />
+            活動通知管理
+          </h1>
+          <div className="flex gap-2 w-full md:w-auto">
+            <button 
+              onClick={() => setActiveTab('events')}
+              className={cn(
+                "flex-1 md:flex-none px-4 py-2 font-black border-2 border-black comic-box-sm transition-transform active:scale-95",
+                activeTab === 'events' ? "bg-black text-white" : "bg-white text-black hover:bg-slate-100"
+              )}
+            >
+              活動列表
+            </button>
+            <button 
+              onClick={() => setActiveTab('sentUsers')}
+              className={cn(
+                "flex-1 md:flex-none px-4 py-2 font-black border-2 border-black comic-box-sm transition-transform active:scale-95",
+                activeTab === 'sentUsers' ? "bg-black text-white" : "bg-white text-black hover:bg-slate-100"
+              )}
+            >
+              已通知人員清單
+            </button>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map(ev => {
-          const isSent = ev.status === 'sent';
-          return (
-            <div key={ev.id} className="bg-white border-[3px] border-black comic-box flex flex-col hover:shadow-[8px_8px_0_0_#000] transition-all overflow-hidden relative">
-              {isSent && (
-                <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 border-2 border-black font-black rotate-12 z-10">
-                  已發送
-                </div>
-              )}
-              {ev.status === 'pending' && (
-                <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 border-2 border-black font-black -rotate-6 z-10">
-                  排程中
-                </div>
-              )}
-              
-              <div className="p-4 border-b-2 border-black bg-slate-100 flex-1">
-                <h3 className="text-xl font-black mb-2 line-clamp-1 pr-14">{ev.title}</h3>
-                
-                <div className="space-y-2 mt-4 text-sm font-bold text-slate-700">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    日期: {ev.sendDate}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    時間: {ev.sendTime}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    人數: 共 {ev.targetUsers?.length || 0} 人
-                  </div>
-                </div>
+        {activeTab === 'events' && (
+          <div className="p-4 bg-cyan-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+              {/* Status Filter */}
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">狀態:</span>
+                <select 
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="p-2 border-2 border-black outline-none font-bold comic-box-sm bg-white"
+                >
+                  <option value="all">全部</option>
+                  <option value="pending">排程中</option>
+                  <option value="sent">已發送</option>
+                </select>
               </div>
-              
-              <div className="flex bg-white">
-                <button 
-                  onClick={() => handleOpenModal(ev)}
-                  disabled={isSent}
-                  className="flex-1 py-3 font-black text-black border-r-2 border-black hover:bg-slate-100 disabled:opacity-50 disabled:bg-slate-200"
-                >
-                  編輯
-                </button>
-                <button 
-                  onClick={() => handleDelete(ev.id)}
-                  className="flex-1 py-3 font-black text-red-600 hover:bg-red-50"
-                >
-                  刪除
-                </button>
+
+              {/* Date Filter */}
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">期間:</span>
+                <input 
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="p-1 border-2 border-black outline-none font-bold comic-box-sm bg-white text-sm"
+                />
+                <span className="font-bold">~</span>
+                <input 
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="p-1 border-2 border-black outline-none font-bold comic-box-sm bg-white text-sm"
+                />
+              </div>
+
+              {/* Keyword Search */}
+              <div className="relative">
+                <input 
+                  type="text"
+                  placeholder="搜尋活動標題或內容..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  className="p-2 pl-8 border-2 border-black outline-none font-bold comic-box-sm bg-white w-full md:w-64"
+                />
+                <Search className="w-4 h-4 text-slate-500 absolute left-2 top-3" />
               </div>
             </div>
-          )
-        })}
-        {events.length === 0 && (
-          <div className="col-span-full p-12 bg-white text-center border-[3px] border-black border-dashed comic-box">
-            <p className="text-slate-500 font-bold text-lg">目前沒有任何活動通知</p>
+
+            <button 
+              onClick={() => handleOpenModal()}
+              className="bg-green-400 hover:bg-green-300 text-black px-4 py-2 border-2 border-black comic-box-sm font-black flex items-center gap-2 transition-transform active:scale-95 shadow-[2px_2px_0_0_#000] whitespace-nowrap w-full md:w-auto justify-center"
+            >
+              <Plus className="w-5 h-5" />
+              新增活動
+            </button>
           </div>
         )}
       </div>
 
-      {/* Modal */}
+      {activeTab === 'events' && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paginatedEvents.map(ev => {
+              const isSent = ev.status === 'sent';
+              return (
+                <div key={ev.id} className="bg-white border-[3px] border-black comic-box flex flex-col hover:shadow-[8px_8px_0_0_#000] transition-all overflow-hidden relative">
+                  {isSent && (
+                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 border-2 border-black font-black rotate-12 z-10">
+                      已發送
+                    </div>
+                  )}
+                  {ev.status === 'pending' && (
+                    <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 border-2 border-black font-black -rotate-6 z-10">
+                      排程中
+                    </div>
+                  )}
+                  
+                  <div className="p-4 border-b-2 border-black bg-slate-100 flex-1">
+                    <h3 className="text-xl font-black mb-2 line-clamp-1 pr-14">{ev.title}</h3>
+                    
+                    <div className="space-y-2 mt-4 text-sm font-bold text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        日期: {ev.sendDate}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        時間: {ev.sendTime}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        人數: 共 {ev.targetUsers?.length || 0} 人
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex bg-white">
+                    <button 
+                      onClick={() => handleOpenModal(ev)}
+                      disabled={isSent}
+                      className="flex-1 py-3 font-black text-black border-r-2 border-black hover:bg-slate-100 disabled:opacity-50 disabled:bg-slate-200"
+                    >
+                      編輯
+                    </button>
+                    <button 
+                      onClick={() => setDeleteModal({ isOpen: true, eventId: ev.id })}
+                      className="flex-1 py-3 font-black text-red-600 hover:bg-red-50"
+                    >
+                      刪除
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+            {filteredEvents.length === 0 && (
+              <div className="col-span-full p-12 bg-white text-center border-[3px] border-black border-dashed comic-box">
+                <p className="text-slate-500 font-bold text-lg">找不到符合條件的活動通知</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {filteredEvents.length > 0 && (
+            <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 comic-box border-[3px] border-black gap-4 mt-6">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">每頁顯示:</span>
+                <select 
+                  value={pageSize} 
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="border-2 border-black bg-white p-1 font-bold outline-none comic-box-sm"
+                >
+                  <option value={5}>5 筆</option>
+                  <option value={10}>10 筆</option>
+                  <option value={15}>15 筆</option>
+                  <option value={20}>20 筆</option>
+                </select>
+                <span className="font-bold text-sm ml-2">
+                  共 {filteredEvents.length} 筆
+                </span>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 bg-yellow-300 border-2 border-black comic-box-sm hover:bg-yellow-200 disabled:opacity-50 disabled:bg-slate-200"
+                >
+                  <ChevronLeft className="w-5 h-5 text-black" />
+                </button>
+                <span className="font-black text-lg">
+                  {currentPage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 bg-yellow-300 border-2 border-black comic-box-sm hover:bg-yellow-200 disabled:opacity-50 disabled:bg-slate-200"
+                >
+                  <ChevronRight className="w-5 h-5 text-black" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Sent Users Tab */}
+      {activeTab === 'sentUsers' && (
+        <div className="bg-white comic-box border-[3px] border-black p-6">
+          <div className="mb-6">
+            <label className="block text-lg font-black mb-2">請選擇已發送的活動：</label>
+            <select 
+              value={selectedSentEventId}
+              onChange={(e) => setSelectedSentEventId(e.target.value)}
+              className="w-full md:w-1/2 p-3 border-2 border-black outline-none font-bold comic-box-sm bg-yellow-50 focus:bg-yellow-100"
+            >
+              <option value="">-- 選擇活動 --</option>
+              {events.filter(e => e.status === 'sent').map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.sendDate} {ev.sendTime} - {ev.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedSentEventId ? (
+            <div className="border-2 border-black comic-box-sm overflow-hidden">
+              <div className="bg-slate-800 text-white p-3 font-black flex justify-between items-center">
+                <span>發送名單</span>
+                <span className="text-sm bg-white/20 px-2 py-1 rounded">
+                  共 {events.find(e => e.id === selectedSentEventId)?.targetUsers?.length || 0} 人
+                </span>
+              </div>
+              <div className="divide-y-2 divide-black">
+                {events.find(e => e.id === selectedSentEventId)?.targetUsers?.map((u, idx) => (
+                  <div key={idx} className="p-3 bg-white flex items-center gap-3 hover:bg-slate-50">
+                    <div className="w-8 h-8 rounded-full bg-cyan-200 border-2 border-black flex items-center justify-center font-black">
+                      {idx + 1}
+                    </div>
+                    <span className="font-bold">{u.displayName}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center p-12 text-slate-500 font-bold border-2 border-dashed border-slate-300 comic-box-sm">
+              請從上方選擇一個已發送的活動來檢視名單
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] max-w-4xl w-full flex flex-col max-h-[90vh]">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] max-w-5xl w-full flex flex-col max-h-[90vh]">
             <div className="p-4 border-b-[3px] border-black bg-green-400 flex justify-between items-center sticky top-0 z-20">
               <h2 className="text-xl font-black text-black">{editingEvent ? '編輯活動通知' : '新增活動通知'}</h2>
               <button onClick={() => setIsModalOpen(false)} className="hover:bg-white/20 p-1 rounded transition-colors">
@@ -291,37 +503,37 @@ export default function AdminEvents() {
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-8">
+            <div className="p-6 overflow-y-auto flex-1 flex flex-col md:flex-row gap-8 bg-slate-50">
               {/* Left Column: Form */}
-              <div className="flex-1 space-y-4">
+              <div className="flex-1 space-y-6">
                 <div>
                   <label className="block text-sm font-black mb-1">活動標題 (內部辨識用)</label>
                   <input 
                     type="text" 
                     value={title} 
                     onChange={e => setTitle(e.target.value)}
-                    className="w-full p-2 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-slate-50"
+                    className="w-full p-3 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-white font-bold"
                     placeholder="例如：端午節特惠活動"
                   />
                 </div>
                 
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-black mb-1">排程發送日期</label>
+                <div className="flex flex-col md:flex-row gap-4 bg-yellow-100 p-4 border-2 border-black comic-box-sm">
+                  <div className="flex-1 relative">
+                    <label className="block text-sm font-black mb-2 flex items-center gap-1"><Calendar className="w-4 h-4"/> 發送日期</label>
                     <input 
                       type="date" 
                       value={sendDate} 
                       onChange={e => setSendDate(e.target.value)}
-                      className="w-full p-2 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-slate-50 font-bold"
+                      className="w-full p-3 border-2 border-black outline-none focus:border-green-500 comic-box-sm bg-white font-black text-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
                     />
                   </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-black mb-1">排程發送時間</label>
+                  <div className="flex-1 relative">
+                    <label className="block text-sm font-black mb-2 flex items-center gap-1"><Clock className="w-4 h-4"/> 發送時間</label>
                     <input 
                       type="time" 
                       value={sendTime} 
                       onChange={e => setSendTime(e.target.value)}
-                      className="w-full p-2 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-slate-50 font-bold"
+                      className="w-full p-3 border-2 border-black outline-none focus:border-green-500 comic-box-sm bg-white font-black text-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
                     />
                   </div>
                 </div>
@@ -332,13 +544,22 @@ export default function AdminEvents() {
                     type="text" 
                     value={messageTitle} 
                     onChange={e => setMessageTitle(e.target.value)}
-                    className="w-full p-2 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-slate-50"
+                    className="w-full p-3 border-2 border-black outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 comic-box-sm bg-white font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-black mb-1">推播內容 (支援 {`{好友的顯示名稱}`} 變數)</label>
-                  <div className="border-2 border-black comic-box-sm">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm font-black">推播內容 (支援 {`{好友的顯示名稱}`} 變數)</label>
+                    <button 
+                      type="button" 
+                      onClick={() => setQrModalOpen(true)} 
+                      className="text-xs bg-yellow-300 border-2 border-black font-black px-2 py-1 comic-box-sm shadow-[2px_2px_0_0_#000] hover:bg-yellow-200 flex items-center gap-1"
+                    >
+                      <BookmarkPlus className="w-3 h-3" /> 常用訊息
+                    </button>
+                  </div>
+                  <div className="border-2 border-black comic-box-sm bg-white">
                     <RichTextEditor
                       value={content}
                       onChange={setContent}
@@ -349,22 +570,25 @@ export default function AdminEvents() {
 
                 <div>
                   <label className="block text-sm font-black mb-1">上傳圖片 (選填)</label>
-                  <div className="border-2 border-black comic-box-sm p-4 bg-slate-50 text-center relative hover:bg-slate-100 transition-colors">
+                  <div className="border-2 border-black comic-box-sm p-4 bg-white text-center relative hover:bg-slate-50 transition-colors shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                     <input 
                       type="file" 
                       ref={fileInputRef}
                       onChange={handleImageChange}
                       accept="image/*"
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     {imagePreview ? (
                       <div className="relative">
-                        <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto border-2 border-black" />
+                        <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto border-2 border-black shadow-[4px_4px_0_0_#000]" />
+                        <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                          點擊更換
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center py-4">
-                        <ImageIcon className="w-8 h-8 text-slate-400 mb-2" />
-                        <span className="text-sm font-bold text-slate-600">點擊上傳圖片</span>
+                      <div className="flex flex-col items-center py-6">
+                        <ImageIcon className="w-12 h-12 text-slate-300 mb-2" />
+                        <span className="text-sm font-bold text-slate-500">點擊此處上傳圖片</span>
                       </div>
                     )}
                   </div>
@@ -376,7 +600,7 @@ export default function AdminEvents() {
                 <div className="bg-slate-800 text-white p-3 border-2 border-black comic-box-sm">
                   <h3 className="font-black text-lg flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    選擇發送對象 ({selectedUserIds.length})
+                    選擇對象 ({selectedUserIds.length})
                   </h3>
                 </div>
 
@@ -392,19 +616,19 @@ export default function AdminEvents() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button onClick={selectAllFiltered} className="flex-1 bg-slate-100 border-2 border-black comic-box-sm py-1 text-sm font-black hover:bg-slate-200">
+                  <button onClick={selectAllFiltered} className="flex-1 bg-white border-2 border-black comic-box-sm py-2 text-sm font-black hover:bg-cyan-50 shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform">
                     全選
                   </button>
-                  <button onClick={deselectAllFiltered} className="flex-1 bg-slate-100 border-2 border-black comic-box-sm py-1 text-sm font-black hover:bg-slate-200">
+                  <button onClick={deselectAllFiltered} className="flex-1 bg-white border-2 border-black comic-box-sm py-2 text-sm font-black hover:bg-red-50 shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform">
                     全不選
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto border-2 border-black comic-box-sm bg-slate-50 min-h-[200px] md:max-h-[500px]">
+                <div className="flex-1 overflow-y-auto border-2 border-black comic-box-sm bg-white min-h-[200px] md:max-h-[600px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
                   {filteredUsers.map(u => {
                     const isChecked = selectedUserIds.includes(u.userId);
                     return (
-                      <label key={u.id} className="flex items-center p-3 border-b border-slate-200 hover:bg-green-50 cursor-pointer">
+                      <label key={u.id} className="flex items-center p-3 border-b border-slate-100 hover:bg-green-50 cursor-pointer transition-colors">
                         <input
                            type="checkbox"
                            className="hidden"
@@ -412,10 +636,10 @@ export default function AdminEvents() {
                            onChange={() => toggleUser(u.userId)}
                         />
                         <div className={cn(
-                          "w-5 h-5 border-2 border-black comic-box-sm mr-3 flex items-center justify-center shrink-0 transition-colors",
+                          "w-6 h-6 border-2 border-black comic-box-sm mr-3 flex items-center justify-center shrink-0 transition-colors",
                           isChecked ? "bg-green-400" : "bg-white"
                         )}>
-                          {isChecked && <Check className="w-4 h-4 text-black font-black" />}
+                          {isChecked && <Check className="w-4 h-4 text-black font-black" strokeWidth={4} />}
                         </div>
                         <div className="flex flex-col">
                           <span className="font-bold text-sm text-black">{u.displayName}</span>
@@ -427,7 +651,7 @@ export default function AdminEvents() {
                     )
                   })}
                   {filteredUsers.length === 0 && (
-                    <div className="p-4 text-center text-slate-500 text-sm font-bold">
+                    <div className="p-8 text-center text-slate-400 text-sm font-bold">
                       沒有找到符合的用戶
                     </div>
                   )}
@@ -435,20 +659,54 @@ export default function AdminEvents() {
               </div>
             </div>
 
-            <div className="p-4 border-t-[3px] border-black bg-slate-50 flex justify-end gap-4 sticky bottom-0 z-20">
+            <div className="p-4 border-t-[3px] border-black bg-white flex justify-end gap-4 sticky bottom-0 z-20">
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2 bg-white text-black font-black border-2 border-black comic-box-sm hover:bg-slate-100"
+                className="px-6 py-2 bg-white text-black font-black border-2 border-black comic-box-sm hover:bg-slate-100 transition-transform active:scale-95"
               >
                 取消
               </button>
               <button 
                 onClick={handleSave}
                 disabled={saving || (editingEvent && editingEvent.status === 'sent')}
-                className="px-6 py-2 bg-green-400 text-black font-black border-2 border-black comic-box-sm hover:bg-green-300 disabled:opacity-50 disabled:bg-slate-200 shadow-[2px_2px_0_0_#000] flex items-center gap-2"
+                className="px-8 py-2 bg-green-400 text-black font-black border-2 border-black comic-box-sm hover:bg-green-300 disabled:opacity-50 disabled:bg-slate-200 shadow-[4px_4px_0_0_#000] flex items-center gap-2 transition-transform active:translate-y-1 active:shadow-[0_0_0_0_#000]"
               >
                 {saving && <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>}
                 儲存排程
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Replies Modal */}
+      <QuickRepliesModal
+        isOpen={qrModalOpen}
+        onClose={() => setQrModalOpen(false)}
+        onApply={applyQuickReply}
+      />
+
+      {/* Custom Delete Confirm Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white border-[4px] border-black comic-box p-6 max-w-sm w-full text-center">
+            <div className="mx-auto w-16 h-16 bg-red-100 border-2 border-black rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-black text-black mb-2">確定要刪除嗎？</h3>
+            <p className="text-slate-600 font-bold mb-6">刪除後將無法還原此活動排程！</p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setDeleteModal({ isOpen: false, eventId: null })}
+                className="flex-1 py-3 bg-white border-2 border-black font-black comic-box-sm hover:bg-slate-100 active:scale-95 transition-transform"
+              >
+                取消
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="flex-1 py-3 bg-red-400 text-black border-2 border-black font-black comic-box-sm shadow-[4px_4px_0_0_#000] hover:bg-red-300 active:scale-95 transition-transform"
+              >
+                確認刪除
               </button>
             </div>
           </div>
