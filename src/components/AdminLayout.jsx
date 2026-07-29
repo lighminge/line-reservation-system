@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Users, CalendarDays, CalendarCheck, Settings, Lock, Menu, X, MessageSquare } from 'lucide-react';
+import { Users, CalendarDays, CalendarCheck, Settings, Lock, Menu, X, MessageSquare, Bell } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { getAdminPassword } from '../services/db';
 
@@ -40,6 +40,7 @@ export default function AdminLayout() {
     { name: '預約時段安排', path: '/admin/scheduling', icon: CalendarDays },
     { name: '預約設定', path: '/admin/availability', icon: CalendarDays },
     { name: '用戶管理', path: '/admin/users', icon: Users },
+    { name: '活動通知', path: '/admin/events', icon: Bell },
     { name: '訊息設定', path: '/admin/messages', icon: MessageSquare },
     { name: '系統設定', path: '/admin/settings', icon: Settings },
   ];

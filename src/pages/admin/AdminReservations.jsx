@@ -448,17 +448,24 @@ export default function AdminReservations() {
                   key={date.toString()}
                   className={cn(
                     "min-h-[140px] p-2 md:p-3 border-2 border-black comic-box-sm border transition-all duration-200 flex flex-col items-start relative",
-                    isToday(date) ? "border-green-400 ring-1 ring-green-400 bg-green-50/10" : "border-black",
+                    isToday(date) ? "border-black ring-2 ring-yellow-400 bg-yellow-50" : "border-black",
                     isWeekend && !isToday(date) ? "bg-red-50/50" : (!isToday(date) ? "bg-white" : "")
                   )}
                 >
                   <div className="flex justify-between items-start w-full mb-2">
-                    <span className={cn(
-                      "text-sm font-semibold",
-                      isToday(date) ? "text-green-600" : isWeekend ? "text-red-500" : "text-black font-black"
-                    )}>
-                      {format(date, 'd')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        "text-sm font-bold flex items-center justify-center", 
+                        isToday(date) ? "text-black bg-yellow-300 px-2 py-0.5 rounded border border-black font-black" : isWeekend ? "text-red-500" : "text-black font-black"
+                      )}>
+                        {format(date, 'd')}
+                      </span>
+                      {isToday(date) && (
+                        <span className="text-[10px] font-black bg-black text-white px-1.5 py-0.5 rounded">
+                          今天
+                        </span>
+                      )}
+                    </div>
                     {holidayText && (
                       <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-sm", isSpecialDay ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600")}>
                         {holidayText}

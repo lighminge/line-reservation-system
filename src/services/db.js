@@ -475,3 +475,39 @@ export const updateReservationStatus = async (reservationId, status) => {
     throw error;
   }
 };
+
+// ==========================================
+// Events
+// ==========================================
+export const getAllEvents = async () => {
+  try {
+    const q = collection(db, "events");
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return [];
+  }
+};
+
+export const saveEvent = async (id, eventData) => {
+  try {
+    if (id) {
+      await setDoc(doc(db, "events", id), { ...eventData, updatedAt: serverTimestamp() }, { merge: true });
+    } else {
+      await addDoc(collection(db, "events"), { ...eventData, createdAt: serverTimestamp(), status: 'pending' });
+    }
+  } catch (error) {
+    console.error("Error saving event:", error);
+    throw error;
+  }
+};
+
+export const deleteEvent = async (id) => {
+  try {
+    await deleteDoc(doc(db, "events", id));
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    throw error;
+  }
+};
