@@ -354,25 +354,25 @@ export default function AdminEvents() {
       {activeTab === 'events' && (
         <div className="space-y-4">
           {/* Pagination Controls Moved to Top */}
-          {totalPages > 1 && (
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-3 border-2 border-black comic-box-sm">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm">每頁顯示:</span>
-                <select 
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="p-1 border-2 border-black outline-none font-bold bg-slate-50"
-                >
-                  <option value={5}>5 筆</option>
-                  <option value={10}>10 筆</option>
-                  <option value={15}>15 筆</option>
-                  <option value={20}>20 筆</option>
-                </select>
-              </div>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-3 border-2 border-black comic-box-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm">每頁顯示:</span>
+              <select 
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="p-1 border-2 border-black outline-none font-bold bg-slate-50"
+              >
+                <option value={5}>5 筆</option>
+                <option value={10}>10 筆</option>
+                <option value={15}>15 筆</option>
+                <option value={20}>20 筆</option>
+              </select>
+            </div>
 
+            {totalPages > 1 && (
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
@@ -392,8 +392,8 @@ export default function AdminEvents() {
                   <ChevronRight className="w-5 h-5 font-black" />
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedEvents.map(ev => {
