@@ -637,7 +637,11 @@ export default function AdminMessages() {
       <QuickRepliesModal 
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
-        activeCategory={activeQrField}
+        activeCategory={
+          (activeQrField === 'reminderDayBefore' || activeQrField === 'reminderSameDay') 
+            ? 'reservationReminder' 
+            : activeQrField
+        }
         onSelect={(text) => {
           if (activeQrField === 'clientSuccess') {
             setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text}});

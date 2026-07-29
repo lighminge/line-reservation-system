@@ -355,24 +355,43 @@ export default function AdminEvents() {
         <div className="space-y-4">
           {/* Pagination Controls Moved to Top */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 bg-white p-3 border-2 border-black comic-box-sm">
-              <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
-              >
-                <ChevronLeft className="w-5 h-5 font-black" />
-              </button>
-              <span className="font-black text-lg">
-                第 {currentPage} 頁 / 共 {totalPages} 頁
-              </span>
-              <button 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
-              >
-                <ChevronRight className="w-5 h-5 font-black" />
-              </button>
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-3 border-2 border-black comic-box-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">每頁顯示:</span>
+                <select 
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="p-1 border-2 border-black outline-none font-bold bg-slate-50"
+                >
+                  <option value={5}>5 筆</option>
+                  <option value={10}>10 筆</option>
+                  <option value={15}>15 筆</option>
+                  <option value={20}>20 筆</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
+                >
+                  <ChevronLeft className="w-5 h-5 font-black" />
+                </button>
+                <span className="font-black text-lg">
+                  第 {currentPage} 頁 / 共 {totalPages} 頁
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 border-2 border-black comic-box-sm transition-transform active:scale-95"
+                >
+                  <ChevronRight className="w-5 h-5 font-black" />
+                </button>
+              </div>
             </div>
           )}
 
