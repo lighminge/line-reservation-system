@@ -731,7 +731,7 @@ export default function AdminEvents() {
                   >
                     <option value="">全部標籤</option>
                     {globalTags.map(tag => (
-                      <option key={tag.id} value={tag.name}>{tag.name}</option>
+                      <option key={tag} value={tag}>{tag}</option>
                     ))}
                   </select>
                   <Tag className="w-4 h-4 text-slate-400 absolute left-2 top-3" />

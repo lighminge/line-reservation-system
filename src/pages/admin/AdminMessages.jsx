@@ -464,80 +464,6 @@ export default function AdminMessages() {
 
         {(viewCategory === 'ALL' || viewCategory === 'REMINDER') && (
           <>
-        {/* Reminder Day Before */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-purple-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
-            <h2 className="text-lg font-black flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2" />
-              預約提醒 - 前一日
-            </h2>
-          </div>
-          
-          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
-            <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">
-                主標題
-                <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
-              </label>
-              <RichTextEditor 
-                value={templates.reminderDayBefore?.title || ''}
-                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, title: val}})}
-                placeholder="例如：貼心提醒：明日預約"
-                styleClass="h-24"
-              />
-            </div>
-            
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <label className="text-sm font-semibold text-black font-black block">
-                  內文說明
-                  <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
-                </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('reminderDayBefore'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
-              </div>
-              <RichTextEditor 
-                value={templates.reminderDayBefore?.text || ''}
-                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text: val}})}
-                placeholder="請輸入前一日的預約提醒內容"
-                styleClass="h-48"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
-              <div 
-                onClick={() => dayBeforeFileRef.current?.click()}
-                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors overflow-hidden relative group"
-              >
-                {dayBeforePreview ? (
-                  <>
-                    <img src={dayBeforePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-purple-600" />
-                    <span className="text-sm text-black font-bold group-hover:text-purple-700 font-medium">點擊上傳圖片</span>
-                  </>
-                )}
-              </div>
-              <input type="file" ref={dayBeforeFileRef} onChange={e => handleImageChange(e, 'dayBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
-              {dayBeforePreview && (
-                <button type="button" onClick={() => { setDayBeforePreview(''); setDayBeforeFile(null); setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
-              )}
-            </div>
-          </div>
-        </div>
-
-
         {/* Reminder Three Days Before */}
         <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-blue-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
@@ -680,6 +606,80 @@ export default function AdminMessages() {
               <input type="file" ref={twoDaysBeforeFileRef} onChange={e => handleImageChange(e, 'twoDaysBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
               {twoDaysBeforePreview && (
                 <button type="button" onClick={() => { setTwoDaysBeforePreview(''); setTwoDaysBeforeFile(null); setTemplates({...templates, reminderTwoDaysBefore: {...templates.reminderTwoDaysBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+        {/* Reminder Day Before */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
+          <div className="bg-purple-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              預約提醒 - 前一日
+            </h2>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+              </label>
+              <RichTextEditor 
+                value={templates.reminderDayBefore?.title || ''}
+                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, title: val}})}
+                placeholder="例如：貼心提醒：明日預約"
+                styleClass="h-24"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('reminderDayBefore'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
+                value={templates.reminderDayBefore?.text || ''}
+                onChange={val => setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text: val}})}
+                placeholder="請輸入前一日的預約提醒內容"
+                styleClass="h-48"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
+              <div 
+                onClick={() => dayBeforeFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors overflow-hidden relative group"
+              >
+                {dayBeforePreview ? (
+                  <>
+                    <img src={dayBeforePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-purple-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-purple-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={dayBeforeFileRef} onChange={e => handleImageChange(e, 'dayBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {dayBeforePreview && (
+                <button type="button" onClick={() => { setDayBeforePreview(''); setDayBeforeFile(null); setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
               )}
             </div>
           </div>
