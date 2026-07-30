@@ -96,7 +96,7 @@ export default function AdminReservations() {
     setSavingReminder(true);
     try {
       await saveReminderSettings(reminderSettings);
-      alert('預約提醒設定已成功儲存！');
+      setSuccessModal({ isOpen: true, message: '預約提醒設定已成功儲存！' });
     } catch (e) {
       alert('儲存失敗');
     }
@@ -825,38 +825,74 @@ export default function AdminReservations() {
           </div>
           
           <div className="flex flex-col gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-3 bg-white p-2 border-2 border-black comic-box-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={reminderSettings.dayBefore?.enabled || false}
-                  onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, enabled: e.target.checked}})}
-                  className="w-5 h-5 accent-green-500 border-2 border-black"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center justify-between gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={reminderSettings.threeDaysBefore?.enabled || false}
+                    onChange={(e) => setReminderSettings({...reminderSettings, threeDaysBefore: {...reminderSettings.threeDaysBefore, enabled: e.target.checked}})}
+                    className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
+                  />
+                  <span className="font-black text-sm whitespace-nowrap">前三日通知</span>
+                </label>
+                <TimePicker 
+                  value={reminderSettings.threeDaysBefore?.time || '20:00'}
+                  onChange={(newVal) => setReminderSettings({...reminderSettings, threeDaysBefore: {...reminderSettings.threeDaysBefore, time: newVal}})}
+                  disabled={!reminderSettings.threeDaysBefore?.enabled}
                 />
-                <span className="font-black text-sm">前一日通知</span>
-              </label>
-              <TimePicker 
-                value={reminderSettings.dayBefore?.time || '20:00'}
-                onChange={(newVal) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, time: newVal}})}
-                disabled={!reminderSettings.dayBefore?.enabled}
-              />
-            </div>
-            
-            <div className="flex items-center gap-3 bg-white p-2 border-2 border-black comic-box-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={reminderSettings.sameDay?.enabled || false}
-                  onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, enabled: e.target.checked}})}
-                  className="w-5 h-5 accent-green-500 border-2 border-black"
+              </div>
+
+              <div className="flex items-center justify-between gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={reminderSettings.twoDaysBefore?.enabled || false}
+                    onChange={(e) => setReminderSettings({...reminderSettings, twoDaysBefore: {...reminderSettings.twoDaysBefore, enabled: e.target.checked}})}
+                    className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
+                  />
+                  <span className="font-black text-sm whitespace-nowrap">前二日通知</span>
+                </label>
+                <TimePicker 
+                  value={reminderSettings.twoDaysBefore?.time || '20:00'}
+                  onChange={(newVal) => setReminderSettings({...reminderSettings, twoDaysBefore: {...reminderSettings.twoDaysBefore, time: newVal}})}
+                  disabled={!reminderSettings.twoDaysBefore?.enabled}
                 />
-                <span className="font-black text-sm">當日通知</span>
-              </label>
-              <TimePicker 
-                value={reminderSettings.sameDay?.time || '09:00'}
-                onChange={(newVal) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, time: newVal}})}
-                disabled={!reminderSettings.sameDay?.enabled}
-              />
+              </div>
+
+              <div className="flex items-center justify-between gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={reminderSettings.dayBefore?.enabled || false}
+                    onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, enabled: e.target.checked}})}
+                    className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
+                  />
+                  <span className="font-black text-sm whitespace-nowrap">前一日通知</span>
+                </label>
+                <TimePicker 
+                  value={reminderSettings.dayBefore?.time || '20:00'}
+                  onChange={(newVal) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, time: newVal}})}
+                  disabled={!reminderSettings.dayBefore?.enabled}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between gap-3 bg-white p-2 border-2 border-black comic-box-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={reminderSettings.sameDay?.enabled || false}
+                    onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, enabled: e.target.checked}})}
+                    className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
+                  />
+                  <span className="font-black text-sm whitespace-nowrap">當日通知</span>
+                </label>
+                <TimePicker 
+                  value={reminderSettings.sameDay?.time || '09:00'}
+                  onChange={(newVal) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, time: newVal}})}
+                  disabled={!reminderSettings.sameDay?.enabled}
+                />
+              </div>
             </div>
           </div>
           

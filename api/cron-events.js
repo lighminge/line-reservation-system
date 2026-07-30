@@ -53,6 +53,14 @@ export default async function handler(req, res) {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowDateStr = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth()+1)}-${pad(tomorrow.getDate())}`;
 
+    const twoDaysAfter = new Date(taipeiTime);
+    twoDaysAfter.setDate(twoDaysAfter.getDate() + 2);
+    const twoDaysAfterStr = `${twoDaysAfter.getFullYear()}-${pad(twoDaysAfter.getMonth()+1)}-${pad(twoDaysAfter.getDate())}`;
+
+    const threeDaysAfter = new Date(taipeiTime);
+    threeDaysAfter.setDate(threeDaysAfter.getDate() + 3);
+    const threeDaysAfterStr = `${threeDaysAfter.getFullYear()}-${pad(threeDaysAfter.getMonth()+1)}-${pad(threeDaysAfter.getDate())}`;
+
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
 
@@ -205,8 +213,10 @@ export default async function handler(req, res) {
       const reminderSettings = reminderSettingsSnap.data();
       const checkDayBefore = reminderSettings.dayBefore?.enabled;
       const checkSameDay = reminderSettings.sameDay?.enabled;
+      const checkTwoDaysBefore = reminderSettings.twoDaysBefore?.enabled;
+      const checkThreeDaysBefore = reminderSettings.threeDaysBefore?.enabled;
       
-      if (checkDayBefore || checkSameDay) {
+      if (checkDayBefore || checkSameDay || checkTwoDaysBefore || checkThreeDaysBefore) {
         // Fetch message templates
         const templatesSnap = await getDoc(doc(db, "system_config", "message_templates"));
         const templates = templatesSnap.exists() ? templatesSnap.data() : {};
@@ -261,6 +271,36 @@ export default async function handler(req, res) {
               if (sendRes.ok) {
                 updateData.reminderSameDaySent = true;
                 reminderResults.push({ id: res.id, type: 'sameDay', success: true });
+              }
+            }
+          }
+
+          // Two Days Before Logic
+          if (checkTwoDaysBefore && resDate === twoDaysAfterStr && !res.reminderTwoDaysBeforeSent) {
+            if (todayTimeStr >= reminderSettings.twoDaysBefore.time) {
+              const tmpl = templates.reminderTwoDaysBefore || {};
+              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
+              const txt = (tmpl.text || '提醒您後天有預約').replace(/{好友的顯示名稱}/g, uName);
+              
+              const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
+              if (sendRes.ok) {
+                updateData.reminderTwoDaysBeforeSent = true;
+                reminderResults.push({ id: res.id, type: 'twoDaysBefore', success: true });
+              }
+            }
+          }
+
+          // Three Days Before Logic
+          if (checkThreeDaysBefore && resDate === threeDaysAfterStr && !res.reminderThreeDaysBeforeSent) {
+            if (todayTimeStr >= reminderSettings.threeDaysBefore.time) {
+              const tmpl = templates.reminderThreeDaysBefore || {};
+              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
+              const txt = (tmpl.text || '提醒您三天後有預約').replace(/{好友的顯示名稱}/g, uName);
+              
+              const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
+              if (sendRes.ok) {
+                updateData.reminderThreeDaysBeforeSent = true;
+                reminderResults.push({ id: res.id, type: 'threeDaysBefore', success: true });
               }
             }
           }

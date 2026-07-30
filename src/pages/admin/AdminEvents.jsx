@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getAllEvents, saveEvent, deleteEvent, getAllUsers, uploadImage, resolveImageUrl, getMessageTemplates } from '../../services/db';
-import { Calendar, Clock, Image as ImageIcon, Plus, Trash2, Edit2, Users, Search, X, MessageSquare, Check, ChevronLeft, ChevronRight, AlertCircle, BookmarkPlus } from 'lucide-react';
+import { getAllEvents, saveEvent, deleteEvent, getAllUsers, uploadImage, resolveImageUrl, getMessageTemplates, getDictTags } from '../../services/db';
+import { Calendar, Clock, Image as ImageIcon, Plus, Trash2, Edit2, Users, Search, X, MessageSquare, Check, ChevronLeft, ChevronRight, AlertCircle, BookmarkPlus, Tag } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import RichTextEditor from '../../components/RichTextEditor';
 import QuickRepliesModal from '../../components/QuickRepliesModal';
@@ -14,7 +14,9 @@ export default function AdminEvents() {
   
   // User selection states
   const [allUsers, setAllUsers] = useState([]);
+  const [globalTags, setGlobalTags] = useState([]);
   const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [userFilterTag, setUserFilterTag] = useState('');
   
   // Filter States
   const [filterStatus, setFilterStatus] = useState('all');
@@ -59,10 +61,11 @@ export default function AdminEvents() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [eventsData, usersData, templates] = await Promise.all([
+      const [eventsData, usersData, templates, tagsData] = await Promise.all([
         getAllEvents(),
         getAllUsers(),
-        getMessageTemplates()
+        getMessageTemplates(),
+        getDictTags()
       ]);
       
       // Sort events by sendDate and sendTime
@@ -74,6 +77,7 @@ export default function AdminEvents() {
 
       setEvents(eventsData);
       setAllUsers(usersData);
+      setGlobalTags(tagsData || []);
       if (templates?.settings?.useOriginalLineNameForPush) {
         setUseOriginalLineName(true);
       }
@@ -196,6 +200,9 @@ export default function AdminEvents() {
   };
 
   const filteredUsers = allUsers.filter(u => {
+    if (userFilterTag && userFilterTag !== 'all') {
+      if (!u.tags || !u.tags.includes(userFilterTag)) return false;
+    }
     if (!userSearchTerm) return true;
     const term = userSearchTerm.toLowerCase();
     return (u.displayName || '').toLowerCase().includes(term) || (u.originalLineName || '').toLowerCase().includes(term);
@@ -340,6 +347,13 @@ export default function AdminEvents() {
               </div>
             </div>
 
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="flex gap-3 text-sm font-black bg-white p-2 border-2 border-black comic-box-sm">
+                <span>總計: {events.length}</span>
+                <span className="text-green-600">已發送: {events.filter(e => e.status === 'sent').length}</span>
+                <span className="text-yellow-600">排程中: {events.filter(e => e.status === 'pending').length}</span>
+              </div>
+
             <button 
               onClick={() => handleOpenModal()}
               className="bg-green-400 hover:bg-green-300 text-black px-4 py-2 border-2 border-black comic-box-sm font-black flex items-center gap-2 transition-transform active:scale-95 shadow-[2px_2px_0_0_#000] whitespace-nowrap w-full md:w-auto justify-center"
@@ -347,6 +361,7 @@ export default function AdminEvents() {
               <Plus className="w-5 h-5" />
               新增活動
             </button>
+            </div>
           </div>
         )}
       </div>
@@ -411,8 +426,11 @@ export default function AdminEvents() {
                     </div>
                   )}
                   
-                  <div className="p-4 border-b-2 border-black bg-slate-100 flex-1">
-                    <h3 className="text-xl font-black mb-2 line-clamp-1 pr-14">{ev.title}</h3>
+                  <div className="p-4 border-b-2 border-black bg-slate-100 flex-1 relative">
+                    <span className="absolute left-2 top-2 text-xs font-black text-slate-400">
+                      #{events.length - events.findIndex(e => e.id === ev.id)}
+                    </span>
+                    <h3 className="text-xl font-black mb-2 line-clamp-1 pr-14 mt-4">{ev.title}</h3>
                     
                     <div className="space-y-2 mt-4 text-sm font-bold text-slate-700">
                       <div className="flex items-center gap-2">
@@ -703,6 +721,20 @@ export default function AdminEvents() {
                     className="w-full p-2 pl-8 border-2 border-black outline-none focus:border-green-500 comic-box-sm text-sm font-bold"
                   />
                   <Search className="w-4 h-4 text-slate-400 absolute left-2 top-3" />
+                </div>
+                
+                <div className="relative">
+                  <select
+                    value={userFilterTag}
+                    onChange={(e) => setUserFilterTag(e.target.value)}
+                    className="w-full p-2 pl-8 border-2 border-black outline-none focus:border-green-500 comic-box-sm text-sm font-bold bg-white"
+                  >
+                    <option value="">全部標籤</option>
+                    {globalTags.map(tag => (
+                      <option key={tag.id} value={tag.name}>{tag.name}</option>
+                    ))}
+                  </select>
+                  <Tag className="w-4 h-4 text-slate-400 absolute left-2 top-3" />
                 </div>
 
                 <div className="flex gap-2">

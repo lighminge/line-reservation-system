@@ -10,6 +10,8 @@ export default function AdminMessages() {
     lineConfirm: { title: '', text: '', imageUrl: '' },
     adminCustomMessage: { title: '', text: '', imageUrl: '' },
     reminderDayBefore: { title: '', text: '', imageUrl: '' },
+    reminderTwoDaysBefore: { title: '', text: '', imageUrl: '' },
+    reminderThreeDaysBefore: { title: '', text: '', imageUrl: '' },
     reminderSameDay: { title: '', text: '', imageUrl: '' },
     settings: { useOriginalLineNameForPush: false }
   });
@@ -22,18 +24,24 @@ export default function AdminMessages() {
   const lineFileRef = useRef(null);
   const customMessageFileRef = useRef(null);
   const dayBeforeFileRef = useRef(null);
+  const twoDaysBeforeFileRef = useRef(null);
+  const threeDaysBeforeFileRef = useRef(null);
   const sameDayFileRef = useRef(null);
   
   const [clientFile, setClientFile] = useState(null);
   const [lineFile, setLineFile] = useState(null);
   const [customMessageFile, setCustomMessageFile] = useState(null);
   const [dayBeforeFile, setDayBeforeFile] = useState(null);
+  const [twoDaysBeforeFile, setTwoDaysBeforeFile] = useState(null);
+  const [threeDaysBeforeFile, setThreeDaysBeforeFile] = useState(null);
   const [sameDayFile, setSameDayFile] = useState(null);
   
   const [clientPreview, setClientPreview] = useState('');
   const [linePreview, setLinePreview] = useState('');
   const [customMessagePreview, setCustomMessagePreview] = useState('');
   const [dayBeforePreview, setDayBeforePreview] = useState('');
+  const [twoDaysBeforePreview, setTwoDaysBeforePreview] = useState('');
+  const [threeDaysBeforePreview, setThreeDaysBeforePreview] = useState('');
   const [sameDayPreview, setSameDayPreview] = useState('');
 
   // Quick Replies Modal State
@@ -57,6 +65,8 @@ export default function AdminMessages() {
         lineConfirm: { ...prev.lineConfirm, ...data.lineConfirm },
         adminCustomMessage: { ...prev.adminCustomMessage, ...data.adminCustomMessage },
         reminderDayBefore: { ...prev.reminderDayBefore, ...data.reminderDayBefore },
+        reminderTwoDaysBefore: { ...prev.reminderTwoDaysBefore, ...data.reminderTwoDaysBefore },
+        reminderThreeDaysBefore: { ...prev.reminderThreeDaysBefore, ...data.reminderThreeDaysBefore },
         reminderSameDay: { ...prev.reminderSameDay, ...data.reminderSameDay },
         settings: { ...prev.settings, ...data.settings }
       }));
@@ -69,9 +79,9 @@ export default function AdminMessages() {
       if (data.adminCustomMessage?.imageUrl) {
         setCustomMessagePreview(await resolveImageUrl(data.adminCustomMessage.imageUrl));
       }
-      if (data.reminderDayBefore?.imageUrl) {
-        setDayBeforePreview(await resolveImageUrl(data.reminderDayBefore.imageUrl));
-      }
+      if (data.reminderDayBefore?.imageUrl) { setDayBeforePreview(await resolveImageUrl(data.reminderDayBefore.imageUrl)); }
+      if (data.reminderTwoDaysBefore?.imageUrl) { setTwoDaysBeforePreview(await resolveImageUrl(data.reminderTwoDaysBefore.imageUrl)); }
+      if (data.reminderThreeDaysBefore?.imageUrl) { setThreeDaysBeforePreview(await resolveImageUrl(data.reminderThreeDaysBefore.imageUrl)); }
       if (data.reminderSameDay?.imageUrl) {
         setSameDayPreview(await resolveImageUrl(data.reminderSameDay.imageUrl));
       }
@@ -93,10 +103,7 @@ export default function AdminMessages() {
         } else if (type === 'customMessage') {
           setCustomMessageFile(file);
           setCustomMessagePreview(reader.result);
-        } else if (type === 'dayBefore') {
-          setDayBeforeFile(file);
-          setDayBeforePreview(reader.result);
-        } else if (type === 'sameDay') {
+        } else if (type === 'dayBefore') { setDayBeforeFile(file); setDayBeforePreview(reader.result); } else if (type === 'twoDaysBefore') { setTwoDaysBeforeFile(file); setTwoDaysBeforePreview(reader.result); } else if (type === 'threeDaysBefore') { setThreeDaysBeforeFile(file); setThreeDaysBeforePreview(reader.result); } else if (type === 'sameDay') {
           setSameDayFile(file);
           setSameDayPreview(reader.result);
         }
@@ -115,6 +122,8 @@ export default function AdminMessages() {
       let finalLineImg = templates.lineConfirm.imageUrl;
       let finalCustomImg = templates.adminCustomMessage?.imageUrl || '';
       let finalDayBeforeImg = templates.reminderDayBefore?.imageUrl || '';
+      let finalTwoDaysBeforeImg = templates.reminderTwoDaysBefore?.imageUrl || '';
+      let finalThreeDaysBeforeImg = templates.reminderThreeDaysBefore?.imageUrl || '';
       let finalSameDayImg = templates.reminderSameDay?.imageUrl || '';
 
       if (clientFile) {
@@ -126,9 +135,9 @@ export default function AdminMessages() {
       if (customMessageFile) {
         finalCustomImg = await uploadImage(customMessageFile, `messages/${Date.now()}_custom_${customMessageFile.name}`);
       }
-      if (dayBeforeFile) {
-        finalDayBeforeImg = await uploadImage(dayBeforeFile, `messages/${Date.now()}_dayBefore_${dayBeforeFile.name}`);
-      }
+      if (dayBeforeFile) { finalDayBeforeImg = await uploadImage(dayBeforeFile, `messages/${Date.now()}_dayBefore_${dayBeforeFile.name}`); }
+      if (twoDaysBeforeFile) { finalTwoDaysBeforeImg = await uploadImage(twoDaysBeforeFile, `messages/${Date.now()}_twoDaysBefore_${twoDaysBeforeFile.name}`); }
+      if (threeDaysBeforeFile) { finalThreeDaysBeforeImg = await uploadImage(threeDaysBeforeFile, `messages/${Date.now()}_threeDaysBefore_${threeDaysBeforeFile.name}`); }
       if (sameDayFile) {
         finalSameDayImg = await uploadImage(sameDayFile, `messages/${Date.now()}_sameDay_${sameDayFile.name}`);
       }
@@ -138,6 +147,8 @@ export default function AdminMessages() {
         lineConfirm: { ...templates.lineConfirm, imageUrl: finalLineImg },
         adminCustomMessage: { ...templates.adminCustomMessage, imageUrl: finalCustomImg },
         reminderDayBefore: { ...templates.reminderDayBefore, imageUrl: finalDayBeforeImg },
+        reminderTwoDaysBefore: { ...templates.reminderTwoDaysBefore, imageUrl: finalTwoDaysBeforeImg },
+        reminderThreeDaysBefore: { ...templates.reminderThreeDaysBefore, imageUrl: finalThreeDaysBeforeImg },
         reminderSameDay: { ...templates.reminderSameDay, imageUrl: finalSameDayImg },
         settings: { ...templates.settings }
       };
@@ -149,6 +160,8 @@ export default function AdminMessages() {
       setLineFile(null);
       setCustomMessageFile(null);
       setDayBeforeFile(null);
+      setTwoDaysBeforeFile(null);
+      setThreeDaysBeforeFile(null);
       setSameDayFile(null);
       setMessage({ text: '訊息畫面設定儲存成功！', type: 'success' });
     } catch (error) {
@@ -524,6 +537,155 @@ export default function AdminMessages() {
           </div>
         </div>
 
+
+        {/* Reminder Three Days Before */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
+          <div className="bg-blue-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              預約提醒 - 前三日
+            </h2>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-blue-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+              </label>
+              <RichTextEditor 
+                value={templates.reminderThreeDaysBefore?.title || ''}
+                onChange={val => setTemplates({...templates, reminderThreeDaysBefore: {...templates.reminderThreeDaysBefore, title: val}})}
+                placeholder="例如：貼心提醒：明日預約"
+                styleClass="h-24"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-blue-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('reminderThreeDaysBefore'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
+                value={templates.reminderThreeDaysBefore?.text || ''}
+                onChange={val => setTemplates({...templates, reminderThreeDaysBefore: {...templates.reminderThreeDaysBefore, text: val}})}
+                placeholder="請輸入前三日的預約提醒內容"
+                styleClass="h-48"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
+              <div 
+                onClick={() => threeDaysBeforeFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors overflow-hidden relative group"
+              >
+                {threeDaysBeforePreview ? (
+                  <>
+                    <img src={threeDaysBeforePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-blue-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-blue-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={threeDaysBeforeFileRef} onChange={e => handleImageChange(e, 'threeDaysBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {threeDaysBeforePreview && (
+                <button type="button" onClick={() => { setThreeDaysBeforePreview(''); setThreeDaysBeforeFile(null); setTemplates({...templates, reminderThreeDaysBefore: {...templates.reminderThreeDaysBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+        {/* Reminder Two Days Before */}
+        <div className="bg-white comic-box overflow-hidden flex flex-col">
+          <div className="bg-indigo-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+            <h2 className="text-lg font-black flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              預約提醒 - 前二日
+            </h2>
+          </div>
+          
+          <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">
+                主標題
+                <span className="text-xs text-indigo-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+              </label>
+              <RichTextEditor 
+                value={templates.reminderTwoDaysBefore?.title || ''}
+                onChange={val => setTemplates({...templates, reminderTwoDaysBefore: {...templates.reminderTwoDaysBefore, title: val}})}
+                placeholder="例如：貼心提醒：明日預約"
+                styleClass="h-24"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  內文說明
+                  <span className="text-xs text-indigo-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => { setActiveQrField('reminderTwoDaysBefore'); setQrModalOpen(true); }}
+                  className="text-xs font-semibold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                >
+                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                </button>
+              </div>
+              <RichTextEditor 
+                value={templates.reminderTwoDaysBefore?.text || ''}
+                onChange={val => setTemplates({...templates, reminderTwoDaysBefore: {...templates.reminderTwoDaysBefore, text: val}})}
+                placeholder="請輸入前二日的預約提醒內容"
+                styleClass="h-48"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-black font-black block mb-2">上方圖案 (選項)</label>
+              <div 
+                onClick={() => twoDaysBeforeFileRef.current?.click()}
+                className="w-full h-40 border-2 border-black comic-box-sm border-2 border-dashed border-black bg-white flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-colors overflow-hidden relative group"
+              >
+                {twoDaysBeforePreview ? (
+                  <>
+                    <img src={twoDaysBeforePreview} alt="Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <p className="text-white font-medium flex items-center"><UploadCloud className="w-5 h-5 mr-2" /> 更換圖片</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImageIcon className="w-8 h-8 text-slate-400 mb-2 group-hover:text-indigo-600" />
+                    <span className="text-sm text-black font-bold group-hover:text-indigo-700 font-medium">點擊上傳圖片</span>
+                  </>
+                )}
+              </div>
+              <input type="file" ref={twoDaysBeforeFileRef} onChange={e => handleImageChange(e, 'twoDaysBefore')} accept="image/jpeg, image/png, image/jpg" className="hidden" />
+              {twoDaysBeforePreview && (
+                <button type="button" onClick={() => { setTwoDaysBeforePreview(''); setTwoDaysBeforeFile(null); setTemplates({...templates, reminderTwoDaysBefore: {...templates.reminderTwoDaysBefore, imageUrl: ''}}) }} className="text-red-500 text-xs mt-2 hover:underline font-bold">移除圖片</button>
+              )}
+            </div>
+          </div>
+        </div>
+
+
         {/* Reminder Same Day */}
         <div className="bg-white comic-box overflow-hidden flex flex-col">
           <div className="bg-orange-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
@@ -638,7 +800,7 @@ export default function AdminMessages() {
         isOpen={qrModalOpen}
         onClose={() => setQrModalOpen(false)}
         activeCategory={
-          (activeQrField === 'reminderDayBefore' || activeQrField === 'reminderSameDay') 
+          (activeQrField === 'reminderDayBefore' || activeQrField === 'reminderSameDay' || activeQrField === 'reminderTwoDaysBefore' || activeQrField === 'reminderThreeDaysBefore') 
             ? 'reservationReminder' 
             : activeQrField
         }
@@ -649,9 +811,7 @@ export default function AdminMessages() {
             setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text}});
           } else if (activeQrField === 'adminCustom') {
             setTemplates({...templates, adminCustomMessage: {...templates.adminCustomMessage, text}});
-          } else if (activeQrField === 'reminderDayBefore') {
-            setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text}});
-          } else if (activeQrField === 'reminderSameDay') {
+          } else if (activeQrField === 'reminderDayBefore') { setTemplates({...templates, reminderDayBefore: {...templates.reminderDayBefore, text}}); } else if (activeQrField === 'reminderTwoDaysBefore') { setTemplates({...templates, reminderTwoDaysBefore: {...templates.reminderTwoDaysBefore, text}}); } else if (activeQrField === 'reminderThreeDaysBefore') { setTemplates({...templates, reminderThreeDaysBefore: {...templates.reminderThreeDaysBefore, text}}); } else if (activeQrField === 'reminderSameDay') {
             setTemplates({...templates, reminderSameDay: {...templates.reminderSameDay, text}});
           }
           setQrModalOpen(false);
