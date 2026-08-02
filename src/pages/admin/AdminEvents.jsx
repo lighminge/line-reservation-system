@@ -18,6 +18,8 @@ export default function AdminEvents() {
   const [globalTags, setGlobalTags] = useState([]);
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [userFilterTag, setUserFilterTag] = useState('');
+  const [modalUserPage, setModalUserPage] = useState(1);
+  const [modalUserPageSize, setModalUserPageSize] = useState(10);
   
   // Filter States
   const [filterStatus, setFilterStatus] = useState('all');
@@ -208,6 +210,15 @@ export default function AdminEvents() {
     const term = userSearchTerm.toLowerCase();
     return (u.displayName || '').toLowerCase().includes(term) || (u.originalLineName || '').toLowerCase().includes(term);
   });
+
+  const modalTotalPages = Math.ceil(filteredUsers.length / modalUserPageSize) || 1;
+  const paginatedUsers = filteredUsers.slice((modalUserPage - 1) * modalUserPageSize, modalUserPage * modalUserPageSize);
+
+  useEffect(() => {
+    if (modalUserPage > modalTotalPages) {
+      setModalUserPage(modalTotalPages);
+    }
+  }, [filteredUsers.length, modalUserPageSize, modalUserPage, modalTotalPages]);
 
   const toggleUser = (userId) => {
     if (selectedUserIds.includes(userId)) {
@@ -724,7 +735,7 @@ export default function AdminEvents() {
                     type="text"
                     placeholder="搜尋用戶名稱..."
                     value={userSearchTerm}
-                    onChange={(e) => setUserSearchTerm(e.target.value)}
+                    onChange={(e) => { setUserSearchTerm(e.target.value); setModalUserPage(1); }}
                     className="w-full p-2 pl-8 border-2 border-black outline-none focus:border-green-500 comic-box-sm text-sm font-bold"
                   />
                   <Search className="w-4 h-4 text-slate-400 absolute left-2 top-3" />
@@ -733,7 +744,7 @@ export default function AdminEvents() {
                 <div className="relative">
                   <select
                     value={userFilterTag}
-                    onChange={(e) => setUserFilterTag(e.target.value)}
+                    onChange={(e) => { setUserFilterTag(e.target.value); setModalUserPage(1); }}
                     className="w-full p-2 pl-8 border-2 border-black outline-none focus:border-green-500 comic-box-sm text-sm font-bold bg-white"
                   >
                     <option value="">全部標籤</option>
@@ -756,8 +767,53 @@ export default function AdminEvents() {
                   目前符合條件的人員總數: {filteredUsers.length} 人
                 </div>
 
-                <div className="flex-1 overflow-y-auto border-2 border-black comic-box-sm bg-white min-h-[200px] md:max-h-[600px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
-                  {filteredUsers.map(u => {
+                <div className="flex-1 flex flex-col min-h-[200px] md:max-h-[600px]">
+                  {filteredUsers.length > 0 && (
+                    <div className="flex flex-col gap-2 bg-slate-100 p-2 border-2 border-black comic-box-sm mb-2 shrink-0">
+                      <div className="flex justify-between items-center text-xs font-bold">
+                        <div className="flex items-center gap-1">
+                          每頁:
+                          <select 
+                            value={modalUserPageSize}
+                            onChange={e => {
+                              setModalUserPageSize(Number(e.target.value));
+                              setModalUserPage(1);
+                            }}
+                            className="border-2 border-black outline-none font-bold bg-white text-xs p-1"
+                          >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={30}>30</option>
+                            <option value={40}>40</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                          </select>
+                        </div>
+                        <div>
+                          {modalUserPage} / {modalTotalPages} 頁
+                        </div>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <button 
+                          onClick={() => setModalUserPage(p => Math.max(1, p - 1))}
+                          disabled={modalUserPage === 1}
+                          className="flex-1 py-1 border-2 border-black bg-white hover:bg-slate-200 disabled:opacity-50 text-xs font-black transition-transform active:scale-95 shadow-[2px_2px_0_0_#000] disabled:shadow-none disabled:active:scale-100"
+                        >
+                          上一頁
+                        </button>
+                        <button 
+                          onClick={() => setModalUserPage(p => Math.min(modalTotalPages, p + 1))}
+                          disabled={modalUserPage === modalTotalPages}
+                          className="flex-1 py-1 border-2 border-black bg-white hover:bg-slate-200 disabled:opacity-50 text-xs font-black transition-transform active:scale-95 shadow-[2px_2px_0_0_#000] disabled:shadow-none disabled:active:scale-100"
+                        >
+                          下一頁
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex-1 overflow-y-auto border-2 border-black comic-box-sm bg-white shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
+                    {paginatedUsers.map(u => {
                     const isChecked = selectedUserIds.includes(u.userId);
                     return (
                       <label key={u.id} className="flex items-center p-3 border-b border-slate-100 hover:bg-green-50 cursor-pointer transition-colors">
@@ -783,10 +839,11 @@ export default function AdminEvents() {
                     )
                   })}
                   {filteredUsers.length === 0 && (
-                    <div className="p-8 text-center text-slate-400 text-sm font-bold">
-                      沒有找到符合的用戶
-                    </div>
-                  )}
+                      <div className="p-8 text-center text-slate-400 text-sm font-bold">
+                        沒有找到符合的用戶
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
