@@ -5,6 +5,7 @@ import { cn } from '../../utils/cn';
 import RichTextEditor from '../../components/RichTextEditor';
 import QuickRepliesModal from '../../components/QuickRepliesModal';
 import TimePicker from '../../components/TimePicker';
+import DatePicker from '../../components/DatePicker';
 
 export default function AdminEvents() {
   const [activeTab, setActiveTab] = useState('events'); // 'events' or 'sentUsers'
@@ -317,21 +318,26 @@ export default function AdminEvents() {
               </div>
 
               {/* Date Filter */}
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm">期間:</span>
-                <input 
-                  type="date"
-                  value={filterStartDate}
-                  onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="p-1 border-2 border-black outline-none font-bold comic-box-sm bg-white text-sm"
-                />
-                <span className="font-bold">~</span>
-                <input 
-                  type="date"
-                  value={filterEndDate}
-                  onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="p-1 border-2 border-black outline-none font-bold comic-box-sm bg-white text-sm"
-                />
+              <div className="flex flex-col xl:flex-row items-start xl:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm whitespace-nowrap">期間:</span>
+                  <div className="bg-white comic-box-sm">
+                    <DatePicker 
+                      value={filterStartDate}
+                      onChange={(val) => setFilterStartDate(val)}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold hidden xl:inline">~</span>
+                  <span className="font-bold text-sm xl:hidden whitespace-nowrap">至:</span>
+                  <div className="bg-white comic-box-sm">
+                    <DatePicker 
+                      value={filterEndDate}
+                      onChange={(val) => setFilterEndDate(val)}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Keyword Search */}
@@ -628,12 +634,13 @@ export default function AdminEvents() {
                 <div className="flex flex-col md:flex-row gap-4 bg-yellow-100 p-4 border-2 border-black comic-box-sm">
                   <div className="flex-1 relative">
                     <label className="block text-sm font-black mb-2 flex items-center gap-1"><Calendar className="w-4 h-4"/> 發送日期</label>
-                    <input 
-                      type="date" 
-                      value={sendDate} 
-                      onChange={e => setSendDate(e.target.value)}
-                      className="w-full p-3 border-2 border-black outline-none focus:border-green-500 comic-box-sm bg-white font-black text-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)]"
-                    />
+                    <div className="w-full p-1 border-2 border-black bg-white comic-box-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] flex items-center h-[52px]">
+                      <DatePicker 
+                        value={sendDate}
+                        onChange={(val) => setSendDate(val)}
+                        clearable={false}
+                      />
+                    </div>
                   </div>
                   <div className="flex-1 relative">
                     <label className="block text-sm font-black mb-2 flex items-center gap-1"><Clock className="w-4 h-4"/> 發送時間</label>
@@ -744,6 +751,9 @@ export default function AdminEvents() {
                   <button onClick={deselectAllFiltered} className="flex-1 bg-white border-2 border-black comic-box-sm py-2 text-sm font-black hover:bg-red-50 shadow-[2px_2px_0_0_#000] active:scale-95 transition-transform">
                     全不選
                   </button>
+                </div>
+                <div className="text-sm font-black text-blue-700 bg-blue-50 border-2 border-black p-2 comic-box-sm text-center shadow-[2px_2px_0_0_#000]">
+                  目前符合條件的人員總數: {filteredUsers.length} 人
                 </div>
 
                 <div className="flex-1 overflow-y-auto border-2 border-black comic-box-sm bg-white min-h-[200px] md:max-h-[600px] shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
