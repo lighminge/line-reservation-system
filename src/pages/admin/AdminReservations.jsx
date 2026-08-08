@@ -24,6 +24,9 @@ export default function AdminReservations() {
 
   // New state for tabs
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'confirmed'
+  const [confirmedSubTab, setConfirmedSubTab] = useState('list'); // 'list' | 'notifications'
+  const [notiPage, setNotiPage] = useState(1);
+  const [notiPageSize, setNotiPageSize] = useState(10);
 
   // New states for pending/confirmed wall filters
   const [pendingPurposeFilter, setPendingPurposeFilter] = useState('ALL');
@@ -831,7 +834,7 @@ export default function AdminReservations() {
                   <input 
                     type="checkbox" 
                     checked={reminderSettings.threeDaysBefore?.enabled || false}
-                    onChange={(e) => setReminderSettings({...reminderSettings, threeDaysBefore: {...reminderSettings.threeDaysBefore, enabled: e.target.checked}})}
+                    onChange={(e) => setReminderSettings({...reminderSettings, threeDaysBefore: {...reminderSettings.threeDaysBefore, enabled: e.target.checked, time: reminderSettings.threeDaysBefore?.time || '20:00'}})}
                     className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
                   />
                   <span className="font-black text-sm whitespace-nowrap">前三日通知</span>
@@ -848,7 +851,7 @@ export default function AdminReservations() {
                   <input 
                     type="checkbox" 
                     checked={reminderSettings.twoDaysBefore?.enabled || false}
-                    onChange={(e) => setReminderSettings({...reminderSettings, twoDaysBefore: {...reminderSettings.twoDaysBefore, enabled: e.target.checked}})}
+                    onChange={(e) => setReminderSettings({...reminderSettings, twoDaysBefore: {...reminderSettings.twoDaysBefore, enabled: e.target.checked, time: reminderSettings.twoDaysBefore?.time || '20:00'}})}
                     className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
                   />
                   <span className="font-black text-sm whitespace-nowrap">前二日通知</span>
@@ -865,7 +868,7 @@ export default function AdminReservations() {
                   <input 
                     type="checkbox" 
                     checked={reminderSettings.dayBefore?.enabled || false}
-                    onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, enabled: e.target.checked}})}
+                    onChange={(e) => setReminderSettings({...reminderSettings, dayBefore: {...reminderSettings.dayBefore, enabled: e.target.checked, time: reminderSettings.dayBefore?.time || '20:00'}})}
                     className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
                   />
                   <span className="font-black text-sm whitespace-nowrap">前一日通知</span>
@@ -882,7 +885,7 @@ export default function AdminReservations() {
                   <input 
                     type="checkbox" 
                     checked={reminderSettings.sameDay?.enabled || false}
-                    onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, enabled: e.target.checked}})}
+                    onChange={(e) => setReminderSettings({...reminderSettings, sameDay: {...reminderSettings.sameDay, enabled: e.target.checked, time: reminderSettings.sameDay?.time || '09:00'}})}
                     className="w-5 h-5 accent-green-500 border-2 border-black shrink-0"
                   />
                   <span className="font-black text-sm whitespace-nowrap">當日通知</span>
@@ -907,14 +910,33 @@ export default function AdminReservations() {
 
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-black font-black flex items-center">
-            <Check className="w-6 h-6 mr-2 text-green-500" />
-            已核准預約
-          </h2>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center w-full md:w-auto">
+            <h2 className="text-2xl font-bold text-black font-black flex items-center">
+              <Check className="w-6 h-6 mr-2 text-green-500" />
+              已核准預約
+            </h2>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button 
+                onClick={() => setConfirmedSubTab('list')}
+                className={cn("flex-1 sm:flex-none px-4 py-2 font-black border-2 border-black comic-box-sm transition-transform active:scale-95", confirmedSubTab === 'list' ? 'bg-black text-white' : 'bg-white text-black')}
+              >
+                預約明細
+              </button>
+              <button 
+                onClick={() => setConfirmedSubTab('notifications')}
+                className={cn("flex-1 sm:flex-none px-4 py-2 font-black border-2 border-black comic-box-sm transition-transform active:scale-95", confirmedSubTab === 'notifications' ? 'bg-black text-white' : 'bg-white text-black')}
+              >
+                預約通知清單
+              </button>
+            </div>
+          </div>
           <div className="flex items-center space-x-2 bg-slate-100 p-1.5 border-2 border-black w-full md:w-auto">
             <select 
               value={confirmedPurposeFilter}
-              onChange={(e) => setConfirmedPurposeFilter(e.target.value)}
+              onChange={(e) => {
+                setConfirmedPurposeFilter(e.target.value);
+                setNotiPage(1);
+              }}
               className="bg-white border border-black text-black font-black text-sm outline-none w-full min-w-[150px] font-medium p-2 border-2 border-black font-black focus:border-blue-500"
             >
               <option value="ALL">全部項目</option>
@@ -925,7 +947,7 @@ export default function AdminReservations() {
           </div>
         </div>
         
-        {Object.keys(confirmedTree).filter(p => confirmedPurposeFilter === 'ALL' || p === confirmedPurposeFilter).length === 0 ? (
+        {confirmedSubTab === 'list' && (Object.keys(confirmedTree).filter(p => confirmedPurposeFilter === 'ALL' || p === confirmedPurposeFilter).length === 0 ? (
           <div className="bg-white comic-box p-12 text-center text-black font-bold">
             目前沒有任何已核准的預約
           </div>
@@ -1151,7 +1173,7 @@ export default function AdminReservations() {
               </div>
             );
           })
-        )}
+        ))}
       </div>
       )}
 

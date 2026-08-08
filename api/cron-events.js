@@ -247,7 +247,8 @@ export default async function handler(req, res) {
 
           // Day Before Logic
           if (checkDayBefore && resDate === tomorrowDateStr && !res.reminderDayBeforeSent) {
-            if (todayTimeStr >= reminderSettings.dayBefore.time) {
+            const dbTime = reminderSettings.dayBefore.time || '20:00';
+            if (todayTimeStr >= dbTime) {
               const tmpl = templates.reminderDayBefore || {};
               const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
               const txt = (tmpl.text || '提醒您明日的預約即將到來').replace(/{好友的顯示名稱}/g, uName);
@@ -262,7 +263,8 @@ export default async function handler(req, res) {
           
           // Same Day Logic
           if (checkSameDay && resDate === todayDateStr && !res.reminderSameDaySent) {
-            if (todayTimeStr >= reminderSettings.sameDay.time) {
+            const sdTime = reminderSettings.sameDay.time || '09:00';
+            if (todayTimeStr >= sdTime) {
               const tmpl = templates.reminderSameDay || {};
               const t = (tmpl.title || '今日預約').replace(/{好友的顯示名稱}/g, uName);
               const txt = (tmpl.text || '提醒您今日的預約').replace(/{好友的顯示名稱}/g, uName);
@@ -277,7 +279,8 @@ export default async function handler(req, res) {
 
           // Two Days Before Logic
           if (checkTwoDaysBefore && resDate === twoDaysAfterStr && !res.reminderTwoDaysBeforeSent) {
-            if (todayTimeStr >= reminderSettings.twoDaysBefore.time) {
+            const tdTime = reminderSettings.twoDaysBefore.time || '20:00';
+            if (todayTimeStr >= tdTime) {
               const tmpl = templates.reminderTwoDaysBefore || {};
               const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
               const txt = (tmpl.text || '提醒您後天有預約').replace(/{好友的顯示名稱}/g, uName);
@@ -292,7 +295,8 @@ export default async function handler(req, res) {
 
           // Three Days Before Logic
           if (checkThreeDaysBefore && resDate === threeDaysAfterStr && !res.reminderThreeDaysBeforeSent) {
-            if (todayTimeStr >= reminderSettings.threeDaysBefore.time) {
+            const thdTime = reminderSettings.threeDaysBefore.time || '20:00';
+            if (todayTimeStr >= thdTime) {
               const tmpl = templates.reminderThreeDaysBefore || {};
               const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
               const txt = (tmpl.text || '提醒您三天後有預約').replace(/{好友的顯示名稱}/g, uName);
