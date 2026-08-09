@@ -63,10 +63,13 @@ export default async function handler(req, res) {
     };
 
     if (templatesSnap.exists()) {
-      if (req.body.type === 'submit' && templatesSnap.data().clientSuccess) {
-        lineTemplate = templatesSnap.data().clientSuccess;
-      } else if (templatesSnap.data().lineConfirm) {
-        lineTemplate = templatesSnap.data().lineConfirm;
+      const allTemplates = templatesSnap.data();
+      if (req.body.type === 'submit' && allTemplates.clientSuccess) {
+        lineTemplate = allTemplates.clientSuccess;
+      } else if (req.body.type && allTemplates[req.body.type]) {
+        lineTemplate = allTemplates[req.body.type];
+      } else if (allTemplates.lineConfirm) {
+        lineTemplate = allTemplates.lineConfirm;
       }
     }
 

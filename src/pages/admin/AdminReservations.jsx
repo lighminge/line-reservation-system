@@ -158,18 +158,22 @@ export default function AdminReservations() {
         await updateReservationStatus(res.id, 'pending');
         await fetchData();
       } else if (type === 'resend_line') {
+        const payload = {
+          userId: res.userId,
+          reservationId: res.id,
+          date: res.date,
+          time: res.time,
+          purpose: res.purpose
+        };
+        if (actionConfirmModal.reminderType) {
+          payload.type = actionConfirmModal.reminderType;
+        }
         await fetch('/api/send-line-message', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: res.userId,
-            reservationId: res.id,
-            date: res.date,
-            time: res.time,
-            purpose: res.purpose
-          }),
+          body: JSON.stringify(payload),
         });
-        setSuccessModal({ isOpen: true, message: '預約確認推播已重新送出！' });
+        setSuccessModal({ isOpen: true, message: actionConfirmModal.reminderType ? '通知已重新送出！' : '預約確認推播已重新送出！' });
       }
     } catch (error) {
       alert("操作失敗：" + error.message);
@@ -186,8 +190,8 @@ export default function AdminReservations() {
     setActionConfirmModal({ isOpen: true, type: 'return_pending', res });
   };
 
-  const handleResendLineMessage = (res) => {
-    setActionConfirmModal({ isOpen: true, type: 'resend_line', res });
+  const handleResendLineMessage = (res, reminderType = undefined) => {
+    setActionConfirmModal({ isOpen: true, type: 'resend_line', res, reminderType });
   };
 
   const days = eachDayOfInterval({
@@ -1318,10 +1322,15 @@ export default function AdminReservations() {
                               <div className="flex items-center justify-center gap-1">
                                 <span>{getSubDays(r.date, 3)}</span>
                                 {r.reminderThreeDaysBeforeSent && (
-                                  <button onClick={() => openPreview(3, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                    <span className="text-[10px] underline">內容</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={() => openPreview(3, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                      <span className="text-[10px] underline">內容</span>
+                                    </button>
+                                    <button onClick={() => handleResendLineMessage(r, 'reminderThreeDaysBefore')} className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-300 px-1 py-0.5 rounded text-slate-600" title="重新發送通知">
+                                      重發
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </td>
@@ -1330,10 +1339,15 @@ export default function AdminReservations() {
                               <div className="flex items-center justify-center gap-1">
                                 <span>{getSubDays(r.date, 2)}</span>
                                 {r.reminderTwoDaysBeforeSent && (
-                                  <button onClick={() => openPreview(2, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                    <span className="text-[10px] underline">內容</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={() => openPreview(2, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                      <span className="text-[10px] underline">內容</span>
+                                    </button>
+                                    <button onClick={() => handleResendLineMessage(r, 'reminderTwoDaysBefore')} className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-300 px-1 py-0.5 rounded text-slate-600" title="重新發送通知">
+                                      重發
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </td>
@@ -1342,22 +1356,32 @@ export default function AdminReservations() {
                               <div className="flex items-center justify-center gap-1">
                                 <span>{getSubDays(r.date, 1)}</span>
                                 {r.reminderDayBeforeSent && (
-                                  <button onClick={() => openPreview(1, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                    <span className="text-[10px] underline">內容</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={() => openPreview(1, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                      <span className="text-[10px] underline">內容</span>
+                                    </button>
+                                    <button onClick={() => handleResendLineMessage(r, 'reminderDayBefore')} className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-300 px-1 py-0.5 rounded text-slate-600" title="重新發送通知">
+                                      重發
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </td>
                             
-                            <td className="p-3 bg-white">
+                            <td className="p-3 bg-white border-b-0">
                               <div className="flex items-center justify-center gap-1">
                                 <span>{r.date}</span>
                                 {r.reminderSameDaySent && (
-                                  <button onClick={() => openPreview(0, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                                    <span className="text-[10px] underline">內容</span>
-                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    <button onClick={() => openPreview(0, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                      <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                                      <span className="text-[10px] underline">內容</span>
+                                    </button>
+                                    <button onClick={() => handleResendLineMessage(r, 'reminderSameDay')} className="text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-300 px-1 py-0.5 rounded text-slate-600" title="重新發送通知">
+                                      重發
+                                    </button>
+                                  </div>
                                 )}
                               </div>
                             </td>
