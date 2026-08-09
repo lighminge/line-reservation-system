@@ -1311,10 +1311,22 @@ export default function AdminReservations() {
                       paginated.map((r, i) => {
                         const idx = (notiPage - 1) * notiPageSize + i + 1;
                         const uName = users[r.userId] || '未知用戶';
+                        const uData = fullUsers[r.userId];
                         return (
                           <tr key={r.id} className="border-b-2 border-black hover:bg-yellow-50 transition-colors whitespace-nowrap font-bold text-center">
                             <td className="p-3 border-r-2 border-black">{idx}</td>
-                            <td className="p-3 border-r-2 border-black text-left">{uName}</td>
+                            <td className="p-3 border-r-2 border-black text-left">
+                              <div className="flex items-center gap-2">
+                                {uData?.pictureUrl ? (
+                                  <img src={uData.pictureUrl} alt={uName} className="w-6 h-6 rounded-full border border-black shadow-[1px_1px_0_0_#000] object-cover" />
+                                ) : (
+                                  <div className="w-6 h-6 rounded-full border border-black bg-slate-200 flex items-center justify-center shadow-[1px_1px_0_0_#000]">
+                                    <User className="w-3 h-3 text-slate-500" />
+                                  </div>
+                                )}
+                                <span>{uName}</span>
+                              </div>
+                            </td>
                             <td className="p-3 border-r-2 border-black text-blue-700">{r.purpose}</td>
                             <td className="p-3 border-r-2 border-black">{r.date}</td>
                             
