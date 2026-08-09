@@ -3,7 +3,7 @@ import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterv
 import { ChevronLeft, ChevronRight, Loader2, X, Check, Clock, User, Calendar as CalendarIcon, MessageCircle, Tag, Heart, List, Users, Send, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import TimePicker from '../../components/TimePicker';
-import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary, getReminderSettings, saveReminderSettings } from '../../services/db';
+import { getAdminReservations, updateReservationStatus, getAllUsers, getDictionary, getReminderSettings, saveReminderSettings, getMessageTemplates } from '../../services/db';
 import { getTaiwanHolidayInfo } from '../../utils/calendar';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
@@ -46,6 +46,8 @@ export default function AdminReservations() {
     sameDay: { enabled: false, time: '09:00' }
   });
   const [savingReminder, setSavingReminder] = useState(false);
+  const [messageTemplates, setMessageTemplates] = useState({});
+  const [previewModal, setPreviewModal] = useState({ isOpen: false, title: '', text: '', imageUrl: '' });
 
   useEffect(() => {
     fetchData();
@@ -74,7 +76,8 @@ export default function AdminReservations() {
       getAdminReservations(),
       getDictionary('purposes'),
       getAllUsers(),
-      getReminderSettings()
+      getReminderSettings(),
+      getMessageTemplates()
     ]);
     
     setReservations(resData);
@@ -1324,6 +1327,45 @@ export default function AdminReservations() {
             >
               確定
             </button>
+          </div>
+        </div>
+      )}
+
+
+      {/* Preview Modal */}
+      {previewModal.isOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-md w-full p-0 animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className="bg-green-500 p-4 border-b-[4px] border-black flex justify-between items-center">
+              <h3 className="text-xl font-black text-white">已發出的資料內容</h3>
+              <button onClick={() => setPreviewModal({ ...previewModal, isOpen: false })} className="text-white hover:text-black font-black bg-black/20 p-1 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 bg-slate-50">
+              <div className="bg-white border-2 border-black p-4 comic-box flex flex-col gap-4">
+                {previewModal.imageUrl && (
+                  <img src={previewModal.imageUrl.startsWith('internal://') ? `/api/image?id=${previewModal.imageUrl.replace('internal://', '')}` : previewModal.imageUrl} alt="預覽圖片" className="w-full h-auto border-2 border-black object-cover rounded-xl" style={{aspectRatio: '1.51/1'}} />
+                )}
+                <div>
+                  <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">標題</div>
+                  <div className="text-lg font-black text-black">{previewModal.title}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">內文</div>
+                  <div className="text-sm font-bold text-slate-800 whitespace-pre-wrap">{previewModal.text}</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-100 border-t-[4px] border-black flex justify-end">
+              <button 
+                onClick={() => setPreviewModal({ ...previewModal, isOpen: false })}
+                className="px-6 py-2 bg-black text-white font-black border-2 border-black hover:bg-slate-800 active:scale-95 transition-transform comic-box-sm"
+              >
+                關閉
+              </button>
+            </div>
           </div>
         </div>
       )}
