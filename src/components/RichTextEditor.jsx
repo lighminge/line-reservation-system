@@ -1,10 +1,26 @@
 import React, { useMemo, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import ReactQuill from 'react-quill-new';
+import ReactQuill, { Quill } from 'react-quill-new';
 import EmojiPicker, { Categories } from 'emoji-picker-react';
 import zhHantData from 'emoji-picker-react/dist/data/emojis-zh-hant';
 import { Smile } from 'lucide-react';
 import { renderToString } from 'react-dom/server';
 import 'react-quill-new/dist/quill.snow.css';
+
+const Size = Quill.import('attributors/style/size');
+Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px'];
+Quill.register(Size, true);
+
+const lineColors = [
+  "#000000", "#333333", "#666666", "#999999", "#cccccc", "#ffffff",
+  "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff",
+  "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff",
+  "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff",
+  "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2",
+  "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466",
+  "#00B900", "#00C300", "#06C755", "#02B956", "#14B65B", "#00C755", "#FF334B",
+  "#0000FF", "#FF0000", "#00FF00", "#FFFF00", "#00FFFF", "#FF00FF", "#C0C0C0",
+  "#808080", "#800000", "#808000", "#008000", "#800080", "#008080", "#000080"
+];
 
 const RichTextEditor = forwardRef(({ value, onChange, placeholder, styleClass = 'h-48' }, ref) => {
   const wrapperRef = useRef(null);
@@ -25,9 +41,9 @@ const RichTextEditor = forwardRef(({ value, onChange, placeholder, styleClass = 
   const modules = useMemo(() => ({
     toolbar: {
       container: [
-        [{ 'size': ['small', false, 'large', 'huge'] }],
+        [{ 'size': ['10px', '12px', '14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px'] }],
         ['bold'],
-        [{ 'color': [] }],
+        [{ 'color': lineColors }],
         [{ 'align': [] }],
         ['clean'],
         ['emoji'] // Placeholder for our custom button

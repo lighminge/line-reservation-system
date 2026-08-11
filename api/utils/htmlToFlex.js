@@ -144,10 +144,21 @@ export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333", de
     });
 
     if (spans.length > 0) {
+      const sizeOrder = { 'xxs': 1, 'xs': 2, 'sm': 3, 'md': 4, 'lg': 5, 'xl': 6, 'xxl': 7, '3xl': 8, '4xl': 9, '5xl': 10 };
+      let maxSize = defaultSize;
+      let maxVal = sizeOrder[defaultSize] || 4;
+      spans.forEach(s => {
+        if (s.size && sizeOrder[s.size] && sizeOrder[s.size] > maxVal) {
+          maxVal = sizeOrder[s.size];
+          maxSize = s.size;
+        }
+      });
+
       contents.push({
         type: "text",
         contents: spans,
         align: align,
+        size: maxSize,
         wrap: true
       });
     }
