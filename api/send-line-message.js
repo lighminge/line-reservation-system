@@ -201,9 +201,16 @@ export default async function handler(req, res) {
     let flexContents = {};
 
     if (finalImageUrl && finalImageUrl.startsWith('http')) {
-      // Hero Image Design
       flexContents = {
         type: "bubble",
+        header: {
+          type: "box",
+          layout: "vertical",
+          contents: [
+            ...parseHtmlToFlexContents(titleText, "#ffffff", "xl", "bold")
+          ],
+          backgroundColor: "#00B900"
+        },
         hero: {
           type: "image",
           url: finalImageUrl,
@@ -216,8 +223,7 @@ export default async function handler(req, res) {
           layout: "vertical",
           spacing: "md",
           contents: [
-            ...parseHtmlToFlexContents(titleText, "#111111", "xl", "bold"),
-            ...parseHtmlToFlexContents(messageText, "#111111", "md", "regular"),
+            ...parseHtmlToFlexContents(messageText, "#333333"),
             { type: "separator", margin: "lg" },
             { type: "box", layout: "vertical", margin: "lg", spacing: "sm", contents: detailsBoxContents }
           ]

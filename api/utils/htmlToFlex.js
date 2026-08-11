@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio';
+import Color from 'colorjs.io';
 
 export function stripHtml(html) {
   if (!html) return '';
@@ -6,13 +7,21 @@ export function stripHtml(html) {
   return $.text();
 }
 
-function rgbToHex(rgbStr) {
-  if (rgbStr.startsWith('#')) return rgbStr;
-  const match = rgbStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-  if (match) {
-    return "#" + match.slice(1, 4).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+function anyColorToHex(colorStr) {
+  try {
+    const color = new Color(colorStr);
+    let hex = color.to('srgb').toString({format: 'hex'});
+    if (hex.length === 4) {
+      hex = "#" + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+    }
+    // Also remove alpha channel if colorjs.io outputs #RRGGBBAA since Line only supports 6 digits
+    if (hex.length === 9) {
+      hex = hex.substring(0, 7);
+    }
+    return hex;
+  } catch (err) {
+    return null;
   }
-  return null;
 }
 
 export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333", defaultSize = "md", defaultWeight = "regular") {
@@ -90,11 +99,38 @@ export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333", de
         
         // Color is inline style
         const styleAttr = $n.attr('style') || '';
+        
         const colorMatch = styleAttr.match(/color:\s*([^;]+)/i);
         if (colorMatch) {
           const colorVal = colorMatch[1].trim();
-          const hex = rgbToHex(colorVal);
+          const hex = anyColorToHex(colorVal);
           if (hex) newStyles.color = hex;
+        }
+
+        const sizeMatch = styleAttr.match(/font-size:\s*([^;]+)/i);
+        if (sizeMatch) {
+          const sizeVal = sizeMatch[1].trim();
+          if (sizeVal.includes('px')) {
+            const px = parseInt(sizeVal);
+            if (px <= 12) newStyles.size = 'sm';
+            else if (px <= 16) newStyles.size = 'md';
+            else if (px <= 20) newStyles.size = 'lg';
+            else if (px <= 24) newStyles.size = 'xl';
+            else if (px <= 28) newStyles.size = 'xxl';
+            else if (px <= 32) newStyles.size = '3xl';
+            else if (px <= 36) newStyles.size = '4xl';
+            else newStyles.size = '5xl';
+          } else if (sizeVal.includes('rem') || sizeVal.includes('em')) {
+            const em = parseFloat(sizeVal);
+            if (em <= 0.8) newStyles.size = 'sm';
+            else if (em <= 1.0) newStyles.size = 'md';
+            else if (em <= 1.25) newStyles.size = 'lg';
+            else if (em <= 1.5) newStyles.size = 'xl';
+            else if (em <= 1.75) newStyles.size = 'xxl';
+            else if (em <= 2.0) newStyles.size = '3xl';
+            else if (em <= 2.25) newStyles.size = '4xl';
+            else newStyles.size = '5xl';
+          }
         }
 
         $(node).contents().each((_, child) => {
