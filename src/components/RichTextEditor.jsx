@@ -138,9 +138,14 @@ const RichTextEditor = forwardRef(({ value, onChange, placeholder, styleClass = 
           box-sizing: border-box !important;
           border-radius: 0 !important;
           width: 100% !important;
+          min-height: 0 !important;
+          display: flex !important;
+          flex-direction: column !important;
         }
         .ql-editor {
           font-size: 16px;
+          flex-grow: 1;
+          overflow-y: auto;
         }
         /* Custom styling for emoji button to look like Quill buttons */
         .ql-snow .ql-toolbar button.ql-emoji {
