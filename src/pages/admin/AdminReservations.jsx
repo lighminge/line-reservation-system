@@ -1197,7 +1197,7 @@ export default function AdminReservations() {
           const totalPages = Math.ceil(filtered.length / notiPageSize) || 1;
           const paginated = filtered.slice((notiPage - 1) * notiPageSize, notiPage * notiPageSize);
           
-          const openPreview = (type, uName) => {
+          const openPreview = (type, resData, uData, uName) => {
             let tmpl = {};
             if (type === 3) tmpl = messageTemplates.reminderThreeDaysBefore || {};
             else if (type === 2) tmpl = messageTemplates.reminderTwoDaysBefore || {};
@@ -1211,8 +1211,47 @@ export default function AdminReservations() {
             if (type === 1) defaultText = '提醒您明日的預約即將到來';
             if (type === 0) { defaultTitle = '今日預約'; defaultText = '提醒您今日的預約'; }
 
-            const t = (tmpl.title || defaultTitle).replace(/{好友的顯示名稱}/g, uName);
-            const txt = (tmpl.text || defaultText).replace(/{好友的顯示名稱}/g, uName);
+            const getZodiac = (birthday) => {
+              if (!birthday) return '';
+              const parts = birthday.split('-');
+              if (parts.length !== 3) return '';
+              const m = parseInt(parts[1], 10);
+              const d = parseInt(parts[2], 10);
+              if (isNaN(m) || isNaN(d)) return '';
+              
+              if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return '牡羊座';
+              if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return '金牛座';
+              if ((m === 5 && d >= 21) || (m === 6 && d <= 21)) return '雙子座';
+              if ((m === 6 && d >= 22) || (m === 7 && d <= 22)) return '巨蟹座';
+              if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return '獅子座';
+              if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return '處女座';
+              if ((m === 9 && d >= 23) || (m === 10 && d <= 23)) return '天秤座';
+              if ((m === 10 && d >= 24) || (m === 11 && d <= 21)) return '天蠍座';
+              if ((m === 11 && d >= 22) || (m === 12 && d <= 20)) return '射手座';
+              if ((m === 12 && d >= 21) || (m === 1 && d <= 20)) return '摩羯座';
+              if ((m === 1 && d >= 21) || (m === 2 && d <= 19)) return '水瓶座';
+              if ((m === 2 && d >= 20) || (m === 3 && d <= 20)) return '雙魚座';
+              return '';
+            };
+
+            const replaceVars = (text) => {
+              if (!text) return '';
+              let res = text.replace(/{好友的顯示名稱}/g, uName || '未知用戶');
+              if (resData) {
+                res = res.replace(/{預約日期}/g, resData.date || '');
+                res = res.replace(/{預約時段}/g, resData.time || '');
+                res = res.replace(/{預約項目}/g, resData.purpose || '');
+              }
+              const genderStr = (uData && uData.gender === 'male') ? '男' : ((uData && uData.gender === 'female') ? '女' : '未知');
+              res = res.replace(/{用戶性別}/g, genderStr);
+              res = res.replace(/{用戶生日}/g, (uData && uData.birthday) ? uData.birthday : '未知');
+              const zodiac = (uData && uData.birthday) ? getZodiac(uData.birthday) : '未知';
+              res = res.replace(/{用戶星座}/g, zodiac);
+              return res;
+            };
+
+            const t = replaceVars(tmpl.title || defaultTitle);
+            const txt = replaceVars(tmpl.text || defaultText);
 
             setPreviewModal({
               isOpen: true,
@@ -1335,7 +1374,7 @@ export default function AdminReservations() {
                                 <span>{getSubDays(r.date, 3)}</span>
                                 {r.reminderThreeDaysBeforeSent && (
                                   <div className="flex items-center gap-2">
-                                    <button onClick={() => openPreview(3, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                    <button onClick={() => openPreview(3, r, uData, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
                                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                                       <span className="text-[10px] underline">內容</span>
                                     </button>
@@ -1352,7 +1391,7 @@ export default function AdminReservations() {
                                 <span>{getSubDays(r.date, 2)}</span>
                                 {r.reminderTwoDaysBeforeSent && (
                                   <div className="flex items-center gap-2">
-                                    <button onClick={() => openPreview(2, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                    <button onClick={() => openPreview(2, r, uData, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
                                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                                       <span className="text-[10px] underline">內容</span>
                                     </button>
@@ -1369,7 +1408,7 @@ export default function AdminReservations() {
                                 <span>{getSubDays(r.date, 1)}</span>
                                 {r.reminderDayBeforeSent && (
                                   <div className="flex items-center gap-2">
-                                    <button onClick={() => openPreview(1, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                    <button onClick={() => openPreview(1, r, uData, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
                                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                                       <span className="text-[10px] underline">內容</span>
                                     </button>
@@ -1386,7 +1425,7 @@ export default function AdminReservations() {
                                 <span>{r.date}</span>
                                 {r.reminderSameDaySent && (
                                   <div className="flex items-center gap-2">
-                                    <button onClick={() => openPreview(0, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
+                                    <button onClick={() => openPreview(0, r, uData, uName)} className="text-blue-500 hover:text-blue-700 flex items-center gap-1" title="查看已發送內容">
                                       <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                                       <span className="text-[10px] underline">內容</span>
                                     </button>
