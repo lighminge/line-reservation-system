@@ -46,7 +46,15 @@ export default function AdminMessages() {
 
   // Quick Replies Modal State
   const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [activeQrField, setActiveQrField] = useState(''); // 'clientSuccess', 'lineConfirm', 'adminCustom'
+  const [activeQrField, setActiveQrField] = useState('');
+  
+  const clientSuccessRef = useRef(null);
+  const lineConfirmRef = useRef(null);
+  const adminCustomRef = useRef(null);
+  const reminderDayBeforeRef = useRef(null);
+  const reminderTwoDaysBeforeRef = useRef(null);
+  const reminderThreeDaysBeforeRef = useRef(null);
+  const reminderSameDayRef = useRef(null); // 'clientSuccess', 'lineConfirm', 'adminCustom'
 
   // View Category State
   const [viewCategory, setViewCategory] = useState('ALL');
@@ -223,7 +231,7 @@ export default function AdminMessages() {
             <div>
               <label className="text-sm font-semibold text-black font-black block mb-2">
                 主標題
-                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：請使用上方選單插入</span>
               </label>
               <RichTextEditor 
                 value={templates.clientSuccess.title}
@@ -237,17 +245,37 @@ export default function AdminMessages() {
               <div className="flex justify-between items-end mb-2">
                 <label className="text-sm font-semibold text-black font-black block">
                   內文說明
-                  <span className="text-xs text-blue-500 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                  <span className="text-xs text-blue-500 font-normal ml-2">支援變數：請使用上方選單插入</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('clientSuccess'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        clientSuccessRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('clientSuccess'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
-              <RichTextEditor 
+              <RichTextEditor ref={clientSuccessRef} 
                 value={templates.clientSuccess.text}
                 onChange={val => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, text: val}})}
                 placeholder="請輸入成功提示文字"
@@ -305,7 +333,7 @@ export default function AdminMessages() {
             <div>
               <label className="text-sm font-semibold text-black font-black block mb-2">
                 主標題
-                <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                <span className="text-xs text-green-600 font-normal ml-2">支援變數：請使用上方選單插入</span>
               </label>
               <RichTextEditor 
                 value={templates.lineConfirm.title}
@@ -319,17 +347,37 @@ export default function AdminMessages() {
               <div className="flex justify-between items-end mb-2">
                 <label className="text-sm font-semibold text-black font-black block">
                   內文說明 (下方會自動附上時間等資訊)
-                  <span className="text-xs text-green-600 font-normal ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                  <span className="text-xs text-green-600 font-normal ml-2">支援變數：請使用上方選單插入</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('lineConfirm'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        lineConfirmRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('lineConfirm'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
-              <RichTextEditor 
+              <RichTextEditor ref={lineConfirmRef} 
                 value={templates.lineConfirm.text}
                 onChange={val => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, text: val}})}
                 placeholder="例如：期待您的到來！"
@@ -392,7 +440,7 @@ export default function AdminMessages() {
               <div>
                 <label className="text-sm font-semibold text-black font-black block mb-2">
                   主標題
-                  <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                  <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：請使用上方選單插入</span>
                 </label>
                 <RichTextEditor 
                   value={templates.adminCustomMessage?.title || ''}
@@ -406,15 +454,35 @@ export default function AdminMessages() {
                 <div className="flex justify-between items-end mb-2">
                   <label className="text-sm font-semibold text-black font-black block">
                     預設內文說明
-                    <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}、{'{帳號名稱}'}</span>
+                    <span className="text-xs text-yellow-700 font-bold ml-2">支援變數：請使用上方選單插入</span>
                   </label>
+                  <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        adminCustomRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
                   <button 
                     type="button" 
                     onClick={() => { setActiveQrField('adminCustom'); setQrModalOpen(true); }}
-                    className="text-xs font-semibold text-black bg-yellow-400 hover:bg-yellow-500 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
                   >
                     <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
                   </button>
+                </div>
                 </div>
                 <RichTextEditor 
                   value={templates.adminCustomMessage?.text || ''}
@@ -493,13 +561,33 @@ export default function AdminMessages() {
                   內文說明
                   <span className="text-xs text-blue-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('reminderThreeDaysBefore'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        reminderThreeDaysBeforeRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('reminderThreeDaysBefore'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
               <RichTextEditor 
                 value={templates.reminderThreeDaysBefore?.text || ''}
@@ -567,13 +655,33 @@ export default function AdminMessages() {
                   內文說明
                   <span className="text-xs text-indigo-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('reminderTwoDaysBefore'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        reminderTwoDaysBeforeRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('reminderTwoDaysBefore'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
               <RichTextEditor 
                 value={templates.reminderTwoDaysBefore?.text || ''}
@@ -641,13 +749,33 @@ export default function AdminMessages() {
                   內文說明
                   <span className="text-xs text-purple-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('reminderDayBefore'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-purple-500 hover:bg-purple-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        reminderDayBeforeRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('reminderDayBefore'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
               <RichTextEditor 
                 value={templates.reminderDayBefore?.text || ''}
@@ -715,13 +843,33 @@ export default function AdminMessages() {
                   內文說明
                   <span className="text-xs text-orange-700 font-bold ml-2">支援變數：{'{好友的顯示名稱}'}</span>
                 </label>
-                <button 
-                  type="button" 
-                  onClick={() => { setActiveQrField('reminderSameDay'); setQrModalOpen(true); }}
-                  className="text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
-                >
-                  <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
-                </button>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        reminderSameDayRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveQrField('reminderSameDay'); setQrModalOpen(true); }}
+                    className="text-xs font-semibold text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded border-2 border-black flex items-center shadow-[2px_2px_0_0_#000] active:shadow-[0_0_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] transition-all"
+                  >
+                    <BookmarkPlus className="w-3 h-3 mr-1" /> 常用訊息
+                  </button>
+                </div>
               </div>
               <RichTextEditor 
                 value={templates.reminderSameDay?.text || ''}

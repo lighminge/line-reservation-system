@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useRef, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import ReactQuill from 'react-quill-new';
 import EmojiPicker, { Categories } from 'emoji-picker-react';
 import zhHantData from 'emoji-picker-react/dist/data/emojis-zh-hant';
@@ -6,10 +6,21 @@ import { Smile } from 'lucide-react';
 import { renderToString } from 'react-dom/server';
 import 'react-quill-new/dist/quill.snow.css';
 
-const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) => {
+const RichTextEditor = forwardRef(({ value, onChange, placeholder, styleClass = 'h-48' }, ref) => {
   const wrapperRef = useRef(null);
   const quillRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    insertTextAtCursor: (text) => {
+      if (quillRef.current) {
+        const editor = quillRef.current.getEditor();
+        const range = editor.getSelection(true) || { index: editor.getLength() };
+        editor.insertText(range.index, text);
+        editor.setSelection(range.index + text.length);
+      }
+    }
+  }));
 
   const modules = useMemo(() => ({
     toolbar: {
@@ -148,6 +159,6 @@ const RichTextEditor = ({ value, onChange, placeholder, styleClass = 'h-48' }) =
       `}</style>
     </div>
   );
-};
+});
 
 export default RichTextEditor;

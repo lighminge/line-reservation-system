@@ -14,6 +14,58 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+
+const getZodiac = (month, day) => {
+  const m = parseInt(month, 10);
+  const d = parseInt(day, 10);
+  if (isNaN(m) || isNaN(d)) return '';
+  if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) return '水瓶座';
+  if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) return '雙魚座';
+  if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) return '牡羊座';
+  if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) return '金牛座';
+  if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) return '雙子座';
+  if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) return '巨蟹座';
+  if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) return '獅子座';
+  if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) return '處女座';
+  if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) return '天秤座';
+  if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) return '天蠍座';
+  if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) return '射手座';
+  if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) return '摩羯座';
+  return '';
+};
+
+const replaceDynamicVars = (text, user, res) => {
+  if (!text) return '';
+  let result = text;
+  
+  // User Variables
+  const uName = user?._displayName || '用戶';
+  const uGender = user?.gender || '';
+  const uBirthday = user?.birthday || '';
+  let uZodiac = '';
+  if (uBirthday) {
+    const parts = uBirthday.split('-');
+    if (parts.length === 3) uZodiac = getZodiac(parts[1], parts[2]);
+  }
+  
+  result = result.replace(/{好友的顯示名稱}/g, uName);
+  result = result.replace(/{帳號名稱}/g, uName);
+  result = result.replace(/{用戶性別}/g, uGender);
+  result = result.replace(/{用戶生日}/g, uBirthday);
+  result = result.replace(/{用戶星座}/g, uZodiac);
+  
+  // Reservation Variables
+  const rDate = res?.date || '';
+  const rTime = res?.time || '';
+  const rPurpose = res?.purpose || '';
+  
+  result = result.replace(/{預約日期}/g, rDate);
+  result = result.replace(/{預約時段}/g, rTime);
+  result = result.replace(/{預約項目}/g, rPurpose);
+  
+  return result;
+};
+
 export default async function handler(req, res) {
   try {
     // 1. Fetch Line Settings from Firestore
@@ -151,8 +203,8 @@ export default async function handler(req, res) {
       if (hasVariables) {
         // Send individually
         for (const u of targetUsers) {
-          const t = (ev.messageTitle || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
-          const txt = (ev.content || '').replace(/{好友的顯示名稱}/g, u.displayName || '用戶').replace(/{帳號名稱}/g, u.displayName || '用戶');
+          const t = replaceDynamicVars(ev.messageTitle, { ...u, _displayName: u.displayName || '用戶' }, null);
+          const txt = replaceDynamicVars(ev.content, { ...u, _displayName: u.displayName || '用戶' }, null);
           
           const lineResponse = await sendLineMessage(u.userId, t, txt, finalImageUrl, ev.imageAspectRatio);
           if (!lineResponse.ok) allSuccess = false;
@@ -229,7 +281,8 @@ export default async function handler(req, res) {
           const u = doc.data();
           let name = u.displayName || '用戶';
           if (useOriginal && u.originalLineName) name = u.originalLineName;
-          usersMap[u.userId] = name;
+          u._displayName = name;
+          usersMap[u.userId] = u;
         });
 
         // Fetch confirmed reservations
@@ -242,7 +295,7 @@ export default async function handler(req, res) {
 
         for (const res of reservations) {
           const resDate = res.date; // YYYY-MM-DD
-          const uName = usersMap[res.userId] || '用戶';
+          const uData = usersMap[res.userId] || { _displayName: '用戶' };
           let updateData = {};
 
           // Day Before Logic
@@ -250,8 +303,8 @@ export default async function handler(req, res) {
             const dbTime = reminderSettings.dayBefore.time || '20:00';
             if (todayTimeStr >= dbTime) {
               const tmpl = templates.reminderDayBefore || {};
-              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
-              const txt = (tmpl.text || '提醒您明日的預約即將到來').replace(/{好友的顯示名稱}/g, uName);
+              const t = replaceDynamicVars(tmpl.title || '預約提醒', uData, res);
+              const txt = replaceDynamicVars(tmpl.text || '提醒您明日的預約即將到來', uData, res);
               
               const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
               if (sendRes.ok) {
@@ -266,8 +319,8 @@ export default async function handler(req, res) {
             const sdTime = reminderSettings.sameDay.time || '09:00';
             if (todayTimeStr >= sdTime) {
               const tmpl = templates.reminderSameDay || {};
-              const t = (tmpl.title || '今日預約').replace(/{好友的顯示名稱}/g, uName);
-              const txt = (tmpl.text || '提醒您今日的預約').replace(/{好友的顯示名稱}/g, uName);
+              const t = replaceDynamicVars(tmpl.title || '今日預約', uData, res);
+              const txt = replaceDynamicVars(tmpl.text || '提醒您今日的預約', uData, res);
               
               const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
               if (sendRes.ok) {
@@ -282,8 +335,8 @@ export default async function handler(req, res) {
             const tdTime = reminderSettings.twoDaysBefore.time || '20:00';
             if (todayTimeStr >= tdTime) {
               const tmpl = templates.reminderTwoDaysBefore || {};
-              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
-              const txt = (tmpl.text || '提醒您後天有預約').replace(/{好友的顯示名稱}/g, uName);
+              const t = replaceDynamicVars(tmpl.title || '預約提醒', uData, res);
+              const txt = replaceDynamicVars(tmpl.text || '提醒您後天有預約', uData, res);
               
               const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
               if (sendRes.ok) {
@@ -298,8 +351,8 @@ export default async function handler(req, res) {
             const thdTime = reminderSettings.threeDaysBefore.time || '20:00';
             if (todayTimeStr >= thdTime) {
               const tmpl = templates.reminderThreeDaysBefore || {};
-              const t = (tmpl.title || '預約提醒').replace(/{好友的顯示名稱}/g, uName);
-              const txt = (tmpl.text || '提醒您三天後有預約').replace(/{好友的顯示名稱}/g, uName);
+              const t = replaceDynamicVars(tmpl.title || '預約提醒', uData, res);
+              const txt = replaceDynamicVars(tmpl.text || '提醒您三天後有預約', uData, res);
               
               const sendRes = await sendLineMessage(res.userId, t, txt, tmpl.imageUrl);
               if (sendRes.ok) {
