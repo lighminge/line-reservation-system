@@ -1623,38 +1623,50 @@ export default function AdminReservations() {
 
       {/* Preview Modal */}
       {previewModal.isOpen && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white border-[4px] border-black shadow-[8px_8px_0_0_#000] shadow-xl max-w-md w-full p-0 animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="bg-green-500 p-4 border-b-[4px] border-black flex justify-between items-center">
-              <h3 className="text-xl font-black text-white">已發出的資料內容</h3>
-              <button onClick={() => setPreviewModal({ ...previewModal, isOpen: false })} className="text-white hover:text-black font-black bg-black/20 p-1 rounded-full">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-transparent max-w-sm w-full p-0 animate-in zoom-in-95 duration-200 flex flex-col items-center">
+            
+            {/* Header Actions */}
+            <div className="w-full flex justify-between items-center mb-2">
+              <span className="text-white font-bold drop-shadow-md">Line 預覽畫面</span>
+              <button onClick={() => setPreviewModal({ ...previewModal, isOpen: false })} className="text-white hover:text-red-400 bg-black/40 hover:bg-black/60 p-1.5 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Line Flex Message Bubble Simulation */}
+            <div className="w-full max-w-[320px] bg-white rounded-2xl overflow-hidden shadow-2xl relative font-sans border border-slate-200/50">
+              {/* Flex Header */}
+              {previewModal.title && (
+                <div className="bg-[#00B900] px-4 py-3">
+                  <div className="text-white text-xl font-bold [&>p]:m-0" dangerouslySetInnerHTML={{ __html: previewModal.title }}></div>
+                </div>
+              )}
+
+              {/* Flex Hero Image */}
+              {previewModal.imageUrl && (
+                <img 
+                  src={previewModal.imageUrl.startsWith('internal://') ? `/api/image?id=${previewModal.imageUrl.replace('internal://', '')}` : previewModal.imageUrl} 
+                  alt="Flex Image" 
+                  className="w-full object-cover block" 
+                  style={{aspectRatio: '1.51/1'}} 
+                />
+              )}
+
+              {/* Flex Body */}
+              {previewModal.text && (
+                <div className="p-4">
+                  <div className="text-[#333333] text-[15px] leading-relaxed whitespace-pre-wrap [&>p]:m-0 [&>p]:mb-1 last:[&>p]:mb-0 [&_strong]:font-bold" dangerouslySetInnerHTML={{ __html: previewModal.text }}></div>
+                </div>
+              )}
+            </div>
+
+            {/* Disclaimer */}
+            <div className="mt-6 p-3 bg-yellow-100/90 text-yellow-800 text-xs rounded-lg border border-yellow-300 max-w-[320px] shadow-lg backdrop-blur-sm">
+              <p className="font-bold mb-1">⚠️ 溫馨提示：</p>
+              <p>由於系統不保留歷史發送「快照」，此畫面是使用用戶當下資料與「最新版」訊息設定即時產生。如果您在發送後有修改過訊息設定，預覽將會顯示最新版樣貌，而非當時發出的歷史內容。</p>
+            </div>
             
-            <div className="p-6 bg-slate-50">
-              <div className="bg-white border-2 border-black p-4 comic-box flex flex-col gap-4">
-                {previewModal.imageUrl && (
-                  <img src={previewModal.imageUrl.startsWith('internal://') ? `/api/image?id=${previewModal.imageUrl.replace('internal://', '')}` : previewModal.imageUrl} alt="預覽圖片" className="w-full h-auto border-2 border-black object-cover rounded-xl" style={{aspectRatio: '1.51/1'}} />
-                )}
-                <div>
-                  <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">標題</div>
-                  <div className="text-lg font-black text-black [&>p]:m-0" dangerouslySetInnerHTML={{ __html: previewModal.title }}></div>
-                </div>
-                <div>
-                  <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">內文</div>
-                  <div className="text-sm font-bold text-slate-800 whitespace-pre-wrap [&>p]:m-0" dangerouslySetInnerHTML={{ __html: previewModal.text }}></div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-slate-100 border-t-[4px] border-black flex justify-end">
-              <button 
-                onClick={() => setPreviewModal({ ...previewModal, isOpen: false })}
-                className="px-6 py-2 bg-black text-white font-black border-2 border-black hover:bg-slate-800 active:scale-95 transition-transform comic-box-sm"
-              >
-                關閉
-              </button>
-            </div>
           </div>
         </div>
       )}
