@@ -64,7 +64,7 @@ export default function AdminMessages() {
   const reminderSameDayRef = useRef(null); // 'clientSuccess', 'lineConfirm', 'adminCustom'
 
   // View Category State
-  const [viewCategory, setViewCategory] = useState('ALL');
+  const [viewCategory, setViewCategory] = useState('RESERVATION');
 
   useEffect(() => {
     fetchTemplates();
@@ -225,8 +225,8 @@ export default function AdminMessages() {
         {(viewCategory === 'ALL' || viewCategory === 'RESERVATION') && (
           <>
             {/* Client Web Success Screen */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-blue-600 p-5 text-white flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-blue-600 rounded-t-2xl p-5 text-  justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               客戶預約成功推播 (LINE)
@@ -347,8 +347,8 @@ export default function AdminMessages() {
         </div>
 
         {/* Line Flex Message Confirm */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-green-600 p-5 text-white flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-green-600 rounded-t-2xl p-5 text-  justify-between items-center shrink-0">
             <h2 className="text-lg font-bold flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               Line 確認推播訊息
@@ -473,8 +473,8 @@ export default function AdminMessages() {
         {(viewCategory === 'ALL' || viewCategory === 'CUSTOM') && (
           <>
             {/* Admin Custom Message (Users Page) */}
-            <div className="bg-white comic-box overflow-hidden flex flex-col lg:col-span-2">
-          <div className="bg-yellow-500 p-5 text-black border-b-2 border-black flex justify-between items-center shrink-0">
+            <div className="bg-white comic-box flex flex-col lg:col-span-2">
+          <div className="bg-yellow-500 rounded-t-2xl p-5 text-  border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               用戶管理 - 客製化推播訊息
@@ -600,8 +600,8 @@ export default function AdminMessages() {
         {(viewCategory === 'ALL' || viewCategory === 'REMINDER') && (
           <>
         {/* Reminder Three Days Before */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-blue-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-blue-500 rounded-t-2xl p-5 text-  border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               預約提醒 - 前三日
@@ -714,8 +714,8 @@ export default function AdminMessages() {
 
 
         {/* Reminder Two Days Before */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-indigo-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-indigo-500 rounded-t-2xl p-5 text-  border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               預約提醒 - 前二日
@@ -828,8 +828,8 @@ export default function AdminMessages() {
 
 
         {/* Reminder Day Before */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-purple-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-purple-500 rounded-t-2xl p-5 text-  border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               預約提醒 - 前一日
@@ -942,8 +942,8 @@ export default function AdminMessages() {
 
 
         {/* Reminder Same Day */}
-        <div className="bg-white comic-box overflow-hidden flex flex-col">
-          <div className="bg-orange-500 p-5 text-white border-b-2 border-black flex justify-between items-center shrink-0">
+        <div className="bg-white comic-box flex flex-col">
+          <div className="bg-orange-500 rounded-t-2xl p-5 text-  border-black flex justify-between items-center shrink-0">
             <h2 className="text-lg font-black flex items-center">
               <MessageSquare className="w-5 h-5 mr-2" />
               預約提醒 - 當日
