@@ -1197,7 +1197,7 @@ export default function AdminReservations() {
           const totalPages = Math.ceil(filtered.length / notiPageSize) || 1;
           const paginated = filtered.slice((notiPage - 1) * notiPageSize, notiPage * notiPageSize);
           
-          const openPreview = (type, resData, uData, uName) => {
+          const openPreview = (type, resData, uData, defaultUName) => {
             let tmpl = {};
             if (type === 3) tmpl = messageTemplates.reminderThreeDaysBefore || {};
             else if (type === 2) tmpl = messageTemplates.reminderTwoDaysBefore || {};
@@ -1211,6 +1211,12 @@ export default function AdminReservations() {
             if (type === 1) defaultText = '提醒您明日的預約即將到來';
             if (type === 0) { defaultTitle = '今日預約'; defaultText = '提醒您今日的預約'; }
 
+            const useOriginal = messageTemplates.settings?.useOriginalLineNameForPush || false;
+            let finalUName = defaultUName;
+            if (useOriginal && uData?.originalLineName) {
+              finalUName = uData.originalLineName;
+            }
+
             const getZodiac = (birthday) => {
               if (!birthday) return '';
               const parts = birthday.split('-');
@@ -1219,35 +1225,48 @@ export default function AdminReservations() {
               const d = parseInt(parts[2], 10);
               if (isNaN(m) || isNaN(d)) return '';
               
-              if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return '牡羊座';
-              if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return '金牛座';
-              if ((m === 5 && d >= 21) || (m === 6 && d <= 21)) return '雙子座';
-              if ((m === 6 && d >= 22) || (m === 7 && d <= 22)) return '巨蟹座';
-              if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return '獅子座';
-              if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return '處女座';
-              if ((m === 9 && d >= 23) || (m === 10 && d <= 23)) return '天秤座';
-              if ((m === 10 && d >= 24) || (m === 11 && d <= 21)) return '天蠍座';
-              if ((m === 11 && d >= 22) || (m === 12 && d <= 20)) return '射手座';
-              if ((m === 12 && d >= 21) || (m === 1 && d <= 20)) return '摩羯座';
-              if ((m === 1 && d >= 21) || (m === 2 && d <= 19)) return '水瓶座';
-              if ((m === 2 && d >= 20) || (m === 3 && d <= 20)) return '雙魚座';
+              if ((m == 1 && d >= 20) || (m == 2 && d <= 18)) return '水瓶座';
+              if ((m == 2 && d >= 19) || (m == 3 && d <= 20)) return '雙魚座';
+              if ((m == 3 && d >= 21) || (m == 4 && d <= 19)) return '牡羊座';
+              if ((m == 4 && d >= 20) || (m == 5 && d <= 20)) return '金牛座';
+              if ((m == 5 && d >= 21) || (m == 6 && d <= 21)) return '雙子座';
+              if ((m == 6 && d >= 22) || (m == 7 && d <= 22)) return '巨蟹座';
+              if ((m == 7 && d >= 23) || (m == 8 && d <= 22)) return '獅子座';
+              if ((m == 8 && d >= 23) || (m == 9 && d <= 22)) return '處女座';
+              if ((m == 9 && d >= 23) || (m == 10 && d <= 23)) return '天秤座';
+              if ((m == 10 && d >= 24) || (m == 11 && d <= 22)) return '天蠍座';
+              if ((m == 11 && d >= 23) || (m == 12 && d <= 21)) return '射手座';
+              if ((m == 12 && d >= 22) || (m == 1 && d <= 19)) return '摩羯座';
               return '';
             };
 
             const replaceVars = (text) => {
               if (!text) return '';
-              let res = text.replace(/{好友的顯示名稱}/g, uName || '未知用戶');
-              if (resData) {
-                res = res.replace(/{預約日期}/g, resData.date || '');
-                res = res.replace(/{預約時段}/g, resData.time || '');
-                res = res.replace(/{預約項目}/g, resData.purpose || '');
+              let result = text;
+              
+              const uName = finalUName || '用戶';
+              const uGender = uData?.gender || '';
+              const uBirthday = uData?.birthday || '';
+              let uZodiac = '';
+              if (uBirthday) {
+                uZodiac = getZodiac(uBirthday);
               }
-              const genderStr = (uData && uData.gender === 'male') ? '男' : ((uData && uData.gender === 'female') ? '女' : '未知');
-              res = res.replace(/{用戶性別}/g, genderStr);
-              res = res.replace(/{用戶生日}/g, (uData && uData.birthday) ? uData.birthday : '未知');
-              const zodiac = (uData && uData.birthday) ? getZodiac(uData.birthday) : '未知';
-              res = res.replace(/{用戶星座}/g, zodiac);
-              return res;
+              
+              result = result.replace(/{好友的顯示名稱}/g, uName);
+              result = result.replace(/{帳號名稱}/g, uName);
+              result = result.replace(/{用戶性別}/g, uGender);
+              result = result.replace(/{用戶生日}/g, uBirthday);
+              result = result.replace(/{用戶星座}/g, uZodiac);
+              
+              const rDate = resData?.date || '';
+              const rTime = resData?.time || '';
+              const rPurpose = resData?.purpose || '';
+              
+              result = result.replace(/{預約日期}/g, rDate);
+              result = result.replace(/{預約時段}/g, rTime);
+              result = result.replace(/{預約項目}/g, rPurpose);
+              
+              return result;
             };
 
             const t = replaceVars(tmpl.title || defaultTitle);
