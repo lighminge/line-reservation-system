@@ -1620,11 +1620,11 @@ export default function AdminReservations() {
                 )}
                 <div>
                   <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">標題</div>
-                  <div className="text-lg font-black text-black">{previewModal.title}</div>
+                  <div className="text-lg font-black text-black [&>p]:m-0" dangerouslySetInnerHTML={{ __html: previewModal.title }}></div>
                 </div>
                 <div>
                   <div className="text-xs text-green-600 font-bold mb-1 border-b border-green-200 pb-1">內文</div>
-                  <div className="text-sm font-bold text-slate-800 whitespace-pre-wrap">{previewModal.text}</div>
+                  <div className="text-sm font-bold text-slate-800 whitespace-pre-wrap [&>p]:m-0" dangerouslySetInnerHTML={{ __html: previewModal.text }}></div>
                 </div>
               </div>
             </div>
