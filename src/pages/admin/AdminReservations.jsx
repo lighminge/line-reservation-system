@@ -72,7 +72,7 @@ export default function AdminReservations() {
   const fetchData = async () => {
     setLoading(true);
     
-    const [resData, pDict, usersData, reminderData] = await Promise.all([
+    const [resData, pDict, usersData, reminderData, messageTemplatesData] = await Promise.all([
       getAdminReservations(),
       getDictionary('purposes'),
       getAllUsers(),
@@ -84,6 +84,9 @@ export default function AdminReservations() {
     setPurposesDict(pDict || []);
     if (reminderData) {
       setReminderSettings(reminderData);
+    }
+    if (messageTemplatesData) {
+      setMessageTemplates(messageTemplatesData);
     }
     
     const userMap = {};
