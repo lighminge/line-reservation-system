@@ -89,9 +89,11 @@ export function parseHtmlToFlexContents(htmlString, defaultColor = "#333333", de
         else if ($n.hasClass('ql-size-huge')) newStyles.size = '3xl';
         
         // Color is inline style
-        const colorStyle = $n.css('color');
-        if (colorStyle) {
-          const hex = rgbToHex(colorStyle);
+        const styleAttr = $n.attr('style') || '';
+        const colorMatch = styleAttr.match(/color:\s*([^;]+)/i);
+        if (colorMatch) {
+          const colorVal = colorMatch[1].trim();
+          const hex = rgbToHex(colorVal);
           if (hex) newStyles.color = hex;
         }
 
