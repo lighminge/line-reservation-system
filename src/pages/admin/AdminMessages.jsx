@@ -48,6 +48,13 @@ export default function AdminMessages() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [activeQrField, setActiveQrField] = useState('');
   
+  const clientSuccessTitleRef = useRef(null);
+  const lineConfirmTitleRef = useRef(null);
+  const adminCustomTitleRef = useRef(null);
+  const reminderDayBeforeTitleRef = useRef(null);
+  const reminderTwoDaysBeforeTitleRef = useRef(null);
+  const reminderThreeDaysBeforeTitleRef = useRef(null);
+  const reminderSameDayTitleRef = useRef(null);
   const clientSuccessRef = useRef(null);
   const lineConfirmRef = useRef(null);
   const adminCustomRef = useRef(null);
@@ -229,12 +236,32 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">
-                主標題
-                <span className="text-xs text-blue-500 font-normal ml-2">支援變數：請使用上方選單插入</span>
-              </label>
-              <RichTextEditor 
-                value={templates.clientSuccess.title}
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  主標題
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        clientSuccessTitleRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                </div>
+              </div>
+              <RichTextEditor ref={clientSuccessTitleRef} value={templates.clientSuccess.title}
                 onChange={val => setTemplates({...templates, clientSuccess: {...templates.clientSuccess, title: val}})}
                 placeholder="例如：預約已送出！"
                 styleClass="h-24"
@@ -331,12 +358,32 @@ export default function AdminMessages() {
           
           <div className="p-6 md:p-8 space-y-6 flex-1 bg-slate-50">
             <div>
-              <label className="text-sm font-semibold text-black font-black block mb-2">
-                主標題
-                <span className="text-xs text-green-600 font-normal ml-2">支援變數：請使用上方選單插入</span>
-              </label>
-              <RichTextEditor 
-                value={templates.lineConfirm.title}
+              <div className="flex justify-between items-end mb-2">
+                <label className="text-sm font-semibold text-black font-black block">
+                  主標題
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        lineConfirmTitleRef.current?.insertTextAtCursor(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="text-xs font-semibold text-black bg-yellow-300 hover:bg-yellow-400 px-2 py-1 rounded border-2 border-black shadow-[2px_2px_0_0_#000] outline-none cursor-pointer"
+                  >
+                    <option value="">+ 插入變數</option>
+                    <option value="{好友的顯示名稱}">好友的名稱</option>
+                    <option value="{預約日期}">預約日期</option>
+                    <option value="{預約時段}">預約時段</option>
+                    <option value="{預約項目}">預約項目</option>
+                    <option value="{用戶性別}">用戶性別</option>
+                    <option value="{用戶生日}">用戶生日</option>
+                    <option value="{用戶星座}">用戶星座</option>
+                  </select>
+                </div>
+              </div>
+              <RichTextEditor ref={lineConfirmTitleRef} value={templates.lineConfirm.title}
                 onChange={val => setTemplates({...templates, lineConfirm: {...templates.lineConfirm, title: val}})}
                 placeholder="例如：預約成功確認"
                 styleClass="h-24"
@@ -346,7 +393,7 @@ export default function AdminMessages() {
             <div>
               <div className="flex justify-between items-end mb-2">
                 <label className="text-sm font-semibold text-black font-black block">
-                  內文說明 (下方會自動附上時間等資訊)
+                  內文說明<br/><span className="text-xs font-normal text-slate-500">(下方會自動附上時間等資訊)</span>
                   <span className="text-xs text-green-600 font-normal ml-2">支援變數：請使用上方選單插入</span>
                 </label>
                 <div className="flex items-center gap-2">
