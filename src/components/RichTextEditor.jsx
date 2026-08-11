@@ -109,8 +109,7 @@ const RichTextEditor = forwardRef(({ value, onChange, placeholder, styleClass = 
           if (quillRef.current) {
             const editor = quillRef.current.getEditor();
             editor.format('color', e.target.value);
-            // Close the picker by triggering a click outside
-            document.body.click();
+            // DO NOT close the picker here! Closing it here breaks the native OS color dialog on Windows/Mac
           }
         });
 
